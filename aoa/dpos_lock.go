@@ -105,7 +105,7 @@ func newBlockLockManager(insertBlockFunc func(blocks types.Blocks) (int, error),
 
 func (l *lockManager) addPendingBlock(b *types.Block) error {
 	startTime := time.Now().Nanosecond()
-	log.Info("lockManager|add pending block start", "blockNumber", b.Number().Int64())
+	// log.Info("lockManager|add pending block start", "blockNumber", b.Number().Int64())
 	if l.isLock() {
 		log.Error("lockManager|add pending block fail|is locking", "blockNumber", b.Number().Int64())
 		return pendingBlockExist
@@ -127,7 +127,7 @@ func (l *lockManager) addPendingBlock(b *types.Block) error {
 	expireTime := time.Unix(expireTimeUnix, 0)
 	id := l.tw.AddTimer(expireTime, -1, blockTimeOutTask)
 	l.taskIds.Store(b.Hash().Hex(), id)
-	log.Info("lockManager|add pending block success", "blockNumber", b.Number().Int64(), "coinbase", b.Coinbase().Hex(), "expireTime", expireTime, "costTime(ns)", time.Now().Nanosecond()-startTime)
+	// log.Info("lockManager|add pending block success", "blockNumber", b.Number().Int64(), "coinbase", b.Coinbase().Hex(), "expireTime", expireTime, "costTime(ns)", time.Now().Nanosecond()-startTime)
 	return nil
 }
 
