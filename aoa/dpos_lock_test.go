@@ -35,7 +35,7 @@ func TestNew(t *testing.T) {
 
 	scryptN := keystore.StandardScryptN
 	scryptP := keystore.StandardScryptP
-	keydir := "/Users/name/abtc-workspace/chain-dev/node3/keystore"
+	keydir := "/Users/name/aurora-workspace/chain-dev/node3/keystore"
 	backends := []accounts.Backend{
 		keystore.NewKeyStore(keydir, scryptN, scryptP),
 	}
