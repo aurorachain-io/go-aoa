@@ -54,7 +54,7 @@ func TestCheckCompatible(t *testing.T) {
 			new:    &ChainConfig{},
 			head:   3,
 			wantErr: &ConfigCompatError{
-				What:         "Epiphron fork block",
+				What:         "Aurora fork block",
 				StoredConfig: big.NewInt(0),
 				NewConfig:    nil,
 				RewindTo:     0,
@@ -65,7 +65,7 @@ func TestCheckCompatible(t *testing.T) {
 			new:    &ChainConfig{ByzantiumBlock: big.NewInt(10000),AresBlock:big.NewInt(90), EpiphronBlock:big.NewInt(1)},
 			head:   3,
 			wantErr: &ConfigCompatError{
-				What:         "Epiphron fork block",
+				What:         "Aurora fork block",
 				StoredConfig: big.NewInt(0),
 				NewConfig:    big.NewInt(1),
 				RewindTo:     0,
