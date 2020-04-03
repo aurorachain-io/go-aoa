@@ -161,7 +161,7 @@ func TestServerDial(t *testing.T) {
 				t.Errorf("peer has wrong id")
 			}
 			if peer.Name() != "test" {
-				t.Errorf("peer has wrong name")
+				t.Errorf("peer has wrong name ")
 			}
 			if peer.RemoteAddr().String() != conn.LocalAddr().String() {
 				t.Errorf("peer started with wrong conn: got %v, want %v",
