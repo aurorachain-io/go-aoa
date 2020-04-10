@@ -124,7 +124,7 @@ func BenchmarkVerifyProof(b *testing.B) {
 	for k := range vals {
 		keys = append(keys, k)
 		proof, _ := aoadb.NewMemDatabase()
-		trie.Prove([]byte(k), 0, proof)
+		_ = trie.Prove([]byte(k), 0, proof)
 		proofs = append(proofs, proof)
 	}
 
@@ -158,6 +158,6 @@ func randomTrie(n int) (*Trie, map[string]*kv) {
 
 func randBytes(n int) []byte {
 	r := make([]byte, n)
-	crand.Read(r)
+	_, _ = crand.Read(r)
 	return r
 }
