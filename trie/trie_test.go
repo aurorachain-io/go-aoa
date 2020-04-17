@@ -83,6 +83,7 @@ func TestMissingNode(t *testing.T) {
 	trie, _ := New(common.Hash{}, db)
 	updateString(trie, "120000", "qwerqwerqwerqwerqwerqwerqwerqwer")
 	updateString(trie, "123456", "asdfasdfasdfasdfasdfasdfasdfasdf")
+	updateString(trie, "102456", "fdafdfdafdfdafdfdfdsfdsfsdfdsafd")
 	root, _ := trie.Commit()
 
 	trie, _ = New(root, db)
