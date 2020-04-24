@@ -17,7 +17,6 @@
 package util
 
 import (
-	"fmt"
 	"github.com/Aurorachain/go-aoa/core/types"
 	"testing"
 	"time"
@@ -26,9 +25,9 @@ import (
 func TestShuffle(t *testing.T) {
 	var delegateNumber = 4
 	for i := 1; i < 100; i++ {
-		fmt.Println(Shuffle(int64(i), delegateNumber))
+		t.Log(Shuffle(int64(i), delegateNumber))
 		if i%delegateNumber == 0 {
-			fmt.Println("=======================")
+			t.Log("=======================")
 		}
 	}
 }
@@ -50,7 +49,7 @@ func TestShuffleNewRound(t *testing.T) {
 	lastBlockTime := time.Now().Unix()
 	newRound := ShuffleNewRound(lastBlockTime, 10, initDelegate)
 	for _, v := range newRound {
-		fmt.Println(v)
+		t.Log(v)
 	}
 
 }
@@ -58,6 +57,7 @@ func TestShuffleNewRound(t *testing.T) {
 func TestCalShuffleTimeByHeaderTime(t *testing.T) {
 	// blockTime 传的是新手收到的校验不过的块头时间，洗牌所用的数据是该块的parentBlockNumber
 	shuffleTime := CalShuffleTimeByHeaderTime(3032, 2048)
-	fmt.Println(shuffleTime)
+	t.Log(shuffleTime)
+
 
 }
