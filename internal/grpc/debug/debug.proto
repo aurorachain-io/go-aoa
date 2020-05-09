@@ -1,0 +1,25 @@
+syntax = "proto3";
+package debug;
+service Debug {
+    rpc getBlockRlp (BlockRequest) returns (ResultReply) {
+    }
+    rpc printBlock (BlockRequest) returns (ResultReply) {
+    }
+    rpc chaindbProperty (Property) returns (ResultReply) {
+    }
+    rpc chaindbCompact (Request) returns (Reply) {
+    }
+}
+message BlockRequest {
+    fixed64 number = 1;
+}
+message ResultReply {
+    string result = 1;
+}
+message Property {
+    string property = 1;
+}
+message Request {
+}
+message Reply {
+}
