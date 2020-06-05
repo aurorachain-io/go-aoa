@@ -1,0 +1,42 @@
+syntax = "proto3";
+import "utils/common.proto";
+package txpool;
+service TxPool {
+    rpc content (ContentRequest) returns (ContentReply) {
+    }
+    rpc status (StatusRequest) returns (StatusReply) {
+    }
+    rpc inspect (InspectRequest) returns (InspectReply) {
+    }
+}
+message ContentRequest {
+}
+message ContentReply {
+    map<string, ContentPending> pending = 1;
+    map<string, ContentQueued> queued = 2;
+}
+message ContentPending {
+    map<string, utils.RpcTransaction> data = 1;
+}
+message ContentQueued {
+    map<string, utils.RpcTransaction> data = 1;
+}
+message StatusRequest {
+}
+message StatusReply {
+    map<string, int32> result = 1;
+}
+message InspectRequest {
+}
+message InspectReply {
+    //        "pending": make(map[string]map[string]string),
+    //    	"queued":  make(map[string]map[string]string),
+    map<string, InspectPending> pending = 1;
+    map<string, InspectQueued> queued = 2;
+}
+message InspectPending {
+    map<string, string> data = 1;
+}
+message InspectQueued {
+    map<string, string> data = 1;
+}
