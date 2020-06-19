@@ -31,3 +31,7 @@ func TestRlpHash(t *testing.T) {
 	h := rlpHash(list)
 	fmt.Println(h.Hex())
 }
+
+func TestDposTaskManager_GetCurrentShuffleRound(t *testing.T) {
+	fmt.Println("Aurora min dpos consensus")
+}
