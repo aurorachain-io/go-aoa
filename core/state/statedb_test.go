@@ -438,7 +438,7 @@ func (test *snapshotTest) checkEqual(state, checkstate *StateDB) error {
 func (s *StateSuite) TestTouchDelete(c *check.C) {
 	s.state.GetOrNewStateObject(common.Address{})
 	root, _ := s.state.CommitTo(s.db, false)
-	s.state.Reset(root)
+	_ = s.state.Reset(root)
 
 	snapshot := s.state.Snapshot()
 	s.state.AddBalance(common.Address{}, new(big.Int))
