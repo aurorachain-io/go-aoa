@@ -18,6 +18,7 @@ package bloombits
 
 import (
 	"bytes"
+	"fmt"
 	"math/rand"
 	"testing"
 
@@ -57,4 +58,12 @@ func TestGenerator(t *testing.T) {
 			t.Errorf("output %d: bit vector mismatch have %x, want %x", i, have, want)
 		}
 	}
+}
+
+func TestNewGenerator(t *testing.T) {
+	gen,err := NewGenerator(types.BloomBitLength)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(gen)
 }
