@@ -19,7 +19,6 @@ package core
 import (
 	"fmt"
 	"math/big"
-
 	"github.com/Aurorachain/go-aoa/aoadb"
 	"github.com/Aurorachain/go-aoa/common"
 	"github.com/Aurorachain/go-aoa/consensus"

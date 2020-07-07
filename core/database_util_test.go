@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"math/big"
 	"testing"
-
 	"fmt"
 	"github.com/Aurorachain/go-aoa/aoadb"
 	"github.com/Aurorachain/go-aoa/common"

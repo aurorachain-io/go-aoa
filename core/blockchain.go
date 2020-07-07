@@ -26,7 +26,6 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
-
 	"github.com/Aurorachain/go-aoa/aoadb"
 	"github.com/Aurorachain/go-aoa/common"
 	"github.com/Aurorachain/go-aoa/common/mclock"

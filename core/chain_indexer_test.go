@@ -22,7 +22,6 @@ import (
 	"math/rand"
 	"testing"
 	"time"
-
 	"github.com/Aurorachain/go-aoa/aoadb"
 	"github.com/Aurorachain/go-aoa/common"
 	"github.com/Aurorachain/go-aoa/core/types"

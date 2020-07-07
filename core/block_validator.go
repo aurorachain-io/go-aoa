@@ -18,7 +18,6 @@ package core
 
 import (
 	"fmt"
-
 	"github.com/Aurorachain/go-aoa/consensus"
 	"github.com/Aurorachain/go-aoa/core/state"
 	"github.com/Aurorachain/go-aoa/core/types"
