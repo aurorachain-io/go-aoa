@@ -98,3 +98,17 @@ func TestBlock_Hash(t *testing.T) {
 	fmt.Printf("with sign blockHash:%s\n", block.Hash().Hex())
 
 }
+
+func TestNewBlock(t *testing.T) {
+	header := &Header{
+		ParentHash: common.HexToHash("0xd2e91d3554d254eb6a3db17ea03bc8d2af305eab483a777a23fd7181ba29b563"),
+		Number:     common.Big1,
+		GasLimit:   25000,
+		Extra:      nil,
+		Time:       big.NewInt(1526442558),
+		Coinbase:   common.HexToAddress("0x8888f1f195afa192cfee860698584c030f4c9db1"),
+		AgentName:  nil,
+	}
+	block := NewBlock(header, nil, nil)
+	fmt.Println(block)
+}
