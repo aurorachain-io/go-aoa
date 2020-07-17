@@ -90,15 +90,15 @@ func TestNewTxPool(t *testing.T) {
 	//}
 
 	var trx trx
-	from := []string{"0x0ac71830f52bda2046583d7cb2df07855922f74a",
-		"0x793fae82c7a0e21fcd69e94b2d7403257422a255",
-		"0x105376386c77adcf23df75505fc27fcb626ad611",
-		"0xb06e33bc647f40d0ba3bddb471f9af8f9e2c6871",
-		"0xa6a3e1d6ecea6bf644aefa684c15d7033876c5fe",
-		"0xbc8276fca9a6be4967ea854bdee9c9aec0595c12",
-		"0x4aef0f9045b5adc395260d8bd04b727471aa59f1",
-		"0x8f20cc9d5edf64f3b8e7d25830f1599628465b0e",
-		"0x3b106d19b75d52c9d9e1391039a7df7a2d585733"}
+	from := []string{"AOA0ac71830f52bda2046583d7cb2df07855922f74a",
+		"AOA793fae82c7a0e21fcd69e94b2d7403257422a255",
+		"AOA105376386c77adcf23df75505fc27fcb626ad611",
+		"AOAb06e33bc647f40d0ba3bddb471f9af8f9e2c6871",
+		"AOAa6a3e1d6ecea6bf644aefa684c15d7033876c5fe",
+		"AOAbc8276fca9a6be4967ea854bdee9c9aec0595c12",
+		"AOA4aef0f9045b5adc395260d8bd04b727471aa59f1",
+		"AOA8f20cc9d5edf64f3b8e7d25830f1599628465b0e",
+		"AOA3b106d19b75d52c9d9e1391039a7df7a2d585733"}
 
 	start := time.Now()
 	count := 0
