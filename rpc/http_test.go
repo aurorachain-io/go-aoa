@@ -45,6 +45,12 @@ func TestHTTPErrorResponseWithValidRequest(t *testing.T) {
 	testHTTPErrorResponse(t, http.MethodPost, contentType, "", 0)
 }
 
+func TestHttpConn_LocalAddr(t *testing.T) {
+	body := make([]rune, maxHTTPRequestContentLength+1)
+	testHTTPErrorResponse(t,
+		http.MethodPost, contentType, string(body), http.StatusRequestEntityTooLarge)
+}
+
 func testHTTPErrorResponse(t *testing.T, method, contentType, body string, expected int) {
 	request := httptest.NewRequest(method, "http://url.com", strings.NewReader(body))
 	request.Header.Set("content-type", contentType)
