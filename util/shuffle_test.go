@@ -34,16 +34,16 @@ func TestShuffle(t *testing.T) {
 
 func TestShuffleNewRound(t *testing.T) {
 	var initDelegate = []types.Candidate{
-		{Address: "0x70715a2a44255ddce2779d60ba95968b770fc751", Nickname: "node1"},
-		{Address: "0xfd48a829397a16b3bc6c319a06a47cd2ce6b3f52", Nickname: "node2"},
-		{Address: "0x612d018cc7db4137366a08075333a634c07e31b3", Nickname: "node3"},
-		{Address: "0x612d018cc7db4137366a08075333a634c07e31b4", Nickname: "node4"},
-		{Address: "0x612d018cc7db4137366a08075333a634c07e31b5", Nickname: "node5"},
-		{Address: "0x612d018cc7db4137366a08075333a634c07e31b6", Nickname: "node6"},
-		{Address: "0x612d018cc7db4137366a08075333a634c07e31b7", Nickname: "node7"},
-		{Address: "0x612d018cc7db4137366a08075333a634c07e31b8", Nickname: "node8"},
-		{Address: "0x612d018cc7db4137366a08075333a634c07e31b9", Nickname: "node9"},
-		{Address: "0x612d018cc7db4137366a08075333a634c07e31b0", Nickname: "node10"},
+		{Address: "AOA70715a2a44255ddce2779d60ba95968b770fc751", Nickname: "node1"},
+		{Address: "AOAfd48a829397a16b3bc6c319a06a47cd2ce6b3f52", Nickname: "node2"},
+		{Address: "AOA612d018cc7db4137366a08075333a634c07e31b3", Nickname: "node3"},
+		{Address: "AOA612d018cc7db4137366a08075333a634c07e31b4", Nickname: "node4"},
+		{Address: "AOA612d018cc7db4137366a08075333a634c07e31b5", Nickname: "node5"},
+		{Address: "AOA612d018cc7db4137366a08075333a634c07e31b6", Nickname: "node6"},
+		{Address: "AOA612d018cc7db4137366a08075333a634c07e31b7", Nickname: "node7"},
+		{Address: "AOA612d018cc7db4137366a08075333a634c07e31b8", Nickname: "node8"},
+		{Address: "AOA612d018cc7db4137366a08075333a634c07e31b9", Nickname: "node9"},
+		{Address: "AOA612d018cc7db4137366a08075333a634c07e31b0", Nickname: "node10"},
 	}
 
 	lastBlockTime := time.Now().Unix()
@@ -58,6 +58,4 @@ func TestCalShuffleTimeByHeaderTime(t *testing.T) {
 	// blockTime 传的是新手收到的校验不过的块头时间，洗牌所用的数据是该块的parentBlockNumber
 	shuffleTime := CalShuffleTimeByHeaderTime(3032, 2048)
 	t.Log(shuffleTime)
-
-
 }
