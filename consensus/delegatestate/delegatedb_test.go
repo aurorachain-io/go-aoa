@@ -284,12 +284,12 @@ func TestCreateDelegates(t *testing.T) {
 		t.Fatalf("create delegateDB err:%v\n", err)
 	}
 	snapshot := delegatedb.Snapshot()
-	d1 := delegatedb.GetOrNewStateObject(common.HexToAddress("0x71af77518da8ee1e152068ea4727d1041d71b813"), "node-1", 1492009146)
-	d2 := delegatedb.GetOrNewStateObject(common.HexToAddress("0xa51bac4fe71640157f29317c2fe233c26b71c6c8"), "node-1", 1492009146)
-	d3 := delegatedb.GetOrNewStateObject(common.HexToAddress("0xb0b81949b3b6d6ff926336d6227cec04ceca88b2"), "node-1", 1492009146)
-	d4 := delegatedb.GetOrNewStateObject(common.HexToAddress("0x4d8bfcdbc0192e3a2e189ed133ee4e98e4e381f8"), "node-1", 1492009146)
-	d5 := delegatedb.GetOrNewStateObject(common.HexToAddress("0xe92c157278abafa68e3547d4d5bd3ed4a5afccb3"), "node-1", 1492009146)
-	d6 := delegatedb.GetOrNewStateObject(common.HexToAddress("0x5ac2ff101f11ae3c2b7093e25f5300018252c2a3"), "node-1", 1492009146)
+	d1 := delegatedb.GetOrNewStateObject(common.HexToAddress("AOA71af77518da8ee1e152068ea4727d1041d71b813"), "node-1", 1492009146)
+	d2 := delegatedb.GetOrNewStateObject(common.HexToAddress("AOAa51bac4fe71640157f29317c2fe233c26b71c6c8"), "node-1", 1492009146)
+	d3 := delegatedb.GetOrNewStateObject(common.HexToAddress("AOAb0b81949b3b6d6ff926336d6227cec04ceca88b2"), "node-1", 1492009146)
+	d4 := delegatedb.GetOrNewStateObject(common.HexToAddress("AOA4d8bfcdbc0192e3a2e189ed133ee4e98e4e381f8"), "node-1", 1492009146)
+	d5 := delegatedb.GetOrNewStateObject(common.HexToAddress("AOAe92c157278abafa68e3547d4d5bd3ed4a5afccb3"), "node-1", 1492009146)
+	d6 := delegatedb.GetOrNewStateObject(common.HexToAddress("AOA5ac2ff101f11ae3c2b7093e25f5300018252c2a3"), "node-1", 1492009146)
 
 	d1.AddVote(big.NewInt(1))
 	d2.AddVote(big.NewInt(1))
