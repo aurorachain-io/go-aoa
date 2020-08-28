@@ -16,7 +16,7 @@
 
 package aoaclient
 
-import "github.com/Aurorachain/go-aoa"
+import _ "github.com/Aurorachain/go-aoa"
 
 // Verify that Client implements the Aurora interfaces.
 var (
