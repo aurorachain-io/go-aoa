@@ -16,6 +16,8 @@
 
 package filter
 
+import "fmt"
+
 type Generic struct {
 	Str1, Str2, Str3 string
 	Data             map[string]struct{}
@@ -45,4 +47,9 @@ func (self Generic) Compare(f Filter) bool {
 
 func (self Generic) Trigger(data interface{}) {
 	self.Fn(data)
+	if (len(self.Str1) > 0 ||
+		len(self.Str2) > 0||
+		(len(self.Str3) > 0 )) {
+		fmt.Println("fit success")
+	}
 }
