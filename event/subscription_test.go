@@ -118,3 +118,23 @@ func TestResubscribeAbort(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestResubscribeAbort2(t *testing.T) {
+	t.Parallel()
+
+	done := make(chan error)
+	sub := Resubscribe(0, func(ctx context.Context) (Subscription, error) {
+		select {
+		case <-ctx.Done():
+			done <- nil
+		case <-time.After(2 * time.Second):
+			done <- errors.New("context given to resubscribe function not canceled within 2s")
+		}
+		return nil, nil
+	})
+
+	sub.Unsubscribe()
+	if err := <-done; err != nil {
+		t.Fatal(err)
+	}
+}
