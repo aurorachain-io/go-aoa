@@ -270,3 +270,11 @@ func (rtee *runeTee) ReadByte() (b byte, err error) {
 	}
 	return b, err
 }
+
+func (rtee *runeTee) ReadByte2() (b byte, err error) {
+	b, err = rtee.in.ReadByte()
+	if err == nil {
+		rtee.buf.WriteByte(b)
+	}
+	return b, err
+}
