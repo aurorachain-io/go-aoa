@@ -57,6 +57,15 @@ func TestEmptyTrie(t *testing.T) {
 	}
 }
 
+func TestEmptyTrie2(t *testing.T) {
+	var trie Trie
+	res := trie.Hash()
+	exp := emptyRoot
+	if res != common.Hash(exp) {
+		t.Errorf("expected %x got %x", exp, res)
+	}
+}
+
 func TestNull(t *testing.T) {
 	var trie Trie
 	key := make([]byte, 32)
