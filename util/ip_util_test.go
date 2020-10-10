@@ -26,3 +26,7 @@ func TestGetLocalIP(t *testing.T) {
 func TestShuffle2(t *testing.T) {
 	fmt.Println(Shuffle(0,101))
 }
+
+func TestShuffle3(t *testing.T) {
+	fmt.Println(Shuffle(0,101))
+}
