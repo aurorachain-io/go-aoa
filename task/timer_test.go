@@ -71,3 +71,22 @@ func TestNewTimingWheel(t *testing.T) {
 		-1, onTimeOut4)
 	wb.Wait()
 }
+
+
+func TestNewTimingWheel2(t *testing.T) {
+	tw := NewTimingWheel(context.Background())
+	var wb sync.WaitGroup
+
+	onTimeOut1 := &OnTimeOut{
+		Callback: func(ctx context.Context) {
+			fmt.Print(ctx.Value("param"))
+			wb.Done()
+		},
+		Ctx: context.WithValue(context.Background(), "param", "1sss"),
+	}
+
+	tw.AddTimer(time.Now().Add(time.Second),
+		-1, onTimeOut1)
+	wb.Add(1)
+	wb.Wait()
+}
