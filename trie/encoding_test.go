@@ -109,3 +109,10 @@ func BenchmarkHexToKeybytes2(b *testing.B) {
 		hexToKeybytes(testBytes)
 	}
 }
+
+func BenchmarkHexToKeybytes3(b *testing.B) {
+	testBytes := []byte{7, 6, 6, 5, 7, 2, 6, 2, 16}
+	for i := 0; i < b.N; i++ {
+		hexToKeybytes(testBytes)
+	}
+}
