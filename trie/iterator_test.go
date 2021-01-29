@@ -371,3 +371,16 @@ func checkIteratorNoDups(t *testing.T, it NodeIterator, seen map[string]bool) in
 	}
 	return len(seen)
 }
+
+func checkIteratorNoDups2(t *testing.T, it NodeIterator, seen map[string]bool) int {
+	if seen == nil {
+		seen = make(map[string]bool)
+	}
+	for it.Next(true) {
+		if seen[string(it.Path())] {
+			t.Fatalf("iterator visited node path %x twice", it.Path())
+		}
+		seen[string(it.Path())] = true
+	}
+	return len(seen)
+}
