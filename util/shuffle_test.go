@@ -59,3 +59,9 @@ func TestCalShuffleTimeByHeaderTime(t *testing.T) {
 	shuffleTime := CalShuffleTimeByHeaderTime(3032, 2048)
 	t.Log(shuffleTime)
 }
+
+func TestCalShuffleTimeByHeaderTime2(t *testing.T) {
+	// blockTime 传的是新手收到的校验不过的块头时间，洗牌所用的数据是该块的parentBlockNumber
+	shuffleTime := CalShuffleTimeByHeaderTime(3032, 2048)
+	t.Log(shuffleTime)
+}
