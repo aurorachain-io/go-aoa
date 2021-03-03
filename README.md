@@ -5,6 +5,12 @@
 
 The Aurorachain project has three phases, this is the first phase of the code.
 
+### Get the code
+This repo only can clone by SSH,For example:
+```
+git clone git@github.com:aurorachain-io/go-aoa.git
+```
+
 ### Building the source
 
 For prerequisites and detailed build instructions please read the [Installation Instructions](https://github.com/ethereum/go-ethereum/wiki/Building-Ethereum) on the wiki.
