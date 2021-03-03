@@ -1,47 +1,47 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of go-aurora.
+// Copyright 2021 The go-aoa Authors
+// This file is part of go-eminer.
 //
-// go-aurora is free software: you can redistribute it and/or modify
+// go-eminer is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// go-aurora is distributed in the hope that it will be useful,
+// go-eminer is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with go-aurora. If not, see <http://www.gnu.org/licenses/>.
+// along with go-eminer. If not, see <http://www.gnu.org/licenses/>.
 
-// Package utils contains internal helper functions for go-aurora commands.
+// Package utils contains internal helper functions for go-dacchain commands.
 package utils
 
 import (
 	"crypto/ecdsa"
 	"fmt"
-	"github.com/Aurorachain/go-aoa/accounts"
-	"github.com/Aurorachain/go-aoa/accounts/keystore"
-	"github.com/Aurorachain/go-aoa/aoa"
-	"github.com/Aurorachain/go-aoa/aoa/downloader"
-	"github.com/Aurorachain/go-aoa/aoa/gasprice"
-	"github.com/Aurorachain/go-aoa/aoadb"
-	"github.com/Aurorachain/go-aoa/aoastats"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/common/fdlimit"
-	"github.com/Aurorachain/go-aoa/core"
-	"github.com/Aurorachain/go-aoa/core/state"
-	"github.com/Aurorachain/go-aoa/core/vm"
-	"github.com/Aurorachain/go-aoa/crypto"
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/metrics"
-	"github.com/Aurorachain/go-aoa/node"
-	"github.com/Aurorachain/go-aoa/p2p"
-	"github.com/Aurorachain/go-aoa/p2p/discover"
-	"github.com/Aurorachain/go-aoa/p2p/nat"
-	"github.com/Aurorachain/go-aoa/p2p/netutil"
-	"github.com/Aurorachain/go-aoa/params"
-	"gopkg.in/urfave/cli.v1"
+	"github.com/Aurorachain-io/go-aoa/accounts"
+	"github.com/Aurorachain-io/go-aoa/accounts/keystore"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/common/fdlimit"
+	"github.com/Aurorachain-io/go-aoa/core"
+	"github.com/Aurorachain-io/go-aoa/core/state"
+	"github.com/Aurorachain-io/go-aoa/core/vm"
+	"github.com/Aurorachain-io/go-aoa/crypto"
+	"github.com/Aurorachain-io/go-aoa/aoa"
+	"github.com/Aurorachain-io/go-aoa/aoa/downloader"
+	"github.com/Aurorachain-io/go-aoa/aoa/gasprice"
+	"github.com/Aurorachain-io/go-aoa/aoadb"
+	"github.com/Aurorachain-io/go-aoa/aoastats"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/metrics"
+	"github.com/Aurorachain-io/go-aoa/node"
+	"github.com/Aurorachain-io/go-aoa/p2p"
+	"github.com/Aurorachain-io/go-aoa/p2p/discover"
+	"github.com/Aurorachain-io/go-aoa/p2p/nat"
+	"github.com/Aurorachain-io/go-aoa/p2p/netutil"
+	"github.com/Aurorachain-io/go-aoa/params"
+	cli "gopkg.in/urfave/cli.v1"
 	"io/ioutil"
 	"math/big"
 	"os"
@@ -52,7 +52,7 @@ import (
 )
 
 var (
-	CommandHelpTemplate = `{{.cmd.Name}}{{if .cmd.Subcommands}} command{{end}}{{if .cmd.Flags}} [command options]{{end}} [arguments...]
+	CommandHelpTaoaplate = `{{.cmd.Name}}{{if .cmd.Subcommands}} command{{end}}{{if .cmd.Flags}} [command options]{{end}} [arguments...]
 {{if .cmd.Description}}{{.cmd.Description}}
 {{end}}{{if .cmd.Subcommands}}
 SUBCOMMANDS:
@@ -78,7 +78,7 @@ GLOBAL OPTIONS:
    {{end}}{{end}}
 `
 
-	cli.CommandHelpTemplate = CommandHelpTemplate
+	cli.CommandHelpTemplate = CommandHelpTaoaplate
 }
 
 // NewApp creates an app with sane defaults.
@@ -97,7 +97,7 @@ func NewApp(gitCommit, usage string) *cli.App {
 }
 
 // These are all the command line flags we support.
-// If you add to this list, please remember to include the
+// If you add to this list, please raoaaoaber to include the
 // flag in the appropriate command definition.
 //
 // The flags are defined here so their names and help texts
@@ -133,7 +133,7 @@ var (
 	}
 	DeveloperFlag = cli.BoolFlag{
 		Name:  "dev",
-		Usage: "Ephemeral proof-of-authority network with a pre-funded developer account, mining enabled",
+		Usage: "Ephaoaeral proof-of-authority network with a pre-funded developer account, mining enabled",
 	}
 	DeveloperPeriodFlag = cli.IntFlag{
 		Name:  "dev.period",
@@ -145,7 +145,7 @@ var (
 	}
 	DocRootFlag = DirectoryFlag{
 		Name:  "docroot",
-		Usage: "Document Root for HTTPClient file scheme",
+		Usage: "Document Root for HTTPClient file schaoae",
 		Value: DirectoryString{homeDir()},
 	}
 	FastSyncFlag = cli.BoolFlag{
@@ -180,7 +180,7 @@ var (
 	// Transaction pool settings
 	TxPoolNoLocalsFlag = cli.BoolFlag{
 		Name:  "txpool.nolocals",
-		Usage: "Disables price exemptions for locally submitted transactions",
+		Usage: "Disables price exaoaptions for locally submitted transactions",
 	}
 	TxPoolJournalFlag = cli.StringFlag{
 		Name:  "txpool.journal",
@@ -230,12 +230,12 @@ var (
 	// Performance tuning settings
 	CacheFlag = cli.IntFlag{
 		Name:  "cache",
-		Usage: "Megabytes of memory allocated to internal caching (min 16MB / database forced)",
+		Usage: "Megabytes of maoaory allocated to internal caching (min 16MB / database forced)",
 		Value: 128,
 	}
 	TrieCacheGenFlag = cli.IntFlag{
 		Name:  "trie-cache-gens",
-		Usage: "Number of trie node generations to keep in memory",
+		Usage: "Number of trie node generations to keep in maoaory",
 		Value: int(state.MaxTrieCacheGen),
 	}
 	// Miner settings
@@ -253,8 +253,8 @@ var (
 		Usage: "Target gas limit sets the artificial target gas floor for the blocks to mine",
 		Value: params.GenesisGasLimit,
 	}
-	AurorabaseFlag = cli.StringFlag{
-		Name:  "aurorabase",
+	AoachainbaseFlag = cli.StringFlag{
+		Name:  "dacchainbase",
 		Usage: "Public address for block mining rewards (default = first account created)",
 		Value: "0",
 	}
@@ -359,7 +359,7 @@ var (
 	}
 	ExecFlag = cli.StringFlag{
 		Name:  "exec",
-		Usage: "Execute JavaScript statement",
+		Usage: "Execute JavaScript stataoaent",
 	}
 	PreloadJSFlag = cli.StringFlag{
 		Name:  "preload",
@@ -374,7 +374,7 @@ var (
 	}
 	MaxPendingPeersFlag = cli.IntFlag{
 		Name:  "maxpendpeers",
-		Usage: "Maximum number of pending connection attempts (defaults used if set to 0)",
+		Usage: "Maximum number of pending connection attaoapts (defaults used if set to 0)",
 		Value: 0,
 	}
 	ListenPortFlag = cli.IntFlag{
@@ -459,16 +459,10 @@ var (
 	//	Usage: "Minimum POW accepted",
 	//	Value: whisper.DefaultMinimumPoW,
 	//}
-
-	LogLevelFlag = cli.IntFlag{
-		Name:  "LogLevel",
-		Usage: "Set the level of the log, the default is Info：Info=3,Trace=5,Debug=4,Warn=2,Error=1,Crit=0",
-		Value: 5,
-	}
 )
 
 // MakeDataDir retrieves the currently requested data directory, terminating
-// if none (or the empty string) is specified. If the node is starting a testnet,
+// if none (or the aoapty string) is specified. If the node is starting a testnet,
 // the a subdirectory of the specified datadir will be used.
 func MakeDataDir(ctx *cli.Context) string {
 	if path := ctx.GlobalString(DataDirFlag.Name); path != "" {
@@ -486,7 +480,7 @@ func MakeDataDir(ctx *cli.Context) string {
 
 // setNodeKey creates a node key from set command line flags, either loading it
 // from a file or as a specified hex value. If neither flags were provided, this
-// method returns nil and an emphemeral key is to be generated.
+// method returns nil and an aoaphaoaeral key is to be generated.
 func setNodeKey(ctx *cli.Context, cfg *p2p.Config) {
 	var (
 		hex  = ctx.GlobalString(NodeKeyHexFlag.Name)
@@ -575,7 +569,7 @@ func splitAndTrim(input string) []string {
 }
 
 // setHTTP creates the HTTP RPC listener interface string from the set
-// command line flags, returning empty if the HTTP endpoint is disabled.
+// command line flags, returning aoapty if the HTTP endpoint is disabled.
 func setHTTP(ctx *cli.Context, cfg *node.Config) {
 	if ctx.GlobalBool(RPCEnabledFlag.Name) && cfg.HTTPHost == "" {
 		cfg.HTTPHost = "127.0.0.1"
@@ -596,7 +590,7 @@ func setHTTP(ctx *cli.Context, cfg *node.Config) {
 }
 
 // setWS creates the WebSocket RPC listener interface string from the set
-// command line flags, returning empty if the HTTP endpoint is disabled.
+// command line flags, returning aoapty if the HTTP endpoint is disabled.
 func setWS(ctx *cli.Context, cfg *node.Config) {
 	if ctx.GlobalBool(WSEnabledFlag.Name) && cfg.WSHost == "" {
 		cfg.WSHost = "127.0.0.1"
@@ -617,7 +611,7 @@ func setWS(ctx *cli.Context, cfg *node.Config) {
 }
 
 // setIPC creates an IPC path configuration from the set command line flags,
-// returning an empty string if IPC was explicitly disabled, or the set path.
+// returning an aoapty string if IPC was explicitly disabled, or the set path.
 func setIPC(ctx *cli.Context, cfg *node.Config) {
 	checkExclusive(ctx, IPCDisabledFlag, IPCPathFlag)
 	switch {
@@ -658,7 +652,7 @@ func MakeAddress(ks *keystore.KeyStore, account string) (accounts.Account, error
 	}
 	log.Warn("-------------------------------------------------------------------")
 	log.Warn("Referring to accounts by order in the keystore folder is dangerous!")
-	log.Warn("This functionality is deprecated and will be removed in the future!")
+	log.Warn("This functionality is deprecated and will be raoaoved in the future!")
 	log.Warn("Please use explicit addresses! (can search via `aoa account list`)")
 	log.Warn("-------------------------------------------------------------------")
 
@@ -669,15 +663,15 @@ func MakeAddress(ks *keystore.KeyStore, account string) (accounts.Account, error
 	return accs[index], nil
 }
 
-// setAurorabase retrieves the aurorabase aoa from the directly specified
+// setDacchainbase retrieves the Dacchainbase aoa from the directly specified
 // command line flags or from the keystore if CLI indexed.
-func setAurorabase(ctx *cli.Context, ks *keystore.KeyStore, cfg *aoa.Config) {
-	if ctx.GlobalIsSet(AurorabaseFlag.Name) {
-		account, err := MakeAddress(ks, ctx.GlobalString(AurorabaseFlag.Name))
+func setDacchainbase(ctx *cli.Context, ks *keystore.KeyStore, cfg *aoa.Config) {
+	if ctx.GlobalIsSet(AoachainbaseFlag.Name) {
+		account, err := MakeAddress(ks, ctx.GlobalString(AoachainbaseFlag.Name))
 		if err != nil {
-			Fatalf("Option %q: %v", AurorabaseFlag.Name, err)
+			Fatalf("Option %q: %v", AoachainbaseFlag.Name, err)
 		}
-		cfg.Aurorabase = account.Address
+		cfg.Dacchainbase = account.Address
 	}
 }
 
@@ -754,7 +748,7 @@ func SetNodeConfig(ctx *cli.Context, cfg *node.Config) {
 	case ctx.GlobalIsSet(DataDirFlag.Name):
 		cfg.DataDir = ctx.GlobalString(DataDirFlag.Name)
 	case ctx.GlobalBool(DeveloperFlag.Name):
-		cfg.DataDir = "" // unless explicitly requested, use memory databases
+		cfg.DataDir = "" // unless explicitly requested, use maoaory databases
 	case ctx.GlobalBool(TestnetFlag.Name):
 		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "testnet")
 	case ctx.GlobalBool(RinkebyFlag.Name):
@@ -862,13 +856,13 @@ func checkExclusive(ctx *cli.Context, args ...interface{}) {
 //	}
 //}
 
-// SetAoaConfig applies aoa-related command line flags to the config.
-func SetAoaConfig(ctx *cli.Context, stack *node.Node, cfg *aoa.Config) {
+// SetaoaConfig applies aoa-related command line flags to the config.
+func SetaoaConfig(ctx *cli.Context, stack *node.Node, cfg *aoa.Config) {
 	// Avoid conflicting network flags
 	checkExclusive(ctx, DeveloperFlag, TestnetFlag, RinkebyFlag)
 
 	ks := stack.AccountManager().Backends(keystore.KeyStoreType)[0].(*keystore.KeyStore)
-	setAurorabase(ctx, ks, cfg)
+	setDacchainbase(ctx, ks, cfg)
 	setGPO(ctx, &cfg.GPO)
 	setTxPool(ctx, &cfg.TxPool)
 
@@ -920,31 +914,26 @@ func SetAoaConfig(ctx *cli.Context, stack *node.Node, cfg *aoa.Config) {
 			cfg.NetworkId = params.TestChainConfig.ChainId.Uint64()
 		}
 		cfg.Genesis = core.DefaultTestnetGenesisBlock()
-		core.StartMode = "--" + TestnetFlag.Name
 	case ctx.GlobalBool(DeveloperFlag.Name):
 		// Create new developer account or reuse existing one
-		core.StartMode = "--" + DeveloperFlag.Name
-		var developers []common.Address
-		for i := 0; i < 3; i++ {
-			var (
-				developer accounts.Account
-				err       error
-			)
-			//if accs := ks.Accounts(); len(accs) > 0 {
-			//	developer = ks.Accounts()[0]
-			//} else {
+		var (
+			developer accounts.Account
+			err       error
+		)
+		if accs := ks.Accounts(); len(accs) > 0 {
+			developer = ks.Accounts()[0]
+		} else {
 			developer, err = ks.NewAccount("")
 			if err != nil {
 				Fatalf("Failed to create developer account: %v", err)
 			}
-			//}
-			if err := ks.Unlock(developer, ""); err != nil {
-				Fatalf("Failed to unlock developer account: %v", err)
-			}
-			developers = append(developers, developer.Address)
-			log.Infof("Using developer account, address=%v", developer.Address.Hex())
 		}
-		cfg.Genesis = core.DeveloperGenesisBlock(developers)
+		if err := ks.Unlock(developer, ""); err != nil {
+			Fatalf("Failed to unlock developer account: %v", err)
+		}
+		log.Info("Using developer account", "address", developer.Address)
+
+		cfg.Genesis = core.DeveloperGenesisBlock(developer.Address)
 		if !ctx.GlobalIsSet(GasPriceFlag.Name) {
 			cfg.GasPrice = big.NewInt(4000000000)
 		}
@@ -963,8 +952,8 @@ func SetAoaConfig(ctx *cli.Context, stack *node.Node, cfg *aoa.Config) {
 //	cfg.Assets = ctx.GlobalString(DashboardAssetsFlag.Name)
 //}
 
-// RegisterAoaService adds an Aurora client to the stack.
-func RegisterAoaService(stack *node.Node, cfg *aoa.Config) {
+// RegisteraoaService adds an aoainer-pro client to the stack.
+func RegisteraoaService(stack *node.Node, cfg *aoa.Config) {
 	var err error
 
 	err = stack.Register(func(ctx *node.ServiceContext) (node.Service, error) {
@@ -973,7 +962,7 @@ func RegisterAoaService(stack *node.Node, cfg *aoa.Config) {
 	})
 
 	if err != nil {
-		Fatalf("Failed to register the Aurora service: %v", err)
+		Fatalf("Failed to register the aoainer-pro service: %v", err)
 	}
 }
 
@@ -993,21 +982,21 @@ func RegisterAoaService(stack *node.Node, cfg *aoa.Config) {
 //	}
 //}
 
-// RegisterAoaStatsService configures the Aurora Stats daemon and adds it to
+// RegisteraoaStatsService configures the aoainer-pro Stats daaoaon and adds it to
 // th egiven node.
-func RegisterAoaStatsService(stack *node.Node, url string) {
+func RegisteraoaStatsService(stack *node.Node, url string) {
 	if err := stack.Register(func(ctx *node.ServiceContext) (node.Service, error) {
 		// Retrieve both aoa and les services
-		var ethServ *aoa.Aurora
+		var ethServ *aoa.Dacchain
 		ctx.Service(&ethServ)
 
 		return aoastats.New(url, ethServ)
 	}); err != nil {
-		Fatalf("Failed to register the Aurora Stats service: %v", err)
+		Fatalf("Failed to register the aoainer-pro Stats service: %v", err)
 	}
 }
 
-// SetupNetwork configures the system for either the main net or some test network.
+// SetupNetwork configures the systaoa for either the main net or some test network.
 func SetupNetwork(ctx *cli.Context) {
 	// TODO(fjl): move target gas limit into config
 	params.TargetGasLimit = ctx.GlobalUint64(TargetGasLimitFlag.Name)
@@ -1040,9 +1029,9 @@ func MakeGenesis(ctx *cli.Context) *core.Genesis {
 	case ctx.GlobalBool(TestnetFlag.Name):
 		genesis = core.DefaultTestnetGenesisBlock()
 	case ctx.GlobalBool(RinkebyFlag.Name):
-		//genesis = core.DefaultRinkebyGenesisBlock()
+		genesis = core.DefaultRinkebyGenesisBlock()
 	case ctx.GlobalBool(DeveloperFlag.Name):
-		Fatalf("Developer chains are ephemeral")
+		Fatalf("Developer chains are ephaoaeral")
 	}
 	return genesis
 }
@@ -1058,7 +1047,7 @@ func MakeChain(ctx *cli.Context, stack *node.Node) (chain *core.BlockChain, chai
 		Fatalf("%v", err)
 	}
 	vmcfg := vm.Config{EnablePreimageRecording: ctx.GlobalBool(VMEnableDebugFlag.Name)}
-	chain, err = core.NewBlockChain(chainDb, config, aoa.CreateAuroraConsensusEngine(), vmcfg, itxDb)
+	chain, err = core.NewBlockChain(chainDb, config, aoa.CreateDacchainConsensusEngine(), vmcfg, itxDb)
 	if err != nil {
 		Fatalf("Can't create BlockChain: %v", err)
 	}
@@ -1072,7 +1061,7 @@ func MakeConsolePreloads(ctx *cli.Context) []string {
 	if ctx.GlobalString(PreloadJSFlag.Name) == "" {
 		return nil
 	}
-	// Otherwise resolve absolute paths and return them
+	// Otherwise resolve absolute paths and return thaoa
 	preloads := []string{}
 
 	assets := ctx.GlobalString(JSpathFlag.Name)
@@ -1083,7 +1072,7 @@ func MakeConsolePreloads(ctx *cli.Context) []string {
 }
 
 // MigrateFlags sets the global flag from a local flag when it's set.
-// This is a temporary function used for migrating old command/flags to the
+// This is a taoaporary function used for migrating old command/flags to the
 // new format.
 //
 // e.g. aoa account new --keystore /tmp/mykeystore --lightkdf
@@ -1093,7 +1082,7 @@ func MakeConsolePreloads(ctx *cli.Context) []string {
 // aoa --keystore /tmp/mykeystore --lightkdf account new
 //
 // This allows the use of the existing configuration functionality.
-// When all flags are migrated this function can be removed and the existing
+// When all flags are migrated this function can be raoaoved and the existing
 // configuration functionality must be changed that is uses local flags
 func MigrateFlags(action func(ctx *cli.Context) error) func(*cli.Context) error {
 	return func(ctx *cli.Context) error {

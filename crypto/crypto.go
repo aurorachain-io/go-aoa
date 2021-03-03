@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package crypto
 
@@ -23,15 +23,14 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/common/math"
+	"github.com/Aurorachain-io/go-aoa/crypto/sha3"
+	"github.com/Aurorachain-io/go-aoa/rlp"
 	"io"
 	"io/ioutil"
 	"math/big"
 	"os"
-
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/common/math"
-	"github.com/Aurorachain/go-aoa/rlp"
-	"golang.org/x/crypto/sha3"
 )
 
 var (
@@ -41,7 +40,7 @@ var (
 
 // Keccak256 calculates and returns the Keccak256 hash of the input data.
 func Keccak256(data ...[]byte) []byte {
-	d := sha3.NewLegacyKeccak256()
+	d := sha3.NewKeccak256()
 	for _, b := range data {
 		d.Write(b)
 	}
@@ -51,7 +50,7 @@ func Keccak256(data ...[]byte) []byte {
 // Keccak256Hash calculates and returns the Keccak256 hash of the input data,
 // converting it to an internal Hash data structure.
 func Keccak256Hash(data ...[]byte) (h common.Hash) {
-	d := sha3.NewLegacyKeccak256()
+	d := sha3.NewKeccak256()
 	for _, b := range data {
 		d.Write(b)
 	}
@@ -61,14 +60,14 @@ func Keccak256Hash(data ...[]byte) (h common.Hash) {
 
 // Keccak512 calculates and returns the Keccak512 hash of the input data.
 func Keccak512(data ...[]byte) []byte {
-	d := sha3.NewLegacyKeccak512()
+	d := sha3.NewKeccak512()
 	for _, b := range data {
 		d.Write(b)
 	}
 	return d.Sum(nil)
 }
 
-// Creates an aurora address given the bytes and the nonce
+// Creates an eminer-pro address given the bytes and the nonce
 func CreateAddress(b common.Address, nonce uint64) common.Address {
 	data, _ := rlp.EncodeToBytes([]interface{}{b, nonce})
 	return common.BytesToAddress(Keccak256(data)[12:])

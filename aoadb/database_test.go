@@ -1,25 +1,25 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package aoadb_test
 
 import (
 	"bytes"
 	"fmt"
-	"github.com/Aurorachain/go-aoa/aoadb"
+	"github.com/Aurorachain-io/go-aoa/emdb"
 	"io/ioutil"
 	"os"
 	"strconv"
@@ -27,12 +27,12 @@ import (
 	"testing"
 )
 
-func newTestLDB() (*aoadb.LDBDatabase, func()) {
-	dirname, err := ioutil.TempDir(os.TempDir(), "aoadb_test_")
+func newTestLDB() (*emdb.LDBDatabase, func()) {
+	dirname, err := ioutil.TempDir(os.TempDir(), "dacdb_test_")
 	if err != nil {
 		panic("failed to create test file: " + err.Error())
 	}
-	db, err := aoadb.NewLDBDatabase(dirname, 0, 0)
+	db, err := emdb.NewLDBDatabase(dirname, 0, 0)
 	if err != nil {
 		panic("failed to create test database: " + err.Error())
 	}
@@ -52,11 +52,11 @@ func TestLDB_PutGet(t *testing.T) {
 }
 
 func TestMemoryDB_PutGet(t *testing.T) {
-	db, _ := aoadb.NewMemDatabase()
+	db, _ := emdb.NewMemDatabase()
 	testPutGet(db, t)
 }
 
-func testPutGet(db aoadb.Database, t *testing.T) {
+func testPutGet(db emdb.Database, t *testing.T) {
 	t.Parallel()
 
 	for _, v := range test_values {
@@ -130,11 +130,11 @@ func TestLDB_ParallelPutGet(t *testing.T) {
 }
 
 func TestMemoryDB_ParallelPutGet(t *testing.T) {
-	db, _ := aoadb.NewMemDatabase()
+	db, _ := emdb.NewMemDatabase()
 	testParallelPutGet(db, t)
 }
 
-func testParallelPutGet(db aoadb.Database, t *testing.T) {
+func testParallelPutGet(db emdb.Database, t *testing.T) {
 	const n = 8
 	var pending sync.WaitGroup
 

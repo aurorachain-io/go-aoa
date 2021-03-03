@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package rpc
 
@@ -30,8 +30,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Aurorachain/go-aoa/log"
 	"github.com/davecgh/go-spew/spew"
+	"github.com/Aurorachain-io/go-aoa/log"
 )
 
 func TestClientRequest(t *testing.T) {
@@ -176,7 +176,7 @@ func testClientCancel(transport string, t *testing.T) {
 			// The key thing here is that no call will ever complete successfully.
 			err := client.CallContext(ctx, nil, "service_sleep", 2*maxContextCancelTimeout)
 			if err != nil {
-				log.Info(fmt.Sprint("got expected error:", err))
+				log.Debug(fmt.Sprint("got expected error:", err))
 			} else {
 				t.Errorf("no error for call with %v wait time", timeout)
 			}
@@ -221,7 +221,7 @@ func TestClientSubscribeInvalidArg(t *testing.T) {
 }
 
 func TestClientSubscribe(t *testing.T) {
-	server := newTestServer("aoa", new(NotificationTestService))
+	server := newTestServer("em", new(NotificationTestService))
 	defer server.Stop()
 	client := DialInProc(server)
 	defer client.Close()
@@ -290,7 +290,7 @@ func TestClientSubscribeClose(t *testing.T) {
 		gotHangSubscriptionReq:  make(chan struct{}),
 		unblockHangSubscription: make(chan struct{}),
 	}
-	server := newTestServer("aoa", service)
+	server := newTestServer("em", service)
 	defer server.Stop()
 	client := DialInProc(server)
 	defer client.Close()
@@ -326,7 +326,7 @@ func TestClientSubscribeClose(t *testing.T) {
 // This test checks that Client doesn't lock up when a single subscriber
 // doesn't read subscription events.
 func TestClientNotificationStorm(t *testing.T) {
-	server := newTestServer("aoa", new(NotificationTestService))
+	server := newTestServer("em", new(NotificationTestService))
 	defer server.Stop()
 
 	doTest := func(count int, wantError bool) {
@@ -520,7 +520,7 @@ func httpTestClient(srv *Server, transport string, fl *flakeyListener) (*Client,
 
 func ipcTestClient(srv *Server, fl *flakeyListener) (*Client, net.Listener) {
 	// Listen on a random endpoint.
-	endpoint := fmt.Sprintf("go-Aurora-test-ipc-%d-%d", os.Getpid(), rand.Int63())
+	endpoint := fmt.Sprintf("go-dacchain-test-ipc-%d-%d", os.Getpid(), rand.Int63())
 	if runtime.GOOS == "windows" {
 		endpoint = `\\.\pipe\` + endpoint
 	} else {
@@ -559,7 +559,7 @@ func (l *flakeyListener) Accept() (net.Conn, error) {
 	if err == nil {
 		timeout := time.Duration(rand.Int63n(int64(l.maxKillTimeout)))
 		time.AfterFunc(timeout, func() {
-			log.Info(fmt.Sprintf("killing conn %v after %v", c.LocalAddr(), timeout))
+			log.Debug(fmt.Sprintf("killing conn %v after %v", c.LocalAddr(), timeout))
 			c.Close()
 		})
 	}

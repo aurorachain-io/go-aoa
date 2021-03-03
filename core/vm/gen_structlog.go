@@ -6,9 +6,9 @@ import (
 	"encoding/json"
 	"math/big"
 
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/common/hexutil"
-	"github.com/Aurorachain/go-aoa/common/math"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/common/hexutil"
+	"github.com/Aurorachain-io/go-aoa/common/math"
 )
 
 var _ = (*structLogMarshaling)(nil)

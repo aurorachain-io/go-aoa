@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package state
 
@@ -21,10 +21,10 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/Aurorachain/go-aoa/aoadb"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/crypto"
-	"github.com/Aurorachain/go-aoa/trie"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/crypto"
+	"github.com/Aurorachain-io/go-aoa/emdb"
+	"github.com/Aurorachain-io/go-aoa/trie"
 )
 
 // testAccount is the data associated with an account used by the state tests.
@@ -36,9 +36,9 @@ type testAccount struct {
 }
 
 // makeTestState create a sample test state to test node-wise reconstruction.
-func makeTestState() (Database, *aoadb.MemDatabase, common.Hash, []*testAccount) {
+func makeTestState() (Database, *emdb.MemDatabase, common.Hash, []*testAccount) {
 	// Create an empty state
-	mem, _ := aoadb.NewMemDatabase()
+	mem, _ := emdb.NewMemDatabase()
 	db := NewDatabase(mem)
 	state, _ := New(common.Hash{}, db)
 
@@ -69,7 +69,7 @@ func makeTestState() (Database, *aoadb.MemDatabase, common.Hash, []*testAccount)
 
 // checkStateAccounts cross references a reconstructed state with an expected
 // account array.
-func checkStateAccounts(t *testing.T, db aoadb.Database, root common.Hash, accounts []*testAccount) {
+func checkStateAccounts(t *testing.T, db emdb.Database, root common.Hash, accounts []*testAccount) {
 	// Check root availability and state contents
 	state, err := New(root, NewDatabase(db))
 	if err != nil {
@@ -92,7 +92,7 @@ func checkStateAccounts(t *testing.T, db aoadb.Database, root common.Hash, accou
 }
 
 // checkTrieConsistency checks that all nodes in a (sub-)trie are indeed present.
-func checkTrieConsistency(db aoadb.Database, root common.Hash) error {
+func checkTrieConsistency(db emdb.Database, root common.Hash) error {
 	if v, _ := db.Get(root[:]); v == nil {
 		return nil // Consider a non existent state consistent.
 	}
@@ -107,7 +107,7 @@ func checkTrieConsistency(db aoadb.Database, root common.Hash) error {
 }
 
 // checkStateConsistency checks that all data of a state root is present.
-func checkStateConsistency(db aoadb.Database, root common.Hash) error {
+func checkStateConsistency(db emdb.Database, root common.Hash) error {
 	// Create and iterate a state trie rooted in a sub-node
 	if _, err := db.Get(root.Bytes()); err != nil {
 		return nil // Consider a non existent state consistent.
@@ -125,7 +125,7 @@ func checkStateConsistency(db aoadb.Database, root common.Hash) error {
 // Tests that an empty state is not scheduled for syncing.
 func TestEmptyStateSync(t *testing.T) {
 	empty := common.HexToHash("56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421")
-	db, _ := aoadb.NewMemDatabase()
+	db, _ := emdb.NewMemDatabase()
 	if req := NewStateSync(empty, db).Missing(1); len(req) != 0 {
 		t.Errorf("content requested for empty state: %v", req)
 	}
@@ -141,7 +141,7 @@ func testIterativeStateSync(t *testing.T, batch int) {
 	_, srcMem, srcRoot, srcAccounts := makeTestState()
 
 	// Create a destination state and sync with the scheduler
-	dstDb, _ := aoadb.NewMemDatabase()
+	dstDb, _ := emdb.NewMemDatabase()
 	sched := NewStateSync(srcRoot, dstDb)
 
 	queue := append([]common.Hash{}, sched.Missing(batch)...)
@@ -173,7 +173,7 @@ func TestIterativeDelayedStateSync(t *testing.T) {
 	_, srcMem, srcRoot, srcAccounts := makeTestState()
 
 	// Create a destination state and sync with the scheduler
-	dstDb, _ := aoadb.NewMemDatabase()
+	dstDb, _ := emdb.NewMemDatabase()
 	sched := NewStateSync(srcRoot, dstDb)
 
 	queue := append([]common.Hash{}, sched.Missing(0)...)
@@ -210,7 +210,7 @@ func testIterativeRandomStateSync(t *testing.T, batch int) {
 	_, srcMem, srcRoot, srcAccounts := makeTestState()
 
 	// Create a destination state and sync with the scheduler
-	dstDb, _ := aoadb.NewMemDatabase()
+	dstDb, _ := emdb.NewMemDatabase()
 	sched := NewStateSync(srcRoot, dstDb)
 
 	queue := make(map[common.Hash]struct{})
@@ -250,7 +250,7 @@ func TestIterativeRandomDelayedStateSync(t *testing.T) {
 	_, srcMem, srcRoot, srcAccounts := makeTestState()
 
 	// Create a destination state and sync with the scheduler
-	dstDb, _ := aoadb.NewMemDatabase()
+	dstDb, _ := emdb.NewMemDatabase()
 	sched := NewStateSync(srcRoot, dstDb)
 
 	queue := make(map[common.Hash]struct{})
@@ -297,7 +297,7 @@ func TestIncompleteStateSync(t *testing.T) {
 	checkTrieConsistency(srcMem, srcRoot)
 
 	// Create a destination state and sync with the scheduler
-	dstDb, _ := aoadb.NewMemDatabase()
+	dstDb, _ := emdb.NewMemDatabase()
 	sched := NewStateSync(srcRoot, dstDb)
 
 	added := []common.Hash{}

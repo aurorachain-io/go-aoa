@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package console
 
@@ -20,11 +20,11 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/Aurorachain/go-aoa/aoa"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/core"
-	"github.com/Aurorachain/go-aoa/internal/jsre"
-	"github.com/Aurorachain/go-aoa/node"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/core"
+	"github.com/Aurorachain-io/go-aoa/em"
+	"github.com/Aurorachain-io/go-aoa/internal/jsre"
+	"github.com/Aurorachain-io/go-aoa/node"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -73,7 +73,7 @@ func (p *hookedPrompter) SetWordCompleter(completer WordCompleter) {}
 type tester struct {
 	workspace string
 	stack     *node.Node
-	aurora    *aoa.Aurora
+	dacchain  *em.Dacchain
 	console   *Console
 	input     *hookedPrompter
 	output    *bytes.Buffer
@@ -81,27 +81,27 @@ type tester struct {
 
 // newTester creates a test environment based on which the console can operate.
 // Please ensure you call Close() on the returned tester to avoid leaks.
-func newTester(t *testing.T, confOverride func(*aoa.Config)) *tester {
+func newTester(t *testing.T, confOverride func(*em.Config)) *tester {
 	// Create a temporary storage for the node keys and initialize it
 	workspace, err := ioutil.TempDir("", "console-tester-")
 	if err != nil {
 		t.Fatalf("failed to create temporary keystore: %v", err)
 	}
 
-	// Create a networkless protocol stack and start an Aurora service within
+	// Create a networkless protocol stack and start an eminer-pro service within
 	stack, err := node.New(&node.Config{DataDir: workspace, UseLightweightKDF: true, Name: testInstance})
 	if err != nil {
 		t.Fatalf("failed to create node: %v", err)
 	}
-	ethConf := &aoa.Config{
-		Genesis:    core.DeveloperGenesisBlock(common.Address{}),
-		Aurorabase: common.HexToAddress(testAddress),
+	ethConf := &em.Config{
+		Genesis:      core.DeveloperGenesisBlock(common.Address{}),
+		Dacchainbase: common.HexToAddress(testAddress),
 	}
 	if confOverride != nil {
 		confOverride(ethConf)
 	}
-	if err = stack.Register(func(ctx *node.ServiceContext) (node.Service, error) { return aoa.New(ctx, ethConf) }); err != nil {
-		t.Fatalf("failed to register Aurora protocol: %v", err)
+	if err = stack.Register(func(ctx *node.ServiceContext) (node.Service, error) { return em.New(ctx, ethConf) }); err != nil {
+		t.Fatalf("failed to register eminer-pro protocol: %v", err)
 	}
 	// Start the node and assemble the JavaScript console around it
 	if err = stack.Start(); err != nil {
@@ -126,13 +126,13 @@ func newTester(t *testing.T, confOverride func(*aoa.Config)) *tester {
 		t.Fatalf("failed to create JavaScript console: %v", err)
 	}
 	// Create the final tester and return
-	var Aurora *aoa.Aurora
-	stack.Service(&Aurora)
+	var Dacchain *em.Dacchain
+	stack.Service(&Dacchain)
 
 	return &tester{
 		workspace: workspace,
 		stack:     stack,
-		aurora:    Aurora,
+		dacchain:  Dacchain,
 		console:   console,
 		input:     prompter,
 		output:    printer,

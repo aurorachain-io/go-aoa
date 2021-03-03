@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package p2p
 
@@ -24,11 +24,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Aurorachain/go-aoa/common/mclock"
-	"github.com/Aurorachain/go-aoa/event"
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/p2p/discover"
-	"github.com/Aurorachain/go-aoa/rlp"
+	"github.com/Aurorachain-io/go-aoa/common/mclock"
+	"github.com/Aurorachain-io/go-aoa/event"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/p2p/discover"
+	"github.com/Aurorachain-io/go-aoa/rlp"
 )
 
 const (
@@ -99,6 +99,7 @@ type PeerEvent struct {
 type Peer struct {
 	rw       *conn
 	running  map[string]*protoRW
+	log      log.Logger
 	created  mclock.AbsTime
 	netType  byte
 	wg       sync.WaitGroup
@@ -177,9 +178,14 @@ func newPeer(conn *conn, protocols []Protocol) *Peer {
 		disc:     make(chan DiscReason),
 		protoErr: make(chan error, len(protomap)+1), // protocols + pingLoop
 		closed:   make(chan struct{}),
+		log:      log.New("id", conn.id, "conn", conn.flags),
 		netType:  conn.netType,
 	}
 	return p
+}
+
+func (p *Peer) Log() log.Logger {
+	return p.log
 }
 
 func (p *Peer) run() (remoteRequested bool, err error) {
@@ -343,14 +349,14 @@ func (p *Peer) startProtocols(writeStart <-chan struct{}, writeErr chan<- error)
 		if p.events != nil {
 			rw = newMsgEventer(rw, p.events, p.ID(), proto.Name)
 		}
-		log.Debug(fmt.Sprintf("Starting protocol %s/%d", proto.Name, proto.Version))
+		p.log.Trace(fmt.Sprintf("Starting protocol %s/%d", proto.Name, proto.Version))
 		go func() {
 			err := proto.Run(p, rw, p.netType)
 			if err == nil {
-				log.Debug(fmt.Sprintf("Protocol %s/%d returned", proto.Name, proto.Version))
+				p.log.Trace(fmt.Sprintf("Protocol %s/%d returned", proto.Name, proto.Version))
 				err = errProtocolReturned
 			} else if err != io.EOF {
-				log.Debug(fmt.Sprintf("Protocol %s/%d failed", proto.Name, proto.Version), "err", err)
+				p.log.Trace(fmt.Sprintf("Protocol %s/%d failed", proto.Name, proto.Version), "err", err)
 			}
 			p.protoErr <- err
 			p.wg.Done()

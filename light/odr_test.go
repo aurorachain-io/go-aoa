@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package light
 
@@ -24,19 +24,19 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Aurorachain/go-aoa/aoa"
-	"github.com/Aurorachain/go-aoa/aoadb"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/common/math"
-	"github.com/Aurorachain/go-aoa/consensus/dpos"
-	"github.com/Aurorachain/go-aoa/core"
-	"github.com/Aurorachain/go-aoa/core/state"
-	"github.com/Aurorachain/go-aoa/core/types"
-	"github.com/Aurorachain/go-aoa/core/vm"
-	"github.com/Aurorachain/go-aoa/crypto"
-	"github.com/Aurorachain/go-aoa/params"
-	"github.com/Aurorachain/go-aoa/rlp"
-	"github.com/Aurorachain/go-aoa/trie"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/common/math"
+	"github.com/Aurorachain-io/go-aoa/consensus/dpos"
+	"github.com/Aurorachain-io/go-aoa/core"
+	"github.com/Aurorachain-io/go-aoa/core/state"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/core/vm"
+	"github.com/Aurorachain-io/go-aoa/crypto"
+	"github.com/Aurorachain-io/go-aoa/em"
+	"github.com/Aurorachain-io/go-aoa/emdb"
+	"github.com/Aurorachain-io/go-aoa/params"
+	"github.com/Aurorachain-io/go-aoa/rlp"
+	"github.com/Aurorachain-io/go-aoa/trie"
 )
 
 var (
@@ -55,11 +55,11 @@ var (
 
 type testOdr struct {
 	OdrBackend
-	sdb, ldb aoadb.Database
+	sdb, ldb emdb.Database
 	disable  bool
 }
 
-func (odr *testOdr) Database() aoadb.Database {
+func (odr *testOdr) Database() emdb.Database {
 	return odr.ldb
 }
 
@@ -86,11 +86,11 @@ func (odr *testOdr) Retrieve(ctx context.Context, req OdrRequest) error {
 	return nil
 }
 
-type odrTestFn func(ctx context.Context, db aoadb.Database, bc *core.BlockChain, lc *LightChain, bhash common.Hash) ([]byte, error)
+type odrTestFn func(ctx context.Context, db emdb.Database, bc *core.BlockChain, lc *LightChain, bhash common.Hash) ([]byte, error)
 
 func TestOdrGetBlockLes1(t *testing.T) { testChainOdr(t, 1, odrGetBlock) }
 
-func odrGetBlock(ctx context.Context, db aoadb.Database, bc *core.BlockChain, lc *LightChain, bhash common.Hash) ([]byte, error) {
+func odrGetBlock(ctx context.Context, db emdb.Database, bc *core.BlockChain, lc *LightChain, bhash common.Hash) ([]byte, error) {
 	var block *types.Block
 	if bc != nil {
 		block = bc.GetBlockByHash(bhash)
@@ -106,7 +106,7 @@ func odrGetBlock(ctx context.Context, db aoadb.Database, bc *core.BlockChain, lc
 
 func TestOdrGetReceiptsLes1(t *testing.T) { testChainOdr(t, 1, odrGetReceipts) }
 
-func odrGetReceipts(ctx context.Context, db aoadb.Database, bc *core.BlockChain, lc *LightChain, bhash common.Hash) ([]byte, error) {
+func odrGetReceipts(ctx context.Context, db emdb.Database, bc *core.BlockChain, lc *LightChain, bhash common.Hash) ([]byte, error) {
 	var receipts types.Receipts
 	if bc != nil {
 		receipts = core.GetBlockReceipts(db, bhash, core.GetBlockNumber(db, bhash))
@@ -122,7 +122,7 @@ func odrGetReceipts(ctx context.Context, db aoadb.Database, bc *core.BlockChain,
 
 func TestOdrAccountsLes1(t *testing.T) { testChainOdr(t, 1, odrAccounts) }
 
-func odrAccounts(ctx context.Context, db aoadb.Database, bc *core.BlockChain, lc *LightChain, bhash common.Hash) ([]byte, error) {
+func odrAccounts(ctx context.Context, db emdb.Database, bc *core.BlockChain, lc *LightChain, bhash common.Hash) ([]byte, error) {
 	dummyAddr := common.HexToAddress("1234567812345678123456781234567812345678")
 	acc := []common.Address{testBankAddress, acc1Addr, acc2Addr, dummyAddr}
 
@@ -152,7 +152,7 @@ type callmsg struct {
 
 func (callmsg) CheckNonce() bool { return false }
 
-func odrContractCall(ctx context.Context, db aoadb.Database, bc *core.BlockChain, lc *LightChain, bhash common.Hash) ([]byte, error) {
+func odrContractCall(ctx context.Context, db emdb.Database, bc *core.BlockChain, lc *LightChain, bhash common.Hash) ([]byte, error) {
 	data := common.Hex2Bytes("60CD26850000000000000000000000000000000000000000000000000000000000000000")
 	config := params.TestChainConfig
 
@@ -191,7 +191,7 @@ func odrContractCall(ctx context.Context, db aoadb.Database, bc *core.BlockChain
 }
 
 func testChainGen(i int, block *core.BlockGen) {
-	signer := types.NewAuroraSigner(new(big.Int))
+	signer := types.NewDacchainSigner(new(big.Int))
 	switch i {
 	case 0:
 		// In block 1, the test bank sends account #1 some ether.
@@ -233,14 +233,14 @@ func testChainGen(i int, block *core.BlockGen) {
 
 func testChainOdr(t *testing.T, protocol int, fn odrTestFn) {
 	var (
-		sdb, _  = aoadb.NewMemDatabase()
-		ldb, _  = aoadb.NewMemDatabase()
+		sdb, _  = emdb.NewMemDatabase()
+		ldb, _  = emdb.NewMemDatabase()
 		gspec   = core.Genesis{Alloc: core.GenesisAlloc{testBankAddress: {Balance: testBankFunds}}}
 		genesis = gspec.MustCommit(sdb)
 	)
 	gspec.MustCommit(ldb)
 	// Assemble the test environment
-	blockchain, _ := core.NewBlockChain(sdb, params.TestChainConfig, aoa.CreateAuroraConsensusEngine(), vm.Config{}, nil)
+	blockchain, _ := core.NewBlockChain(sdb, params.TestChainConfig, em.CreateDacchainConsensusEngine(), vm.Config{}, nil)
 	gchain, _ := core.GenerateChain(params.TestChainConfig, genesis, dpos.New(), sdb, 4, testChainGen)
 	if _, err := blockchain.InsertChain(gchain); err != nil {
 		t.Fatal(err)

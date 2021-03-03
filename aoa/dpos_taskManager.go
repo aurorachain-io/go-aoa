@@ -1,39 +1,39 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package aoa
 
 import (
 	"context"
 	"fmt"
-	"github.com/Aurorachain/go-aoa/accounts"
-	"github.com/Aurorachain/go-aoa/aoadb"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/consensus/delegatestate"
-	"github.com/Aurorachain/go-aoa/core"
-	"github.com/Aurorachain/go-aoa/core/types"
-	"github.com/Aurorachain/go-aoa/crypto"
-	"github.com/Aurorachain/go-aoa/crypto/secp256k1"
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/node"
-	"github.com/Aurorachain/go-aoa/rlp"
-	"github.com/Aurorachain/go-aoa/task"
-	"github.com/Aurorachain/go-aoa/util"
+	"github.com/Aurorachain-io/go-aoa/accounts"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/consensus/delegatestate"
+	"github.com/Aurorachain-io/go-aoa/core"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/crypto"
+	"github.com/Aurorachain-io/go-aoa/crypto/secp256k1"
+	"github.com/Aurorachain-io/go-aoa/crypto/sha3"
+	"github.com/Aurorachain-io/go-aoa/aoadb"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/node"
+	"github.com/Aurorachain-io/go-aoa/rlp"
+	"github.com/Aurorachain-io/go-aoa/task"
+	"github.com/Aurorachain-io/go-aoa/util"
 	"github.com/pkg/errors"
-	"golang.org/x/crypto/sha3"
 	"math/big"
 	"strings"
 	"sync"
@@ -47,16 +47,16 @@ const (
 
 type DposTaskManager struct {
 	runningTimeIds          []int64
-	timingWheel             *task.TimingWheel         // time schedule
-	shuffleCallback         func(ctx context.Context) // 洗牌回调方法
-	produceBlockCallback    func(ctx context.Context) // 出块回调方法
+	timingWheel             *task.TimingWheel // time schedule
+	shuffleCallback         func(ctx context.Context)
+	produceBlockCallback    func(ctx context.Context)
 	blockchain              *core.BlockChain
 	accountManager          *accounts.Manager
 	lock                    sync.WaitGroup
 	shuffleNewRoundChan     chan types.ShuffleList
-	currentNewRound         types.ShuffleList       // 保存本轮洗牌的列表
-	currentRoundBlockHeight int64                   // 本轮洗牌对应的块高
-	currentNewRoundHash     common.Hash             // 本轮洗牌列表的Hex
+	currentNewRound         types.ShuffleList
+	currentRoundBlockHeight int64
+	currentNewRoundHash     common.Hash
 	shuffleHashChan         chan *types.ShuffleData // use by produce call back
 	delegateStoredb         aoadb.Database
 	mu                      sync.Mutex
@@ -74,7 +74,7 @@ func NewDposTaskManager(ctx *node.ServiceContext, blockchain *core.BlockChain, a
 	maxElectDelegate = int(genesisConfig.MaxElectDelegate.Int64())
 	blockInterval = int(genesisConfig.BlockInterval.Int64())
 	delegateAmount = (maxElectDelegate / 3) * 2
-	log.Infof("NewDposTaskManager, maxElectDelegate=%s, blockInterval=%s, delegateAmount=%s", maxElectDelegate, blockInterval, delegateAmount)
+	log.Info("NewDposTaskManager", "maxElectDelegate", maxElectDelegate, "blockInterval", blockInterval, "delegateAmount", delegateAmount)
 	taskManager := &DposTaskManager{
 		runningTimeIds:       make([]int64, 0, maxElectDelegate+1),
 		timingWheel:          task.NewTimingWheel(context.Background()),
@@ -87,7 +87,7 @@ func NewDposTaskManager(ctx *node.ServiceContext, blockchain *core.BlockChain, a
 
 	delegateDB, err := createDelegateDB(ctx)
 	if err != nil {
-		log.Errorf("DposTaskManager fail to create database, err=%s", err)
+		log.Error("DposTaskManager fail to create database", "err", err)
 	}
 	taskManager.delegateStoredb = delegateDB
 
@@ -95,33 +95,33 @@ func NewDposTaskManager(ctx *node.ServiceContext, blockchain *core.BlockChain, a
 		currentBlock := taskManager.blockchain.CurrentBlock()
 		dState, err := taskManager.blockchain.DelegateStateAt(currentBlock.DelegateRoot())
 		if err != nil {
-			log.Errorf("shuffle create delegateState fail, err=%s", err)
+			log.Error("shuffle create delegateState fail", "err", err)
 			return
 		}
 		// cal shuffle time of current round
 		shuffleTime := initTaskBeginTime + shuffleCount*int64(maxElectDelegate*blockInterval)
 		exist, candidates := taskManager.checkLocalExistDelegateWhenShuffle(dState)
 		if !exist {
-			log.Infof("DposTaskManager| shuffle end because doesn't exist delegate in this node, blockNumber=%s, len=%s", currentBlock.NumberU64(), len(candidates))
+			log.Info("DposTaskManager| shuffle end because doesn't exist delegate in this node", "blockNumber", currentBlock.NumberU64(), "len", len(candidates))
 			return
 		}
 		topDelegates := candidates
 
 		if len(topDelegates) == 0 {
-			log.Errorf("dposTaskManager|shuffle doesn't have any delegatePeers,blockchain is stopping")
+			log.Error("dposTaskManager|shuffle doesn't have any delegatePeers,blockchain is stopping")
 			return
 		}
 		if len(topDelegates) > maxElectDelegate {
 			topDelegates = topDelegates[:maxElectDelegate]
 		}
 		for _, v := range candidates {
-			log.Infof("shuffle candidate, blockNumber=%d, address=%s, vote=%d, nickName=%s, registerTime=%v", currentBlock.NumberU64(), v.Address, v.Vote, v.Nickname, time.Unix(int64(v.RegisterTime), 0))
+			log.Info("shuffle candidate", "blockNumber", currentBlock.NumberU64(), "address", v.Address, "vote", v.Vote, "nick", v.Nickname, "registerTime", v.RegisterTime)
 		}
 		shuffleNewRound := util.ShuffleNewRound(shuffleTime, maxElectDelegate, topDelegates, int64(blockInterval))
 		shuffleData := types.ShuffleDelegateData{BlockNumber: *currentBlock.Number(), ShuffleTime: *big.NewInt(shuffleTime)}
 		err = taskManager.loadShuffleDataToDB(shuffleData)
 		if err != nil {
-			log.Errorf("DposTaskManager| shuffle data fail load to db. err=%s", err)
+			log.Error("DposTaskManager| shuffle data fail load to db", "err", err)
 			return
 		}
 		taskManager.mu.Lock()
@@ -132,7 +132,7 @@ func NewDposTaskManager(ctx *node.ServiceContext, blockchain *core.BlockChain, a
 		rlpShufflehash := rlpHash(shuffleList)
 		taskManager.currentNewRoundHash = rlpShufflehash
 		taskManager.shuffleHashChan <- &types.ShuffleData{ShuffleHash: &rlpShufflehash, ShuffleBlockNumber: currentBlock.Number()}
-		log.Infof("shuffle, shuffleHash=%s", rlpShufflehash.Hex())
+		log.Info("shuffle", "shuffleHash", rlpShufflehash)
 		taskManager.shuffleNewRoundChan <- shuffleList
 		shuffleCount++
 	}
@@ -150,7 +150,7 @@ func (taskManager *DposTaskManager) update() {
 		case shuffleList := <-taskManager.shuffleNewRoundChan:
 			shuffleNewRound := shuffleList.ShuffleDels
 			for _, v := range shuffleNewRound {
-				log.Infof("dposTaskManager|delegates in latest turn, delegate=%v", v)
+				log.Info("dposTaskManager", "delegate", v)
 			}
 			localDelegates := make([]types.ProduceDelegate, 0)
 			for _, v := range shuffleNewRound {
@@ -189,9 +189,10 @@ func (taskManager *DposTaskManager) initTask() {
 	genesisTime := taskManager.blockchain.Genesis().Header().Time.Int64()
 	nextRoundBeginTime, _ := generateNextRoundBeginTime(genesisTime)
 	initTimeId := taskManager.timingWheel.AddTimer(time.Unix(nextRoundBeginTime, 0), time.Duration(blockInterval*maxElectDelegate*secondDuration), onTimeOut)
-	log.Infof("dposTaskManager, initTask|beginTime=%s, initTimeId=%v", time.Unix(nextRoundBeginTime, 0), initTimeId)
+	log.Info("dposTaskManager", "initTask|beginTime", time.Unix(nextRoundBeginTime, 0), "initTimeId", initTimeId)
 	initTaskBeginTime = nextRoundBeginTime
 	taskManager.runningTimeIds = append(taskManager.runningTimeIds, initTimeId)
+	//log.Info("dposTaskManager","timeIds",taskManager.runningTimeIds)
 }
 
 // shuffle to create new shuffleList when verify fail,only try one times.
@@ -216,7 +217,7 @@ func (taskManager *DposTaskManager) ShuffleWhenVerifyFail(receiveBlockNumber int
 	}
 	shuffleTime := util.CalShuffleTimeByHeaderTime(initTaskBeginTime, receiveBlockTime, int64(blockInterval), int64(maxElectDelegate))
 	shuffleNewRound := util.ShuffleNewRound(shuffleTime, maxElectDelegate, topDelegates, int64(blockInterval))
-	log.Debugf("dposTaskManager|verifyFail|shuffleEnd, shuffleTime=%v, blockNumber=%v, lenCandidates=%v, result=%v.", shuffleTime, shuffleBlock.NumberU64(), len(topDelegates), shuffleNewRound)
+	log.Info("dposTaskManager|verifyFail|shuffleEnd", "shuffleTime", shuffleTime, "blockNumber", shuffleBlock.NumberU64(), "lenCandidates", len(topDelegates), "result", shuffleNewRound)
 	shuffleData := types.ShuffleDelegateData{BlockNumber: *shuffleBlock.Number(), ShuffleTime: *big.NewInt(shuffleTime)}
 	err = taskManager.loadShuffleDataToDB(shuffleData)
 	if err != nil {
@@ -241,7 +242,7 @@ func (taskManager *DposTaskManager) ShuffleWhenVerifyFail(receiveBlockNumber int
 // check local whether exist delegate,return candidates when exist
 func (taskManager *DposTaskManager) checkLocalExistDelegateWhenShuffle(d *delegatestate.DelegateDB) (bool, []types.Candidate) {
 	candidates := d.GetDelegates()
-	log.Debugf("checkLocalExistDelegateWhenShuffle, candidates=%v", candidates)
+	log.Debug("checkLocalExistDelegateWhenShuffle", "candidates", candidates)
 	for _, v := range candidates {
 		if taskManager.checkAddressInAccounts(v.Address) {
 			return true, candidates
@@ -349,7 +350,7 @@ func (taskManager *DposTaskManager) readShuffleDataFromDB() (*types.ShuffleDeleg
 }
 
 func (taskManager *DposTaskManager) loadShuffleDataToDB(sdd types.ShuffleDelegateData) error {
-	log.Info("dposTaskManager loadShuffle data begin", "data", sdd)
+	log.Debug("dposTaskManager loadShuffle data begin", "data", sdd)
 	data, err := rlp.EncodeToBytes(sdd)
 	if err != nil {
 		log.Error("dposTaskManager", "failed to encode data", err)
@@ -358,10 +359,10 @@ func (taskManager *DposTaskManager) loadShuffleDataToDB(sdd types.ShuffleDelegat
 	err = core.WriteDelegateShuffleBlockHeightRLP(taskManager.delegateStoredb, data)
 
 	if err != nil {
-		log.Errorf("dposTaskManager, failed to store shuffle block number, %v", err)
+		log.Error("dposTaskManager", "failed to store shuffle block number", err)
 		return err
 	}
-	log.Infof("dposTaskManager|load delegate data to DB success, blockNumber=%v,shuffleTime=%v", sdd.BlockNumber.Int64(), sdd.ShuffleTime.Int64())
+	log.Info("dposTaskManager|load delegate data to DB success", "blockNumber", sdd.BlockNumber.Int64(), "shuffleTime", sdd.ShuffleTime.Int64())
 	return nil
 }
 
@@ -369,7 +370,7 @@ func (taskManager *DposTaskManager) loadShuffleDataToDB(sdd types.ShuffleDelegat
 func (taskManager *DposTaskManager) initShuffleDataFromLevelDB() error {
 	sdd, err := taskManager.readShuffleDataFromDB()
 	if err != nil {
-		log.Errorf("dposTaskManager, fail to read shuffle data from db, %v", err)
+		log.Error("dposTaskManager", "fail to read shuffle data from db", err)
 		return err
 	}
 	block := taskManager.blockchain.GetBlockByNumber(sdd.BlockNumber.Uint64())
@@ -403,7 +404,6 @@ func (taskManager *DposTaskManager) initShuffleDataFromLevelDB() error {
 
 // cal begin time of next round
 func generateNextRoundBeginTime(genesisBlockTime int64) (int64, error) {
-	// 当前ntp时间 +(一轮的总时间 - (当前ntp时间 - 创世块时间) % 一轮的总时间)
 	currentTime := time.Now().Unix()
 	roundTime := int64(maxElectDelegate * blockInterval)
 	finishTime := (currentTime - genesisBlockTime) % int64(roundTime)
@@ -411,7 +411,7 @@ func generateNextRoundBeginTime(genesisBlockTime int64) (int64, error) {
 }
 
 func rlpHash(x interface{}) (h common.Hash) {
-	hw := sha3.NewLegacyKeccak256()
+	hw := sha3.NewKeccak256()
 	rlp.Encode(hw, x)
 	hw.Sum(h[:0])
 	return h

@@ -75,7 +75,7 @@ var (
 // this template generates the license comment.
 // its input is an info structure.
 var licenseT = template.Must(template.New("").Parse(`
-// Copyright {{.Year}} The go-aurora Authors
+// Copyright {{.Year}} The go-aoa Authors
 // This file is part of {{.Whole false}}.
 //
 // {{.Whole true}} is free software: you can redistribute it and/or modify
@@ -114,12 +114,12 @@ func (i info) ShortLicense() string {
 
 func (i info) Whole(startOfSentence bool) string {
 	if i.gpl() {
-		return "go-aurora"
+		return "go-eminer"
 	}
 	if startOfSentence {
-		return "The go-aurora library"
+		return "The the go-aoa library"
 	}
-	return "the go-aurora library"
+	return "the go-aoa library"
 }
 
 func (i info) gpl() bool {

@@ -1,29 +1,28 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package aoa
 
 import (
 	"errors"
 	"fmt"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/core/types"
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/p2p"
-	"github.com/Aurorachain/go-aoa/rlp"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/p2p"
+	"github.com/Aurorachain-io/go-aoa/rlp"
 	"gopkg.in/fatih/set.v0"
 	"math/big"
 	"sync"
@@ -45,10 +44,10 @@ const (
 	handshakeTimeout   = 5 * time.Second
 )
 
-// PeerInfo represents a short summary of the Aurora sub-protocol metadata known
+// PeerInfo represents a short summary of the eminer-pro sub-protocol metadata known
 // about a connected peer.
 type PeerInfo struct {
-	Version    int      `json:"version"` // Aurora protocol version negotiated
+	Version    int      `json:"version"` // eminer-pro protocol version negotiated
 	difficulty *big.Int // `json:"difficulty"` // Total difficulty of the peer's blockchain
 	Head       string   `json:"head"` // SHA3 hash of the peer's best owned block
 }
@@ -271,45 +270,45 @@ func (p *peer) SendReceiptsRLP(receipts []rlp.RawValue) error {
 // RequestOneHeader is a wrapper around the header query functions to fetch a
 // single header. It is used solely by the fetcher.
 func (p *peer) RequestOneHeader(hash common.Hash) error {
-	log.Info("Fetching single header", "hash", hash)
+	p.Log().Debug("Fetching single header", "hash", hash)
 	return p2p.Send(p.rw, GetBlockHeadersMsg, &getBlockHeadersData{Origin: hashOrNumber{Hash: hash}, Amount: uint64(1), Skip: uint64(0), Reverse: false})
 }
 
 // RequestHeadersByHash fetches a batch of blocks' headers corresponding to the
 // specified header query, based on the hash of an origin block.
 func (p *peer) RequestHeadersByHash(origin common.Hash, amount int, skip int, reverse bool) error {
-	log.Infof("Fetching batch of headers, count=%v, fromhash=%v, origin=%v, skip=%v, reverse=%v", amount, origin.String(), skip, reverse)
+	p.Log().Debug("Fetching batch of headers", "count", amount, "fromhash", origin, "skip", skip, "reverse", reverse)
 	return p2p.Send(p.rw, GetBlockHeadersMsg, &getBlockHeadersData{Origin: hashOrNumber{Hash: origin}, Amount: uint64(amount), Skip: uint64(skip), Reverse: reverse})
 }
 
 // RequestHeadersByNumber fetches a batch of blocks' headers corresponding to the
 // specified header query, based on the number of an origin block.
 func (p *peer) RequestHeadersByNumber(origin uint64, amount int, skip int, reverse bool) error {
-	log.Infof("Fetching batch of headers, count=%v, fromNum=%v, skip=%v, reverse=%v", amount, origin, skip, reverse)
+	p.Log().Debug("Fetching batch of headers", "count", amount, "fromnum", origin, "skip", skip, "reverse", reverse)
 	return p2p.Send(p.rw, GetBlockHeadersMsg, &getBlockHeadersData{Origin: hashOrNumber{Number: origin}, Amount: uint64(amount), Skip: uint64(skip), Reverse: reverse})
 }
 
 // RequestBodies fetches a batch of blocks' bodies corresponding to the hashes
 // specified.
 func (p *peer) RequestBodies(hashes []common.Hash) error {
-	log.Infof("Fetching batch of block bodies, count=%v", len(hashes))
+	p.Log().Debug("Fetching batch of block bodies", "count", len(hashes))
 	return p2p.Send(p.rw, GetBlockBodiesMsg, hashes)
 }
 
 // RequestNodeData fetches a batch of arbitrary data from a node's known state
 // data, corresponding to the specified hashes.
 func (p *peer) RequestNodeData(hashes []common.Hash) error {
-	log.Infof("Fetching batch of state data, count=%v", len(hashes))
+	p.Log().Debug("Fetching batch of state data", "count", len(hashes))
 	return p2p.Send(p.rw, GetNodeDataMsg, hashes)
 }
 
 // RequestReceipts fetches a batch of transaction receipts from a remote node.
 func (p *peer) RequestReceipts(hashes []common.Hash) error {
-	log.Infof("Fetching batch of receipts, count=%v", len(hashes))
+	p.Log().Debug("Fetching batch of receipts", "count", len(hashes))
 	return p2p.Send(p.rw, GetReceiptsMsg, hashes)
 }
 
-// Handshake executes the aoa protocol handshake, negotiating version number,
+// Handshake executes the em protocol handshake, negotiating version number,
 // network IDs, difficulties, head and genesis blocks.
 func (p *peer) Handshake(network uint64, td *big.Int, head common.Hash, genesis common.Hash) error {
 	// Send out own handshake in a new thread
@@ -374,12 +373,12 @@ func (p *peer) readStatus(network uint64, status *statusData, genesis common.Has
 // String implements fmt.Stringer.
 func (p *peer) String() string {
 	return fmt.Sprintf("Peer %s [%s]", p.id,
-		fmt.Sprintf("aoa/%2d", p.version),
+		fmt.Sprintf("em/%2d", p.version),
 	)
 }
 
 // peerSet represents the collection of active peers currently participating in
-// the Aurora sub-protocol.
+// the eminer-pro sub-protocol.
 type peerSet struct {
 	peers  map[string]*peer
 	lock   sync.RWMutex

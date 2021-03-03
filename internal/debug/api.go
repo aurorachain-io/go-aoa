@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 // Package debug interfaces Go runtime debugging facilities.
 // This package is mostly glue code making these facilities available
@@ -33,7 +33,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Aurorachain/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/log"
 )
 
 // Handler is the global debugging handler.
@@ -50,23 +50,23 @@ type HandlerT struct {
 	traceFile string
 }
 
-//// Verbosity sets the log verbosity ceiling. The verbosity of individual packages
-//// and source files can be raised using Vmodule.
-//func (*HandlerT) Verbosity(level int) {
-//	glogger.Verbosity(log.Lvl(level))
-//}
-//
-//// Vmodule sets the log verbosity pattern. See package log for details on the
-//// pattern syntax.
-//func (*HandlerT) Vmodule(pattern string) error {
-//	return glogger.Vmodule(pattern)
-//}
-//
-//// BacktraceAt sets the log backtrace location. See package log for details on
-//// the pattern syntax.
-//func (*HandlerT) BacktraceAt(location string) error {
-//	return glogger.BacktraceAt(location)
-//}
+// Verbosity sets the log verbosity ceiling. The verbosity of individual packages
+// and source files can be raised using Vmodule.
+func (*HandlerT) Verbosity(level int) {
+	glogger.Verbosity(log.Lvl(level))
+}
+
+// Vmodule sets the log verbosity pattern. See package log for details on the
+// pattern syntax.
+func (*HandlerT) Vmodule(pattern string) error {
+	return glogger.Vmodule(pattern)
+}
+
+// BacktraceAt sets the log backtrace location. See package log for details on
+// the pattern syntax.
+func (*HandlerT) BacktraceAt(location string) error {
+	return glogger.BacktraceAt(location)
+}
 
 // MemStats returns detailed runtime memory statistics.
 func (*HandlerT) MemStats() *runtime.MemStats {
@@ -110,7 +110,7 @@ func (h *HandlerT) StartCPUProfile(file string) error {
 	}
 	h.cpuW = f
 	h.cpuFile = file
-	log.Infof("CPU profiling started, dump=%v", h.cpuFile)
+	log.Info("CPU profiling started", "dump", h.cpuFile)
 	return nil
 }
 
@@ -122,7 +122,7 @@ func (h *HandlerT) StopCPUProfile() error {
 	if h.cpuW == nil {
 		return errors.New("CPU profiling not in progress")
 	}
-	log.Infof("Done writing CPU profile, dump=%v", h.cpuFile)
+	log.Info("Done writing CPU profile", "dump", h.cpuFile)
 	h.cpuW.Close()
 	h.cpuW = nil
 	h.cpuFile = ""
@@ -189,7 +189,7 @@ func (*HandlerT) SetGCPercent(v int) int {
 
 func writeProfile(name, file string) error {
 	p := pprof.Lookup(name)
-	log.Infof("Writing profile records, count=%v, type=%v, dump=%v", p.Count(), name, file)
+	log.Info("Writing profile records", "count", p.Count(), "type", name, "dump", file)
 	f, err := os.Create(expandHome(file))
 	if err != nil {
 		return err

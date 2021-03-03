@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package types
 
@@ -22,10 +22,10 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/crypto"
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/params"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/crypto"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/params"
 )
 
 var (
@@ -103,7 +103,7 @@ type AuroraSigner struct {
 
 func NewAuroraSigner(chainId *big.Int) AuroraSigner {
 	if chainId == nil {
-		panic(errors.New("new Aurora Signer can not without chainId"))
+		panic(errors.New("new aurora Signer can not without chainId"))
 	}
 	return AuroraSigner{
 		chainId:    chainId,
@@ -112,19 +112,19 @@ func NewAuroraSigner(chainId *big.Int) AuroraSigner {
 }
 
 func (s AuroraSigner) Equal(s2 Signer) bool {
-	auroraSigner, ok := s2.(AuroraSigner)
-	return ok && auroraSigner.chainId.Cmp(s.chainId) == 0
+	AuroraSigner, ok := s2.(AuroraSigner)
+	return ok && AuroraSigner.chainId.Cmp(s.chainId) == 0
 }
 
 func (s AuroraSigner) Sender(tx *Transaction) (common.Address, error) {
-	log.Debugf("AuroraSigner|Sender, tx.ChainId=%v, s.chainId=%v", tx.ChainId(), s.chainId)
+	log.Debug("AuroraSigner|Sender", "tx.ChainId", tx.ChainId(), "s.chainId", s.chainId)
 	if tx.ChainId().Cmp(s.chainId) != 0 {
 		return common.Address{}, ErrInvalidChainId
 	}
 	// V = 27 + chainId * 2 + 8
 	V := new(big.Int).Sub(tx.data.V, s.chainIdMul)
 	V.Sub(V, big8)
-	log.Debugf("AuroraSigner|Sender, V=%v", V.Int64())
+	log.Debug("AuroraSigner|Sender", "V", V.Int64())
 	return recoverPlain(s.Hash(tx), tx.data.R, tx.data.S, V, true)
 }
 
@@ -156,7 +156,7 @@ func (s AuroraSigner) SignatureValues(tx *Transaction, sig []byte) (R, S, V *big
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	log.Infof("AuroraSigner|SignatureValues, chainId=%v, V=%v", s.chainId.Int64(), V.Int64())
+	log.Debug("AuroraSigner|SignatureValues", "chainId", s.chainId.Int64(), "V", V.Int64())
 	if s.chainId.Sign() != 0 {
 		V = big.NewInt(int64(sig[64] + 27 + 8))
 		V.Add(V, s.chainIdMul)
@@ -178,7 +178,7 @@ func signatureValues(tx *Transaction, sig []byte) (r, s, v *big.Int, err error) 
 
 func recoverPlain(sighash common.Hash, R, S, Vb *big.Int, homestead bool) (common.Address, error) {
 	if Vb.BitLen() > 8 {
-		log.Errorf("recoverPlain1| err, vb=%v", Vb.BitLen())
+		log.Error("recoverPlain1| err", "vb", Vb.BitLen())
 		return common.Address{}, ErrInvalidSig
 	}
 	V := byte(Vb.Uint64() - 27)

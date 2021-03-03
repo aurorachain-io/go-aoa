@@ -1,26 +1,26 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package core
 
 import (
-	"github.com/Aurorachain/go-aoa/core/state"
-	"github.com/Aurorachain/go-aoa/core/types"
-	"github.com/Aurorachain/go-aoa/core/vm"
-	"github.com/Aurorachain/go-aoa/consensus/delegatestate"
+	"github.com/Aurorachain-io/go-aoa/consensus/delegatestate"
+	"github.com/Aurorachain-io/go-aoa/core/state"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/core/vm"
 )
 
 // Validator is an interface which defines the standard for block validation. It
@@ -33,7 +33,7 @@ type Validator interface {
 
 	// ValidateState validates the given statedb and optionally the receipts and
 	// gas used.
-	ValidateState(block, parent *types.Block, state *state.StateDB, receipts types.Receipts, usedGas uint64,db *delegatestate.DelegateDB) error
+	ValidateState(block, parent *types.Block, state *state.StateDB, receipts types.Receipts, usedGas uint64, db *delegatestate.DelegateDB) error
 }
 
 // Processor is an interface for processing blocks using a given initial state.
@@ -43,5 +43,5 @@ type Validator interface {
 // of gas used in the process and return an error if any of the internal rules
 // failed.
 type Processor interface {
-	Process(block *types.Block, statedb *state.StateDB, cfg vm.Config,db *delegatestate.DelegateDB) (types.Receipts, []*types.Log, uint64, error)
+	Process(block *types.Block, statedb *state.StateDB, cfg vm.Config, db *delegatestate.DelegateDB) (types.Receipts, []*types.Log, uint64, error)
 }

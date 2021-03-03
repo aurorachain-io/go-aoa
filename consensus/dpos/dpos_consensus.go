@@ -1,35 +1,36 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package dpos
 
 import (
 	"errors"
 	"fmt"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/consensus"
-	"github.com/Aurorachain/go-aoa/consensus/delegatestate"
-	"github.com/Aurorachain/go-aoa/core/state"
-	"github.com/Aurorachain/go-aoa/core/types"
-	"github.com/Aurorachain/go-aoa/crypto"
-	"github.com/Aurorachain/go-aoa/crypto/secp256k1"
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/params"
-	"github.com/Aurorachain/go-aoa/rlp"
-	"github.com/Aurorachain/go-aoa/rpc"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/consensus"
+	"github.com/Aurorachain-io/go-aoa/consensus/delegatestate"
+	"github.com/Aurorachain-io/go-aoa/core/state"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/crypto"
+	"github.com/Aurorachain-io/go-aoa/crypto/secp256k1"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/params"
+	"github.com/Aurorachain-io/go-aoa/rlp"
+	"github.com/Aurorachain-io/go-aoa/rpc"
+	"math"
 	"math/big"
 	"runtime"
 	"strings"
@@ -47,28 +48,34 @@ type Config struct {
 	CacheDir string
 }
 
-type AuroraDpos struct {
+type DacchainDpos struct {
 	// config Config
 	lock sync.Mutex
 }
 
-func New() *AuroraDpos {
-	return &AuroraDpos{}
+func New() *DacchainDpos {
+	return &DacchainDpos{}
 }
 
-// AccumulateRewards credits the coinbase of the given block with the produce reward
-func accumulateRewards(config *params.ChainConfig, state *state.StateDB, header *types.Header) {
-	blockReward := config.FrontierBlockReward
-	if config.IsByzantium(header.Number) {
-		blockReward = config.ByzantiumBlockReward
-	}
-
-	reward := new(big.Int).Set(blockReward)
+// annul with 15% profit,AccumulateRewards credits the coinbase of the given block with the produce reward
+func accumulateEmRewards(config *params.ChainConfig, state *state.StateDB, header *types.Header) {
+	// begin with 100 reward
+	var (
+		// begin with 500 reward
+		basicReward        float64 = 500
+		annulProfit                = params.AnnulProfit
+		annulBlockAmount           = params.AnnulBlockAmount
+		blockReward                = big.NewInt(1e+18)
+	)
+	yearNumber := header.Number.Int64() / annulBlockAmount.Int64()
+	currentReward := (int64)(basicReward * math.Pow(annulProfit, float64(yearNumber)))
+	precisionReward := new(big.Int).Mul(big.NewInt(currentReward), blockReward)
+	reward := new(big.Int).Set(precisionReward)
 	state.AddBalance(header.Coinbase, reward)
 }
 
 // check parent exist and cache header
-func (d *AuroraDpos) Prepare(chain consensus.ChainReader, header *types.Header) error {
+func (d *DacchainDpos) Prepare(chain consensus.ChainReader, header *types.Header) error {
 	parent := chain.GetHeader(header.ParentHash, header.Number.Uint64()-1)
 	if parent == nil {
 		return consensus.ErrUnknownAncestor
@@ -76,8 +83,8 @@ func (d *AuroraDpos) Prepare(chain consensus.ChainReader, header *types.Header) 
 	return nil
 }
 
-func (d *AuroraDpos) Finalize(chain consensus.ChainReader, header *types.Header, state *state.StateDB, dState *delegatestate.DelegateDB, txs []*types.Transaction, receipts []*types.Receipt) (*types.Block, error) {
-	accumulateRewards(chain.Config(), state, header)
+func (d *DacchainDpos) Finalize(chain consensus.ChainReader, header *types.Header, state *state.StateDB, dState *delegatestate.DelegateDB, txs []*types.Transaction, receipts []*types.Receipt) (*types.Block, error) {
+	accumulateEmRewards(chain.Config(), state, header)
 
 	header.Root = state.IntermediateRoot(false)
 	header.DelegateRoot = dState.IntermediateRoot(false)
@@ -87,7 +94,7 @@ func (d *AuroraDpos) Finalize(chain consensus.ChainReader, header *types.Header,
 
 }
 
-func (d *AuroraDpos) VerifyHeaderAndSign(chain consensus.ChainReader, block *types.Block, currentShuffleList *types.ShuffleList, blockInterval int) error {
+func (d *DacchainDpos) VerifyHeaderAndSign(chain consensus.ChainReader, block *types.Block, currentShuffleList *types.ShuffleList, blockInterval int) error {
 	header := block.Header()
 	parent := chain.GetHeader(header.ParentHash, header.Number.Uint64()-1)
 	blockTime := header.Time.Uint64()
@@ -112,7 +119,7 @@ func (d *AuroraDpos) VerifyHeaderAndSign(chain consensus.ChainReader, block *typ
 	}
 	var delegate types.ShuffleDel
 	var exist bool
-	log.Infof("VerifyHeaderAndSign, coinbase=%v, shuffleDelsLen=%v", coinbase, len(currentShuffleList.ShuffleDels))
+	log.Debug("VerifyHeaderAndSign", "coinbase", coinbase, "shuffleDelsLen", len(currentShuffleList.ShuffleDels))
 	for _, v := range currentShuffleList.ShuffleDels {
 		if strings.EqualFold(v.Address, coinbase) {
 			delegate = v
@@ -123,13 +130,13 @@ func (d *AuroraDpos) VerifyHeaderAndSign(chain consensus.ChainReader, block *typ
 	if !exist {
 		return errors.New(fmt.Sprintf("coinbase:%s not exist in current shuffle list", coinbase))
 	}
-	log.Infof("VerifyHeaderAndSign, delegate=%v", delegate)
+	log.Debug("VerifyHeaderAndSign", "delegate", delegate)
 	if blockTime != delegate.WorkTime {
 		errMsg := fmt.Sprintf("timeStamp not same blockNumber:%d coinbase:%s blockTime:%d shuffleTime:%d", block.NumberU64(), coinbase, blockTime, delegate.WorkTime)
 		return errors.New(errMsg)
 	}
 	pubkey, err := secp256k1.RecoverPubkey(block.Hash().Bytes()[:32], coinbaseSign)
-	log.Infof("VerifyHeaderAndSign, coinbaseSign=%v, blockHash=%v, pubkey=%v, err=%v ", coinbaseSign, block.Hash().Hex(), pubkey, err)
+	log.Debug("VerifyHeaderAndSign", "coinbaseSign", coinbaseSign, "blockHash", block.Hash().Bytes(), "pubkey", pubkey, "err", err)
 	//if err != nil {
 	//	return err
 	//}
@@ -141,7 +148,7 @@ func (d *AuroraDpos) VerifyHeaderAndSign(chain consensus.ChainReader, block *typ
 	return nil
 }
 
-func (d *AuroraDpos) VerifySignatureSend(blockHash common.Hash, confirmSign []byte, currentShuffleList *types.ShuffleList) error {
+func (d *DacchainDpos) VerifySignatureSend(blockHash common.Hash, confirmSign []byte, currentShuffleList *types.ShuffleList) error {
 	confirmPubkey, err := secp256k1.RecoverPubkey(blockHash.Bytes()[:32], confirmSign)
 	if err != nil {
 		return err
@@ -156,7 +163,7 @@ func (d *AuroraDpos) VerifySignatureSend(blockHash common.Hash, confirmSign []by
 	return errors.New(errMsg)
 }
 
-func (d *AuroraDpos) VerifyBlockGenerate(chain consensus.ChainReader, block *types.Block, currentShuffleList *types.ShuffleList, blockInterval int) error {
+func (d *DacchainDpos) VerifyBlockGenerate(chain consensus.ChainReader, block *types.Block, currentShuffleList *types.ShuffleList, blockInterval int) error {
 	genesisConfig := chain.Config()
 	maxElectDelegate := genesisConfig.MaxElectDelegate.Int64()
 	delegateAmount := (maxElectDelegate / 3) * 2
@@ -191,7 +198,7 @@ func (d *AuroraDpos) VerifyBlockGenerate(chain consensus.ChainReader, block *typ
 // VerifyHeaders is similar to VerifyHeader, but verifies a batch of headers
 // concurrently. The method returns a quit channel to abort the operations and
 // a results channel to retrieve the async verifications.
-func (d *AuroraDpos) VerifyHeaders(chain consensus.ChainReader, headers []*types.Header) (chan<- struct{}, <-chan error) {
+func (d *DacchainDpos) VerifyHeaders(chain consensus.ChainReader, headers []*types.Header) (chan<- struct{}, <-chan error) {
 
 	// // If we're running a full engine faking, accept any input as valid
 	if len(headers) == 0 {
@@ -251,7 +258,7 @@ func (d *AuroraDpos) VerifyHeaders(chain consensus.ChainReader, headers []*types
 	return abort, errorsOut
 }
 
-func (d *AuroraDpos) verifyHeaders(chain consensus.ChainReader, headers []*types.Header, index int) error {
+func (d *DacchainDpos) verifyHeaders(chain consensus.ChainReader, headers []*types.Header, index int) error {
 	var parent *types.Header
 	if index == 0 {
 		parent = chain.GetHeader(headers[0].ParentHash, headers[0].Number.Uint64()-1)
@@ -269,8 +276,8 @@ func (d *AuroraDpos) verifyHeaders(chain consensus.ChainReader, headers []*types
 	return d.verifyHeader(chain, headers[index], parent)
 }
 
-// verifyHeader checks whether a header conforms to the consensus rules of the AOA engine
-func (d *AuroraDpos) verifyHeader(chain consensus.ChainReader, header, parent *types.Header) error {
+// verifyHeader checks whether a header conforms to the consensus rules of the DAC engine
+func (d *DacchainDpos) verifyHeader(chain consensus.ChainReader, header, parent *types.Header) error {
 	// Ensure that the header's extra-data section is of a reasonable size
 	if uint64(len(header.Extra)) > params.MaximumExtraDataSize {
 		return fmt.Errorf("extra-data too long: %d > %d", len(header.Extra), params.MaximumExtraDataSize)
@@ -311,7 +318,7 @@ func (d *AuroraDpos) verifyHeader(chain consensus.ChainReader, header, parent *t
 	return nil
 }
 
-func (d *AuroraDpos) VerifyHeader(chain consensus.ChainReader, header *types.Header) error {
+func (d *DacchainDpos) VerifyHeader(chain consensus.ChainReader, header *types.Header) error {
 	// Short circuit if the header is known, or it's parent not
 	number := header.Number.Uint64()
 	if chain.GetHeader(header.Hash(), number) != nil {
@@ -330,11 +337,11 @@ func (d *AuroraDpos) VerifyHeader(chain consensus.ChainReader, header *types.Hea
 
 // APIs implements consensus.Engine, returning the user facing RPC APIs. Currently
 // that is empty.
-func (d *AuroraDpos) APIs(chain consensus.ChainReader) []rpc.API {
+func (d *DacchainDpos) APIs(chain consensus.ChainReader) []rpc.API {
 	return nil
 }
 
-func (d *AuroraDpos) Author(header *types.Header) (common.Address, error) {
+func (d *DacchainDpos) Author(header *types.Header) (common.Address, error) {
 	return header.Coinbase, nil
 }
 

@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package core
 
@@ -22,11 +22,11 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
-	"github.com/Aurorachain/go-aoa/aoadb"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/core/types"
-	"github.com/Aurorachain/go-aoa/event"
-	"github.com/Aurorachain/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/aoadb"
+	"github.com/Aurorachain-io/go-aoa/event"
+	"github.com/Aurorachain-io/go-aoa/log"
 )
 
 // ChainIndexerBackend defines the methods needed to process chain segments in
@@ -64,8 +64,8 @@ type ChainIndexerChain interface {
 // after an entire section has been finished or in case of rollbacks that might
 // affect already finished sections.
 type ChainIndexer struct {
-	chainDb  aoadb.Database      // Chain database to index the data from
-	indexDb  aoadb.Database      // Prefixed table-view of the db to write index metadata into
+	chainDb  aoadb.Database       // Chain database to index the data from
+	indexDb  aoadb.Database       // Prefixed table-view of the db to write index metadata into
 	backend  ChainIndexerBackend // Background processor generating the index data content
 	children []*ChainIndexer     // Child indexers to cascade chain updates to
 
@@ -82,6 +82,7 @@ type ChainIndexer struct {
 
 	throttling time.Duration // Disk throttling to prevent a heavy upgrade from hogging resources
 
+	log  log.Logger
 	lock sync.RWMutex
 }
 
@@ -98,6 +99,7 @@ func NewChainIndexer(chainDb, indexDb aoadb.Database, backend ChainIndexerBacken
 		sectionSize: section,
 		confirmsReq: confirm,
 		throttling:  throttling,
+		log:         log.New("type", kind),
 	}
 	// Initialize database dependent fields and start the updater
 	c.loadValidSections()
@@ -276,7 +278,7 @@ func (c *ChainIndexer) updateLoop() {
 				if time.Since(updated) > 8*time.Second {
 					if c.knownSections > c.storedSections+1 {
 						updating = true
-						log.Infof("Upgrading chain index, percentage=%v", c.storedSections*100/c.knownSections)
+						c.log.Info("Upgrading chain index", "percentage", c.storedSections*100/c.knownSections)
 					}
 					updated = time.Now()
 				}
@@ -290,7 +292,7 @@ func (c *ChainIndexer) updateLoop() {
 				c.lock.Unlock()
 				newHead, err := c.processSection(section, oldHead)
 				if err != nil {
-					log.Error("Section processing failed", "error", err)
+					c.log.Error("Section processing failed", "error", err)
 				}
 				c.lock.Lock()
 
@@ -300,17 +302,17 @@ func (c *ChainIndexer) updateLoop() {
 					c.setValidSections(section + 1)
 					if c.storedSections == c.knownSections && updating {
 						updating = false
-						log.Info("Finished upgrading chain index")
+						c.log.Info("Finished upgrading chain index")
 					}
 
 					c.cascadedHead = c.storedSections*c.sectionSize - 1
 					for _, child := range c.children {
-						log.Debugf("Cascading chain index update, head=%v", c.cascadedHead)
+						c.log.Trace("Cascading chain index update", "head", c.cascadedHead)
 						child.newHead(c.cascadedHead, false)
 					}
 				} else {
 					// If processing failed, don't retry until further notification
-					log.Infof("Chain index processing failed, section=%v, err=%v", section, err)
+					c.log.Debug("Chain index processing failed", "section", section, "err", err)
 					c.knownSections = c.storedSections
 				}
 			}
@@ -333,7 +335,7 @@ func (c *ChainIndexer) updateLoop() {
 // held while processing, the continuity can be broken by a long reorg, in which
 // case the function returns with an error.
 func (c *ChainIndexer) processSection(section uint64, lastHead common.Hash) (common.Hash, error) {
-	log.Debugf("Processing new chain section, section=%v", section)
+	c.log.Trace("Processing new chain section", "section", section)
 
 	// Reset and partial processing
 
@@ -357,7 +359,7 @@ func (c *ChainIndexer) processSection(section uint64, lastHead common.Hash) (com
 		lastHead = header.Hash()
 	}
 	if err := c.backend.Commit(); err != nil {
-		log.Error("Section commit failed", "error", err)
+		c.log.Error("Section commit failed", "error", err)
 		return common.Hash{}, err
 	}
 	return lastHead, nil

@@ -1,18 +1,18 @@
-// Copyright 2016 The aurora Authors
-// This file is part of the aurora library.
+// Copyright 2016 The aurora-pro Authors
+// This file is part of the aurora-pro library.
 //
 // The go-aurora library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The aurora library is distributed in the hope that it will be useful,
+// The aurora-pro library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-dacchain library. If not, see <http://www.gnu.org/licenses/>.
 
 // +build none
 
@@ -43,7 +43,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/Aurorachain/go-aoa/internal/build"
 	"go/parser"
 	"go/token"
 	"io/ioutil"
@@ -53,16 +52,17 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"github.com/Aurorachain-io/go-aoa/internal/build"
 )
 
 var (
-	// Files that end up in the aoa*.zip archive.
+	// Files that end up in the em*.zip archive.
 	gethArchiveFiles = []string{
 		"COPYING",
 		executablePath("aoa"),
 	}
 
-	// Files that end up in the aoa-alltools*.zip archive.
+	// Files that end up in the em-alltools*.zip archive.
 	allToolsArchiveFiles = []string{
 		"COPYING",
 		executablePath("abigen"),
@@ -74,29 +74,28 @@ var (
 		executablePath("swarm"),
 		executablePath("wnode"),
 	}
-
 /*
 	// A debian package is created for all executables listed here.
 	debExecutables = []debExecutable{
 		{
 			Name:        "abigen",
-			Description: "Source code generator to convert aurora contract definitions into easy to use, compile-time type-safe Go packages.",
+			Description: "Source code generator to convert aurora-pro contract definitions into easy to use, compile-time type-safe Go packages.",
 		},
 		{
 			Name:        "bootnode",
-			Description: "aurora bootnode.",
+			Description: "aurora-pro bootnode.",
 		},
 		{
 			Name:        "evm",
-			Description: "Developer utility version of the EVM (Aurora Virtual Machine) that is capable of running bytecode snippets within a configurable environment and execution mode.",
+			Description: "Developer utility version of the EVM (aurora-pro Virtual Machine) that is capable of running bytecode snippets within a configurable environment and execution mode.",
 		},
 		{
 			Name:        "aoa",
-			Description: "aurora CLI client.",
+			Description: "aurora-pro CLI client.",
 		},
 		{
 			Name:        "puppeth",
-			Description: "aurora private network manager.",
+			Description: "aurora-pro private network manager.",
 		},
 		{
 			Name:        "rlpdump",
@@ -104,19 +103,19 @@ var (
 		},
 		{
 			Name:        "swarm",
-			Description: "aurora Swarm daemon and tools",
+			Description: "aurora-pro Swarm daemon and tools",
 		},
 		{
 			Name:        "wnode",
-			Description: "aurora Whisper diagnostic tool",
+			Description: "aurora-pro Whisper diagnostic tool",
 		},
 	}
 */
-// Distros for which packages are created.
-// Note: vivid is unsupported because there is no golang-1.6 package for it.
-// Note: wily is unsupported because it was officially deprecated on lanchpad.
-// Note: yakkety is unsupported because it was officially deprecated on lanchpad.
-//debDistros = []string{"trusty", "xenial", "zesty", "artful"}
+	// Distros for which packages are created.
+	// Note: vivid is unsupported because there is no golang-1.6 package for it.
+	// Note: wily is unsupported because it was officially deprecated on lanchpad.
+	// Note: yakkety is unsupported because it was officially deprecated on lanchpad.
+	//debDistros = []string{"trusty", "xenial", "zesty", "artful"}
 )
 
 var GOBIN, _ = filepath.Abs(filepath.Join("build", "bin"))
@@ -140,24 +139,24 @@ func main() {
 	switch os.Args[1] {
 	case "install":
 		doInstall(os.Args[2:])
-		//	case "test":
-		//		doTest(os.Args[2:])
-		//	case "lint":
-		//		doLint(os.Args[2:])
-		//	case "archive":
-		//		doArchive(os.Args[2:])
-		//	case "debsrc":
-		//		doDebianSource(os.Args[2:])
-		//	case "nsis":
-		//		doWindowsInstaller(os.Args[2:])
-		//	case "aar":
-		//		doAndroidArchive(os.Args[2:])
-		//	case "xcode":
-		//		doXCodeFramework(os.Args[2:])
+//	case "test":
+//		doTest(os.Args[2:])
+//	case "lint":
+//		doLint(os.Args[2:])
+//	case "archive":
+//		doArchive(os.Args[2:])
+//	case "debsrc":
+//		doDebianSource(os.Args[2:])
+//	case "nsis":
+//		doWindowsInstaller(os.Args[2:])
+//	case "aar":
+//		doAndroidArchive(os.Args[2:])
+//	case "xcode":
+//		doXCodeFramework(os.Args[2:])
 	case "xgo":
 		doXgo(os.Args[2:])
-		//	case "purge":
-		//		doPurge(os.Args[2:])
+//	case "purge":
+//		doPurge(os.Args[2:])
 	default:
 		log.Fatal("unknown command ", os.Args[1])
 	}
@@ -166,7 +165,7 @@ func main() {
 // Compiling
 
 func doInstall(cmdline []string) {
-	//	p := fmt.Println
+//	p := fmt.Println
 	var (
 		arch = flag.String("arch", "", "Architecture to cross build for")
 		cc   = flag.String("cc", "", "C compiler to cross build with")
@@ -182,7 +181,7 @@ func doInstall(cmdline []string) {
 
 		if minor < 7 {
 			log.Println("You have Go version", runtime.Version())
-			log.Println("aurora requires at least Go version 1.7 and cannot")
+			log.Println("Aurorachain requires at least Go version 1.7 and cannot")
 			log.Println("be compiled with an earlier version. Please upgrade your Go installation.")
 			os.Exit(1)
 		}
@@ -373,8 +372,8 @@ func doArchive(cmdline []string) {
 	var (
 		env      = build.Env()
 		base     = archiveBasename(*arch, env)
-		geth     = "aoa-" + base + ext
-		alltools = "aoa-alltools-" + base + ext
+		geth     = "em-" + base + ext
+		alltools = "em-alltools-" + base + ext
 	)
 	maybeSkipArchive(env)
 	if err := build.WriteArchive(geth, gethArchiveFiles); err != nil {
@@ -466,7 +465,7 @@ func maybeSkipArchive(env build.Environment) {
 func doDebianSource(cmdline []string) {
 	var (
 		signer  = flag.String("signer", "", `Signing key name, also used as package author`)
-		upload  = flag.String("upload", "", `Where to upload the source package (usually "ppa:aurora/aurora")`)
+		upload  = flag.String("upload", "", `Where to upload the source package (usually "ppa:aurora-pro/aurora-pro")`)
 		workdir = flag.String("workdir", "", `Output directory for packages (uses temp dir if unset)`)
 		now     = time.Now()
 	)
@@ -510,7 +509,7 @@ func makeWorkdir(wdflag string) string {
 	if wdflag != "" {
 		err = os.MkdirAll(wdflag, 0744)
 	} else {
-		wdflag, err = ioutil.TempDir("", "aoa-build-")
+		wdflag, err = ioutil.TempDir("", "em-build-")
 	}
 	if err != nil {
 		log.Fatal(err)
@@ -528,7 +527,7 @@ func isUnstableBuild(env build.Environment) bool {
 type debMetadata struct {
 	Env build.Environment
 
-	// go-aurora version being built. Note that this
+	// go-dacchain version being built. Note that this
 	// is not the debian package version. The package version
 	// is constructed by VersionString.
 	Version string
@@ -545,7 +544,7 @@ type debExecutable struct {
 func newDebMetadata(distro, author string, env build.Environment, t time.Time) debMetadata {
 	if author == "" {
 		// No signing key, use default author.
-		author = "aurora Builds <qkz@aurorachain.org>"
+		author = "aurora-pro Builds <qkz@Dacchainchain.org>"
 	}
 	return debMetadata{
 		Env:         env,
@@ -561,9 +560,9 @@ func newDebMetadata(distro, author string, env build.Environment, t time.Time) d
 // on all executable packages.
 func (meta debMetadata) Name() string {
 	if isUnstableBuild(meta.Env) {
-		return "aurora-unstable"
+		return "aurora-pro-unstable"
 	}
-	return "aurora"
+	return "aurora-pro"
 }
 
 // VersionString returns the debian version of the packages.
@@ -607,7 +606,7 @@ func (meta debMetadata) ExeConflicts(exe debExecutable) string {
 		// be preferred and the conflicting files should be handled via
 		// alternates. We might do this eventually but using a conflict is
 		// easier now.
-		return "aurora, " + exe.Name
+		return "aurora-pro, " + exe.Name
 	}
 	return ""
 }
@@ -667,7 +666,7 @@ func doWindowsInstaller(cmdline []string) {
 			continue
 		}
 		allTools = append(allTools, filepath.Base(file))
-		if filepath.Base(file) == "aoa.exe" {
+		if filepath.Base(file) == "em.exe" {
 			gethTool = file
 		} else {
 			devTools = append(devTools, file)
@@ -675,13 +674,13 @@ func doWindowsInstaller(cmdline []string) {
 	}
 
 	// Render NSIS scripts: Installer NSIS contains two installer sections,
-	// first section contains the aoa binary, second section holds the dev tools.
+	// first section contains the em binary, second section holds the dev tools.
 	templateData := map[string]interface{}{
 		"License":  "COPYING",
 		"Geth":     gethTool,
 		"DevTools": devTools,
 	}
-	build.Render("build/nsis.aoa.nsi", filepath.Join(*workdir, "aoa.nsi"), 0644, nil)
+	build.Render("build/nsis.em.nsi", filepath.Join(*workdir, "em.nsi"), 0644, nil)
 	build.Render("build/nsis.install.nsh", filepath.Join(*workdir, "install.nsh"), 0644, templateData)
 	build.Render("build/nsis.uninstall.nsh", filepath.Join(*workdir, "uninstall.nsh"), 0644, allTools)
 	build.Render("build/nsis.pathupdate.nsh", filepath.Join(*workdir, "PathUpdate.nsh"), 0644, nil)
@@ -696,14 +695,14 @@ func doWindowsInstaller(cmdline []string) {
 	if env.Commit != "" {
 		version[2] += "-" + env.Commit[:8]
 	}
-	installer, _ := filepath.Abs("aoa-" + archiveBasename(*arch, env) + ".exe")
+	installer, _ := filepath.Abs("em-" + archiveBasename(*arch, env) + ".exe")
 	build.MustRunCommand("makensis.exe",
 		"/DOUTPUTFILE="+installer,
 		"/DMAJORVERSION="+version[0],
 		"/DMINORVERSION="+version[1],
 		"/DBUILDVERSION="+version[2],
 		"/DARCH="+*arch,
-		filepath.Join(*workdir, "aoa.nsi"),
+		filepath.Join(*workdir, "em.nsi"),
 	)
 
 	// Sign and publish installer.
@@ -734,11 +733,11 @@ func doAndroidArchive(cmdline []string) {
 	// Build the Android archive and Maven resources
 	build.MustRun(goTool("get", "golang.org/x/mobile/cmd/gomobile"))
 	build.MustRun(gomobileTool("init", "--ndk", os.Getenv("ANDROID_NDK")))
-	build.MustRun(gomobileTool("bind", "--target", "android", "--javapkg", "io.aurorachain", "-v", "github.com/Aurorachain/go-aoa/mobile"))
+	build.MustRun(gomobileTool("bind", "--target", "android", "--javapkg", "io.Dacchainchain", "-v", "github.com/Aurorachain-io/go-aoa/mobile"))
 
 	if *local {
 		// If we're building locally, copy bundle to build dir and skip Maven
-		os.Rename("aoa.aar", filepath.Join(GOBIN, "aoa.aar"))
+		os.Rename("em.aar", filepath.Join(GOBIN, "em.aar"))
 		return
 	}
 	meta := newMavenMetadata(env)
@@ -748,8 +747,8 @@ func doAndroidArchive(cmdline []string) {
 	maybeSkipArchive(env)
 
 	// Sign and upload the archive to Azure
-	archive := "aoa-" + archiveBasename("android", env) + ".aar"
-	os.Rename("aoa.aar", archive)
+	archive := "em-" + archiveBasename("android", env) + ".aar"
+	os.Rename("em.aar", archive)
 
 	if err := archiveUpload(archive, *upload, *signer); err != nil {
 		log.Fatal(err)
@@ -834,7 +833,7 @@ func newMavenMetadata(env build.Environment) mavenMetadata {
 	}
 	return mavenMetadata{
 		Version:      version,
-		Package:      "aoa-" + version,
+		Package:      "em-" + version,
 		Develop:      isUnstableBuild(env),
 		Contributors: contribs,
 	}
@@ -855,7 +854,7 @@ func doXCodeFramework(cmdline []string) {
 	// Build the iOS XCode framework
 	build.MustRun(goTool("get", "golang.org/x/mobile/cmd/gomobile"))
 	build.MustRun(gomobileTool("init"))
-	bind := gomobileTool("bind", "--target", "ios", "--tags", "ios", "-v", "github.com/Aurorachain/go-aoa/mobile")
+	bind := gomobileTool("bind", "--target", "ios", "--tags", "ios", "-v", "github.com/Aurorachain-io/go-aoa/mobile")
 
 	if *local {
 		// If we're building locally, use the build folder and stop afterwards
@@ -863,7 +862,7 @@ func doXCodeFramework(cmdline []string) {
 		build.MustRun(bind)
 		return
 	}
-	archive := "aoa-" + archiveBasename("ios", env)
+	archive := "em-" + archiveBasename("ios", env)
 	if err := os.Mkdir(archive, os.ModePerm); err != nil {
 		log.Fatal(err)
 	}
@@ -935,7 +934,7 @@ func newPodMetadata(env build.Environment, archive string) podMetadata {
 // Cross compilation
 
 func doXgo(cmdline []string) {
-	//	p := fmt.Println
+//	p := fmt.Println
 	var (
 		alltools = flag.Bool("alltools", false, `Flag whether we're building all known tools, or only on in particular`)
 	)

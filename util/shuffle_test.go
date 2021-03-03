@@ -1,23 +1,24 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package util
 
 import (
-	"github.com/Aurorachain/go-aoa/core/types"
+	"fmt"
+	"github.com/Aurorachain-io/go-aoa/core/types"
 	"testing"
 	"time"
 )
@@ -25,43 +26,37 @@ import (
 func TestShuffle(t *testing.T) {
 	var delegateNumber = 4
 	for i := 1; i < 100; i++ {
-		t.Log(Shuffle(int64(i), delegateNumber))
+		fmt.Println(Shuffle(int64(i), delegateNumber))
 		if i%delegateNumber == 0 {
-			t.Log("=======================")
+			fmt.Println("=======================")
 		}
 	}
 }
 
 func TestShuffleNewRound(t *testing.T) {
 	var initDelegate = []types.Candidate{
-		{Address: "AOA70715a2a44255ddce2779d60ba95968b770fc751", Nickname: "node1"},
-		{Address: "AOAfd48a829397a16b3bc6c319a06a47cd2ce6b3f52", Nickname: "node2"},
-		{Address: "AOA612d018cc7db4137366a08075333a634c07e31b3", Nickname: "node3"},
-		{Address: "AOA612d018cc7db4137366a08075333a634c07e31b4", Nickname: "node4"},
-		{Address: "AOA612d018cc7db4137366a08075333a634c07e31b5", Nickname: "node5"},
-		{Address: "AOA612d018cc7db4137366a08075333a634c07e31b6", Nickname: "node6"},
-		{Address: "AOA612d018cc7db4137366a08075333a634c07e31b7", Nickname: "node7"},
-		{Address: "AOA612d018cc7db4137366a08075333a634c07e31b8", Nickname: "node8"},
-		{Address: "AOA612d018cc7db4137366a08075333a634c07e31b9", Nickname: "node9"},
-		{Address: "AOA612d018cc7db4137366a08075333a634c07e31b0", Nickname: "node10"},
+		{Address: "EM70715a2a44255ddce2779d60ba95968b770fc751", Nickname: "node1"},
+		{Address: "EMfd48a829397a16b3bc6c319a06a47cd2ce6b3f52", Nickname: "node2"},
+		{Address: "EM612d018cc7db4137366a08075333a634c07e31b3", Nickname: "node3"},
+		{Address: "EM612d018cc7db4137366a08075333a634c07e31b4", Nickname: "node4"},
+		{Address: "EM612d018cc7db4137366a08075333a634c07e31b5", Nickname: "node5"},
+		{Address: "EM612d018cc7db4137366a08075333a634c07e31b6", Nickname: "node6"},
+		{Address: "EM612d018cc7db4137366a08075333a634c07e31b7", Nickname: "node7"},
+		{Address: "EM612d018cc7db4137366a08075333a634c07e31b8", Nickname: "node8"},
+		{Address: "EM612d018cc7db4137366a08075333a634c07e31b9", Nickname: "node9"},
+		{Address: "EM612d018cc7db4137366a08075333a634c07e31b0", Nickname: "node10"},
 	}
 
 	lastBlockTime := time.Now().Unix()
 	newRound := ShuffleNewRound(lastBlockTime, 10, initDelegate)
 	for _, v := range newRound {
-		t.Log(v)
+		fmt.Println(v)
 	}
 
 }
 
 func TestCalShuffleTimeByHeaderTime(t *testing.T) {
-	// blockTime 传的是新手收到的校验不过的块头时间，洗牌所用的数据是该块的parentBlockNumber
-	shuffleTime := CalShuffleTimeByHeaderTime(3032, 2048)
-	t.Log(shuffleTime)
-}
+	shuffleTime := CalShuffleTimeByHeaderTime(3030, 2040)
+	fmt.Println(shuffleTime)
 
-func TestCalShuffleTimeByHeaderTime2(t *testing.T) {
-	// blockTime 传的是新手收到的校验不过的块头时间，洗牌所用的数据是该块的parentBlockNumber
-	shuffleTime := CalShuffleTimeByHeaderTime(3032, 2048)
-	t.Log(shuffleTime)
 }

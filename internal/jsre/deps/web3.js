@@ -926,7 +926,7 @@ var SolidityParam = require('./param');
  * @returns {SolidityParam}
  */
 var formatInputInt = function (value) {
-    BigNumber.config(c.AOA_BIGNUMBER_ROUNDING_MODE);
+    BigNumber.config(c.aoa_BIGNUMBER_ROUNDING_MODE);
     var result = utils.padLeft(utils.toTwosComplement(value).toString(16), 64);
     return new SolidityParam(result);
 };
@@ -1758,21 +1758,21 @@ if (typeof XMLHttpRequest === 'undefined') {
  */
 
 
-/// required to define AOA_BIGNUMBER_ROUNDING_MODE
+/// required to define aoa_BIGNUMBER_ROUNDING_MODE
 var BigNumber = require('bignumber.js');
 
-var AOA_UNITS = [
+var aoa_UNITS = [
     'wei',
     'kwei',
     'Mwei',
     'Gwei',
     'szabo',
     'finney',
-    'femtoaoa',
-    'picoaoa',
-    'nanoaoa',
-    'microaoa',
-    'milliaoa',
+    'femtoem',
+    'picoem',
+    'nanoem',
+    'microem',
+    'milliem',
     'nano',
     'micro',
     'milli',
@@ -1792,11 +1792,11 @@ var AOA_UNITS = [
 ];
 
 module.exports = {
-    AOA_PADDING: 32,
-    AOA_SIGNATURE_LENGTH: 4,
-    AOA_UNITS: AOA_UNITS,
-    AOA_BIGNUMBER_ROUNDING_MODE: { ROUNDING_MODE: BigNumber.ROUND_DOWN },
-    AOA_POLLING_TIMEOUT: 1000/2,
+    aoa_PADDING: 32,
+    aoa_SIGNATURE_LENGTH: 4,
+    aoa_UNITS: aoa_UNITS,
+    aoa_BIGNUMBER_ROUNDING_MODE: { ROUNDING_MODE: BigNumber.ROUND_DOWN },
+    aoa_POLLING_TIMEOUT: 1000/2,
     defaultBlock: 'latest',
     defaultAccount: undefined
 };
@@ -1889,21 +1889,21 @@ var unitMap = {
     'kwei':         '1000',
     'Kwei':         '1000',
     'babbage':      '1000',
-    'femtoaoa':   '1000',
+    'femtoem':   '1000',
     'mwei':         '1000000',
     'Mwei':         '1000000',
     'lovelace':     '1000000',
-    'picoaoa':    '1000000',
+    'picoem':    '1000000',
     'gwei':         '1000000000',
     'Gwei':         '1000000000',
     'shannon':      '1000000000',
-    'nanoaoa':    '1000000000',
+    'nanoem':    '1000000000',
     'nano':         '1000000000',
     'szabo':        '1000000000000',
-    'microaoa':   '1000000000000',
+    'microem':   '1000000000000',
     'micro':        '1000000000000',
     'finney':       '1000000000000000',
-    'milliaoa':    '1000000000000000',
+    'milliem':    '1000000000000000',
     'milli':         '1000000000000000',
     'aoa':        '1000000000000000000',
     'kaoa':       '1000000000000000000000',
@@ -2124,7 +2124,7 @@ var toHex = function (val) {
  * Returns value of unit in Wei
  *
  * @method getValueOfUnit
- * @param {String} unit the unit to convert to, default aoa
+ * @param {String} unit the unit to convert to, default em
  * @returns {BigNumber} value of the unit (in Wei)
  * @throws error if the unit is not correct:w
  */
@@ -2142,11 +2142,11 @@ var getValueOfUnit = function (unit) {
  *
  * Possible units are:
  *   SI Short   SI Full        Effigy       Other
- * - kwei       femtoaoa     babbage
- * - mwei       picoaoa      lovelace
- * - gwei       nanoaoa      shannon      nano
- * - --         microaoa     szabo        micro
- * - --         milliaoa     finney       milli
+ * - kwei       femtoem     babbage
+ * - mwei       picoem      lovelace
+ * - gwei       nanoem      shannon      nano
+ * - --         microem     szabo        micro
+ * - --         milliem     finney       milli
  * - aoa      --             --
  * - kaoa                    --           grand
  * - maoa
@@ -2155,7 +2155,7 @@ var getValueOfUnit = function (unit) {
  *
  * @method fromWei
  * @param {Number|String} number can be a number, number string or a HEX of a decimal
- * @param {String} unit the unit to convert to, default aoa
+ * @param {String} unit the unit to convert to, default em
  * @return {String|Object} When given a BigNumber object it returns one as well, otherwise a number
 */
 var fromWei = function(number, unit) {
@@ -2169,12 +2169,12 @@ var fromWei = function(number, unit) {
  *
  * Possible units are:
  *   SI Short   SI Full        Effigy       Other
- * - kwei       femtoaoa     babbage
- * - mwei       picoaoa      lovelace
- * - gwei       nanoaoa      shannon      nano
- * - --         microaoa     szabo        micro
- * - --         microaoa     szabo        micro
- * - --         milliaoa     finney       milli
+ * - kwei       femtoem     babbage
+ * - mwei       picoem      lovelace
+ * - gwei       nanoem      shannon      nano
+ * - --         microem     szabo        micro
+ * - --         microem     szabo        micro
+ * - --         milliem     finney       milli
  * - aoa      --             --
  * - kaoa                    --           grand
  * - maoa
@@ -2183,7 +2183,7 @@ var fromWei = function(number, unit) {
  *
  * @method toWei
  * @param {Number|String|BigNumber} number can be a number, number string or a HEX of a decimal
- * @param {String} unit the unit to convert from, default aoa
+ * @param {String} unit the unit to convert from, default em
  * @return {String|Object} When given a BigNumber object it returns one as well, otherwise a number
 */
 var toWei = function(number, unit) {
@@ -2214,8 +2214,8 @@ var toBigNumber = function(number) {
         return new BigNumber(number.replace('aoa',''), 16);
     }
 
-    if (isString(number) && number.indexOf('AOA') === 0) {
-        return new BigNumber(number.replace('AOA',''), 16);
+    if (isString(number) && number.indexOf('aoa') === 0) {
+        return new BigNumber(number.replace('aoa',''), 16);
     }
     
     return new BigNumber(number.toString(10), 10);
@@ -2244,7 +2244,7 @@ var toTwosComplement = function (number) {
  * @return {Boolean}
 */
 var isStrictAddress = function (address) {
-    return /^AOA[0-9a-f]{40}$/i.test(address) || /^0x[0-9a-f]{40}$/i.test(address);
+    return /^aoa[0-9a-f]{40}$/i.test(address) || /^0x[0-9a-f]{40}$/i.test(address);
 };
 
 /**
@@ -2255,10 +2255,10 @@ var isStrictAddress = function (address) {
  * @return {Boolean}
 */
 var isAddress = function (address) {
-    if (!/^(AOA)?[0-9a-f]{40}$/i.test(address) || !/^(0x)?[0-9a-f]{40}$/i.test(address)) {
+    if (!/^(aoa)?[0-9a-f]{40}$/i.test(address) || !/^(0x)?[0-9a-f]{40}$/i.test(address)) {
         // check if it has the basic requirements of an address
         return false;
-    } else if (/^(AOA)?[0-9a-fA-F]{40}$/.test(address) || /^(0x)?[0-9a-fA-F]{40}$/.test(address)) {
+    } else if (/^(aoa)?[0-9a-fA-F]{40}$/.test(address) || /^(0x)?[0-9a-fA-F]{40}$/.test(address)) {
         // If it's all small caps or all all caps, return true
         return true;
     } else {
@@ -2276,7 +2276,7 @@ var isAddress = function (address) {
 */
 var isChecksumAddress = function (address) {
     // Check each case
-    address = address.replace('AOA','');
+    address = address.replace('aoa','');
     address = address.replace('0x','');
     var addressHash = sha3(address.toLowerCase());
 
@@ -2301,9 +2301,9 @@ var isChecksumAddress = function (address) {
 var toChecksumAddress = function (address) {
     if (typeof address === 'undefined') return '';
 
-    address = address.toLowerCase().replace('AOA','');
+    address = address.toLowerCase().replace('aoa','');
     var addressHash = sha3(address);
-    var checksumAddress = 'AOA';
+    var checksumAddress = 'aoa';
 
     for (var i = 0; i < address.length; i++ ) {
         // If ith character is 9 to f then make it uppercase
@@ -2329,10 +2329,10 @@ var toAddress = function (address) {
     }
 
     if (/^[0-9a-f]{40}$/.test(address)) {
-        return 'AOA' + address;
+        return 'aoa' + address;
     }
 
-    return 'AOA' + padLeft(toHex(address).substr(3), 40);
+    return 'aoa' + padLeft(toHex(address).substr(3), 40);
 };
 
 /**
@@ -2419,7 +2419,7 @@ var isJson = function (str) {
 };
 
 /**
- * Returns true if given string is a valid Aurora block header bloom.
+ * Returns true if given string is a valid aurorachain block header bloom.
  *
  * @method isBloom
  * @param {String} hex encoded bloom filter
@@ -2518,7 +2518,7 @@ module.exports={
 
 var RequestManager = require('./web3/requestmanager');
 var Iban = require('./web3/iban');
-var Aoa = require('./web3/methods/aoa');
+var aoa = require('./web3/methods/aoa');
 var DB = require('./web3/methods/db');
 var Shh = require('./web3/methods/shh');
 var Net = require('./web3/methods/net');
@@ -2540,7 +2540,7 @@ var BigNumber = require('bignumber.js');
 function Web3 (provider) {
     this._requestManager = new RequestManager(provider);
     this.currentProvider = provider;
-    this.aoa = new Aoa(this);
+    this.aoa = new aoa(this);
     this.db = new DB(this);
     this.shh = new Shh(this);
     this.net = new Net(this);
@@ -2619,7 +2619,7 @@ var properties = function () {
             inputFormatter: utils.toDecimal
         }),
         new Property({
-            name: 'version.aoaeum',
+            name: 'version.emeum',
             getter: 'aoa_protocolVersion',
             inputFormatter: utils.toDecimal
         }),
@@ -2721,7 +2721,7 @@ AllSolidityEvents.prototype.execute = function (options, callback) {
 
     var o = this.encode(options);
     var formatter = this.decode.bind(this);
-    return new Filter(o, 'aoa', this._requestManager, watches.aoa(), formatter, callback);
+    return new Filter(o, 'aoa', this._requestManager, watches.em(), formatter, callback);
 };
 
 AllSolidityEvents.prototype.attachToContract = function (contract) {
@@ -2965,8 +2965,8 @@ var checkForContractAddress = function(contract, callback){
  * @method ContractFactory
  * @param {Array} abi
  */
-var ContractFactory = function (aoa, abi) {
-    this.aoa = aoa;
+var ContractFactory = function (em, abi) {
+    this.em = em;
     this.abi = abi;
 
     /**
@@ -2982,7 +2982,7 @@ var ContractFactory = function (aoa, abi) {
     this.new = function () {
         /*jshint maxcomplexity: 7 */
 
-        var contract = new Contract(this.aoa, this.abi);
+        var contract = new Contract(this.em, this.abi);
 
         // parse arguments
         var options = {}; // required!
@@ -3014,7 +3014,7 @@ var ContractFactory = function (aoa, abi) {
         if (callback) {
 
             // wait for the contract address adn check if the code was deployed
-            this.aoa.sendTransaction(options, function (err, hash) {
+            this.em.sendTransaction(options, function (err, hash) {
                 if (err) {
                     callback(err);
                 } else {
@@ -3028,7 +3028,7 @@ var ContractFactory = function (aoa, abi) {
                 }
             });
         } else {
-            var hash = this.aoa.sendTransaction(options);
+            var hash = this.em.sendTransaction(options);
             // add the transaction hash
             contract.transactionHash = hash;
             checkForContractAddress(contract);
@@ -3063,7 +3063,7 @@ var ContractFactory = function (aoa, abi) {
  * otherwise calls callback function (err, contract)
  */
 ContractFactory.prototype.at = function (address, callback) {
-    var contract = new Contract(this.aoa, this.abi, address);
+    var contract = new Contract(this.em, this.abi, address);
 
     // this functions are not part of prototype,
     // because we dont want to spoil the interface
@@ -3346,7 +3346,7 @@ SolidityEvent.prototype.execute = function (indexed, options, callback) {
 
     var o = this.encode(indexed, options);
     var formatter = this.decode.bind(this);
-    return new Filter(o, 'aoa', this._requestManager, watches.aoa(), formatter, callback);
+    return new Filter(o, 'aoa', this._requestManager, watches.em(), formatter, callback);
 };
 
 /**
@@ -3777,7 +3777,7 @@ var inputTransactionFormatter = function (options){
             if (!/[0-9a-zA-Z]{32}$/i.test(subAddress)) {
                 throw new Error('invalid subAddress: ' + subAddress);
             }
-            options.subAddress = start.replace("0x", "AOA") + options.to.substring(options.to.length - 32, options.to.length).toLowerCase();
+            options.subAddress = start.replace("0x", "aoa") + options.to.substring(options.to.length - 32, options.to.length).toLowerCase();
         }
         options.to = inputAddressFormatter(checkAddress);
     }
@@ -4527,7 +4527,7 @@ var Iban = function (iban) {
 };
 
 /**
- * This method should be used to create iban object from aurora address
+ * This method should be used to create iban object from emchain address
  *
  * @method fromAddress
  * @param {String} address
@@ -5252,7 +5252,7 @@ var getBlockTransactionCountCall = function (args) {
     return (utils.isString(args[0]) && args[0].indexOf('0x') === 0) ? 'aoa_getBlockTransactionCountByHash' : 'aoa_getBlockTransactionCountByNumber';
 };
 
-function Aoa(web3) {
+function aoa(web3) {
     this._requestManager = web3._requestManager;
 
     var self = this;
@@ -5268,7 +5268,7 @@ function Aoa(web3) {
     });
 }
 
-Object.defineProperty(Aoa.prototype, 'defaultBlock', {
+Object.defineProperty(aoa.prototype, 'defaultBlock', {
     get: function () {
         return c.defaultBlock;
     },
@@ -5278,7 +5278,7 @@ Object.defineProperty(Aoa.prototype, 'defaultBlock', {
     }
 });
 
-Object.defineProperty(Aoa.prototype, 'defaultAccount', {
+Object.defineProperty(aoa.prototype, 'defaultAccount', {
     get: function () {
         return c.defaultAccount;
     },
@@ -5498,20 +5498,20 @@ var properties = function () {
     ];
 };
 
-Aoa.prototype.contract = function (abi) {
+aoa.prototype.contract = function (abi) {
     var factory = new Contract(this, abi);
     return factory;
 };
 
-Aoa.prototype.filter = function (options, callback, filterCreationErrorCallback) {
-    return new Filter(options, 'aoa', this._requestManager, watches.aoa(), formatters.outputLogFormatter, callback, filterCreationErrorCallback);
+aoa.prototype.filter = function (options, callback, filterCreationErrorCallback) {
+    return new Filter(options, 'aoa', this._requestManager, watches.em(), formatters.outputLogFormatter, callback, filterCreationErrorCallback);
 };
 
-Aoa.prototype.isSyncing = function (callback) {
+aoa.prototype.isSyncing = function (callback) {
     return new IsSyncing(this._requestManager, callback);
 };
 
-module.exports = Aoa;
+module.exports = aoa;
 
 },{"../../utils/config":18,"../../utils/utils":20,"../contract":25,"../filter":29,"../formatters":30,"../iban":33,"../method":36,"../namereg":44,"../property":45,"../syncing":48,"../transfer":49,"./watches":43}],39:[function(require,module,exports){
 /*
@@ -5530,7 +5530,7 @@ module.exports = Aoa;
     You should have received a copy of the GNU Lesser General Public License
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** @file aoa.js
+/** @file em.js
  * @authors:
  *   Marek Kotewicz <marek@ethdev.com>
  * @date 2015
@@ -5550,7 +5550,7 @@ var Net = function (web3) {
     });
 };
 
-/// @returns an array of objects describing web3.aoa api properties
+/// @returns an array of objects describing web3.em api properties
 var properties = function () {
     return [
         new Property({
@@ -5585,7 +5585,7 @@ module.exports = Net;
     along with web3.js.  If not, see <http://www.gnu.org/licenses/>.
 */
 /**
- * @file aoa.js
+ * @file em.js
  * @author Marek Kotewicz <marek@ethdev.com>
  * @author Fabian Vogelsteller <fabian@ethdev.com>
  * @date 2015
@@ -5711,7 +5711,7 @@ module.exports = Personal;
 */
 /** @file shh.js
  * @authors:
- *   Fabian Vogelsteller <fabian@aurora.org>
+ *   Fabian Vogelsteller <fabian@emchain.org>
  *   Marek Kotewicz <marek@ethcore.io>
  * @date 2017
  */
@@ -5860,7 +5860,7 @@ module.exports = Shh;
  * @author Alex Beregszaszi <alex@rtfs.hu>
  * @date 2016
  *
- * Reference: https://github.com/Aurorachain/go-aoa/blob/swarm/internal/web3ext/web3ext.go#L33
+ * Reference: https://github.com/emchain/go-emchain/blob/swarm/internal/web3ext/web3ext.go#L33
  */
 
 "use strict";
@@ -6315,7 +6315,7 @@ var errors = require('./errors');
 
 /**
  * It's responsible for passing messages to providers
- * It's also responsible for polling the aurora node for incoming messages
+ * It's also responsible for polling the emchain node for incoming messages
  * Default poll timeout is 1 second
  * Singleton
  */
@@ -6479,7 +6479,7 @@ RequestManager.prototype.reset = function (keepIsSyncing) {
  */
 RequestManager.prototype.poll = function () {
     /*jshint maxcomplexity: 6 */
-    this.timeout = setTimeout(this.poll.bind(this), c.AOA_POLLING_TIMEOUT);
+    this.timeout = setTimeout(this.poll.bind(this), c.aoa_POLLING_TIMEOUT);
 
     if (Object.keys(this.polls).length === 0) {
         return;
@@ -6689,23 +6689,23 @@ var exchangeAbi = require('../contracts/SmartExchange.json');
  * @param {Value} value to be tranfered
  * @param {Function} callback, callback
  */
-var transfer = function (aoa, from, to, value, callback) {
+var transfer = function (em, from, to, value, callback) {
     var iban = new Iban(to);
     if (!iban.isValid()) {
         throw new Error('invalid iban address');
     }
 
     if (iban.isDirect()) {
-        return transferToAddress(aoa, from, iban.address(), value, callback);
+        return transferToAddress(em, from, iban.address(), value, callback);
     }
 
     if (!callback) {
-        var address = aoa.icapNamereg().addr(iban.institution());
-        return deposit(aoa, from, address, value, iban.client());
+        var address = em.icapNamereg().addr(iban.institution());
+        return deposit(em, from, address, value, iban.client());
     }
 
-    aoa.icapNamereg().addr(iban.institution(), function (err, address) {
-        return deposit(aoa, from, address, value, iban.client(), callback);
+    em.icapNamereg().addr(iban.institution(), function (err, address) {
+        return deposit(em, from, address, value, iban.client(), callback);
     });
 
 };
@@ -6719,8 +6719,8 @@ var transfer = function (aoa, from, to, value, callback) {
  * @param {Value} value to be tranfered
  * @param {Function} callback, callback
  */
-var transferToAddress = function (aoa, from, to, value, callback) {
-    return aoa.sendTransaction({
+var transferToAddress = function (em, from, to, value, callback) {
+    return em.sendTransaction({
         address: to,
         from: from,
         value: value
@@ -6737,9 +6737,9 @@ var transferToAddress = function (aoa, from, to, value, callback) {
  * @param {String} client unique identifier
  * @param {Function} callback, callback
  */
-var deposit = function (aoa, from, to, value, client, callback) {
+var deposit = function (em, from, to, value, client, callback) {
     var abi = exchangeAbi;
-    return aoa.contract(abi).at(to).deposit(client, {
+    return em.contract(abi).at(to).deposit(client, {
         from: from,
         value: value
     }, callback);

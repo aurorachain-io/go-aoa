@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 // Package common contains various helper functions.
 package common
@@ -21,6 +21,10 @@ import (
 	"encoding/hex"
 	"math/big"
 	"strings"
+)
+
+var (
+	AddressPrefixLower = "aoa"
 )
 
 func ToHex(b []byte) string {
@@ -44,15 +48,14 @@ func FromHex(s string) []byte {
 	return Hex2Bytes(s)
 }
 
-func FromAoAHex(s string) []byte {
+func FromAoaHex(s string) []byte {
 	if len(s) > 1 {
-		if strings.EqualFold(s[0:3], "aoa") {
+		if strings.EqualFold(s[0:3], AddressPrefixLower) {
 			s = s[3:]
 		}
 	}
 	return Hex2Bytes(s)
 }
-
 
 // Copy bytes
 //
@@ -72,7 +75,7 @@ func hasHexPrefix(str string) bool {
 }
 
 func hasAOAPrefix(str string) bool {
-	return len(str) >= 3 && (str[0] == 'A' || str[0] == 'a') && (str[1] == 'O' || str[1] == 'o') && (str[2] == 'A' || str[2] == 'a')
+	return len(str) >= 3 && (str[0] == 'a' || str[0] == 'A') && (str[1] == 'o' || str[1] == 'O') && (str[2] == 'a' || str[2] == 'A')
 }
 
 func isHexCharacter(c byte) bool {

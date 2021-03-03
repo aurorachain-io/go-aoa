@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package p2p
 
@@ -24,9 +24,9 @@ import (
 	"net"
 	"time"
 
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/p2p/discover"
-	"github.com/Aurorachain/go-aoa/p2p/netutil"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/p2p/discover"
+	"github.com/Aurorachain-io/go-aoa/p2p/netutil"
 )
 
 const (
@@ -190,7 +190,7 @@ func (s *dialstate) newTasks(nRunning int, peers map[discover.NodeID]*Peer, now 
 	var newtasks []task
 	addDial := func(flag connFlag, n *discover.Node) bool {
 		if err := s.checkDial(n, peers); err != nil {
-			log.Debugf("Skipping dial candidate, id=%v, addr=%v, err=%v", n.ID, &net.TCPAddr{IP: n.IP, Port: int(n.TCP)}, err)
+			log.Trace("Skipping dial candidate", "id", n.ID, "addr", &net.TCPAddr{IP: n.IP, Port: int(n.TCP)}, "err", err)
 			return false
 		}
 
@@ -360,7 +360,7 @@ func (s *dialstate) taskDone(t task, now time.Time) {
 }
 
 func (t *dialTask) Do(srv *Server) {
-	log.Infof("start connect remote node task, node=%v, netType=%v", t.dest, t.netType)
+	log.Debug("remote node start mask", "node", t.dest, "netType", t.netType)
 	if t.dest.Incomplete() {
 		if !t.resolve(srv) {
 			return
@@ -372,7 +372,7 @@ func (t *dialTask) Do(srv *Server) {
 			t.ds.ntab.Delete(t.dest.ID)
 		}
 
-		log.Infof("connect to remote node failed, err=%v", err.Error())
+		log.Info("failed to connect remote node", "err", err.Error())
 
 	}
 
@@ -391,7 +391,7 @@ func (t *dialTask) GetNetType() byte {
 // The backoff delay resets when the node is found.
 func (t *dialTask) resolve(srv *Server) bool {
 	if srv.ntab == nil {
-		log.Infof("Can't resolve node, id=%v, discovery is disabled",  t.dest.ID)
+		log.Debug("Can't resolve node", "id", t.dest.ID, "err", "discovery is disabled")
 		return false
 	}
 	if t.resolveDelay == 0 {
@@ -407,13 +407,13 @@ func (t *dialTask) resolve(srv *Server) bool {
 		if t.resolveDelay > maxResolveDelay {
 			t.resolveDelay = maxResolveDelay
 		}
-		log.Infof("Resolving node failed, id=%v, newDelay=%v", t.dest.ID, t.resolveDelay)
+		log.Debug("Resolving node failed", "id", t.dest.ID, "newdelay", t.resolveDelay)
 		return false
 	}
 	// The node was found.
 	t.resolveDelay = initialResolveDelay
 	t.dest = resolved
-	log.Infof("Resolved node, id=%v, addr=%v", t.dest.ID, &net.TCPAddr{IP: t.dest.IP, Port: int(t.dest.TCP)})
+	log.Debug("Resolved node", "id", t.dest.ID, "addr", &net.TCPAddr{IP: t.dest.IP, Port: int(t.dest.TCP)})
 	return true
 }
 
@@ -426,7 +426,7 @@ func (t *dialTask) dial(srv *Server, dest *discover.Node) error {
 	fd, err := srv.Dialer.Dial(dest)
 
 	if err != nil {
-		log.Infof("Establish tcp connection error: %v",  err)
+		log.Info("tcp connect failed", "tcpconnectionErr", err)
 		return &dialError{err}
 	}
 	mfd := newMeteredConn(fd, false)

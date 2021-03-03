@@ -1,30 +1,28 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package core
 
 import (
 	"math/big"
-
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/consensus"
-	"github.com/Aurorachain/go-aoa/core/types"
-	"github.com/Aurorachain/go-aoa/core/vm"
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/params"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/consensus"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/core/vm"
+	"github.com/Aurorachain-io/go-aoa/params"
 )
 
 // ChainContext supports retrieving headers and consensus parameters from the
@@ -45,7 +43,7 @@ type ChainContext interface {
 func NewEVMContext(msg Message, header *types.Header, chain ChainContext, author *common.Address) vm.Context {
 	var delegates *map[common.Address]types.Candidate
 	var err error
-	if msg.Action() == types.ActionRegister || msg.Action() == types.ActionAddVote || msg.Action() == types.ActionSubVote || msg.Action() == types.ActionCallContract {
+	if msg.Action() == types.ActionRegister || msg.Action() == types.ActionAddVote || msg.Action() == types.ActionSubVote {
 		delegates, err = chain.GetDelegatePoll()
 		if err != nil {
 			return vm.Context{}
@@ -117,20 +115,17 @@ func Transfer(db vm.StateDB, sender, recipient common.Address, asset *common.Add
 	}
 }
 
-func Vote(db vm.StateDB, user common.Address, amount *big.Int, vote []types.Vote, delegateList *map[common.Address]types.Candidate, maxElectDelegate int64) error {
+func Vote(db vm.StateDB, user common.Address, vote []types.Vote, delegateList *map[common.Address]types.Candidate, maxElectDelegate int64) error {
 	d := *delegateList
-	//for _, v := range vote {
-	//	if _, ok := d[strings.ToLower(v.Candidate.Hex())]; !ok {
-	//		return ErrVoteList
-	//	}
-	//}
 	newVoteList, diff, err := changeVoteList(db.GetVoteList(user), vote, d)
 	if err != nil {
-		log.Infof("InVoteError: %v", err)
 		return err
 	}
-	lockBalance, _ := new(big.Int).SetString(db.GetLockBalance(user).String(), 0)
-	if (lockBalance.Add(lockBalance, diff)).Cmp(new(big.Int).Mul(big.NewInt(params.Aoa), big.NewInt(maxElectDelegate))) > 0 {
+	if !CanTransfer(db, user, nil, diff) {
+		return vm.ErrInsufficientBalance
+	}
+	lockBalance := db.GetLockBalance(user)
+	if (big.NewInt(0).Add(lockBalance, diff)).Cmp(new(big.Int).Mul(big.NewInt(params.Em), big.NewInt(maxElectDelegate))) > 0 {
 		return vm.ErrVote
 	}
 	db.SubBalance(user, diff)
@@ -168,12 +163,13 @@ func changeVoteList(prevVoteList []common.Address, curVoteList []types.Vote, del
 		}
 	}
 	lockNumber := big.NewInt(diff)
-	lockNumber = lockNumber.Mul(lockNumber, big.NewInt(params.Aoa))
+	lockNumber = lockNumber.Mul(lockNumber, big.NewInt(params.Em))
 	return voteChangeList, lockNumber, nil
 }
 
 func sliceContains(address common.Address, slice []common.Address) (int, bool) {
 	for i, a := range slice {
+		//log.Info("address == a", "address", address.Hex(), "a", a.Hex(), "result", address == a)
 		if address == a {
 			return i, true
 		}

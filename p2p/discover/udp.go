@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package discover
 
@@ -25,11 +25,11 @@ import (
 	"net"
 	"time"
 
-	"github.com/Aurorachain/go-aoa/crypto"
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/p2p/nat"
-	"github.com/Aurorachain/go-aoa/p2p/netutil"
-	"github.com/Aurorachain/go-aoa/rlp"
+	"github.com/Aurorachain-io/go-aoa/crypto"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/p2p/nat"
+	"github.com/Aurorachain-io/go-aoa/p2p/netutil"
+	"github.com/Aurorachain-io/go-aoa/rlp"
 )
 
 const Version = 4
@@ -235,7 +235,7 @@ func ListenUDP(priv *ecdsa.PrivateKey, conn conn, realaddr *net.UDPAddr, unhandl
 	if err != nil {
 		return nil, err
 	}
-	log.Infof("UDP listener up, self=%v", tab.self)
+	log.Info("UDP listener up", "self", tab.self)
 	return tab, nil
 }
 
@@ -296,7 +296,7 @@ func (t *udp) findnode(toid NodeID, toaddr *net.UDPAddr, target NodeID, netType 
 			nreceived++
 			n, err := t.nodeFromRPC(toaddr, rn)
 			if err != nil {
-				log.Debugf("Invalid neighbor node received, ip=%v, addr=%v, err=%v", rn.IP, toaddr, err)
+				log.Trace("Invalid neighbor node received", "ip", rn.IP, "addr", toaddr, "err", err)
 				continue
 			}
 			nodes = append(nodes, n)
@@ -472,7 +472,7 @@ func (t *udp) send(toaddr *net.UDPAddr, ptype byte, req packet) error {
 		return err
 	}
 	_, err = t.conn.WriteToUDP(packet, toaddr)
-	log.Debugf(">> %v, toAddr=%v, err=%v", req.name(), toaddr, err)
+	log.Trace(">> "+req.name(), "addr", toaddr, "err", err)
 	return err
 }
 
@@ -481,13 +481,13 @@ func encodePacket(priv *ecdsa.PrivateKey, ptype byte, req interface{}) ([]byte, 
 	b.Write(headSpace)
 	b.WriteByte(ptype)
 	if err := rlp.Encode(b, req); err != nil {
-		log.Errorf("Can't encode discv4 packet, err=%v", err)
+		log.Error("Can't encode discv4 packet", "err", err)
 		return nil, err
 	}
 	packet := b.Bytes()
 	sig, err := crypto.Sign(crypto.Keccak256(packet[headSize:]), priv)
 	if err != nil {
-		log.Errorf("Can't sign discv4 packet, err=%v", err)
+		log.Error("Can't sign discv4 packet", "err", err)
 		return nil, err
 	}
 	copy(packet[macSize:], sig)
@@ -512,11 +512,11 @@ func (t *udp) readLoop(unhandled chan ReadPacket) {
 		nbytes, from, err := t.conn.ReadFromUDP(buf)
 		if netutil.IsTemporaryError(err) {
 			// Ignore temporary read errors.
-			log.Infof("Temporary UDP read error: %v",  err)
+			log.Debug("Temporary UDP read error", "err", err)
 			continue
 		} else if err != nil {
 			// Shut down the loop for permament errors.
-			log.Infof("UDP read error: %v", err)
+			log.Debug("UDP read error", "err", err)
 			return
 		}
 		if t.handlePacket(from, buf[:nbytes]) != nil && unhandled != nil {
@@ -531,11 +531,11 @@ func (t *udp) readLoop(unhandled chan ReadPacket) {
 func (t *udp) handlePacket(from *net.UDPAddr, buf []byte) error {
 	packet, fromID, hash, err := decodePacket(buf)
 	if err != nil {
-		log.Infof("Bad discv4 packet, addr=%v, err=%v", from, err)
+		log.Debug("Bad discv4 packet", "addr", from, "err", err)
 		return err
 	}
 	err = packet.handle(t, from, fromID, hash)
-	log.Debugf("<< %v, addr=%v, err=%v", packet.name(), from, err)
+	log.Trace("<< "+packet.name(), "addr", from, "err", err)
 	return err
 }
 

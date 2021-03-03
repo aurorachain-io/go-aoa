@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 // Contains the block download scheduler to collect download tasks and schedule
 // them in an ordered, and throttled way.
@@ -25,9 +25,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/core/types"
-	"github.com/Aurorachain/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/log"
 	"github.com/rcrowley/go-metrics"
 	"gopkg.in/karalabe/cookiejar.v2/collections/prque"
 )
@@ -42,9 +42,9 @@ var (
 // fetchRequest is a currently running data retrieval operation.
 type fetchRequest struct {
 	Peer    *peerConnection     // Peer to which the request was sent
-	From    uint64              // [aoa/62] Requested chain element index (used for skeleton fills only)
-	Hashes  map[common.Hash]int // [aoa/61] Requested hashes with their insertion index (priority)
-	Headers []*types.Header     // [aoa/62] Requested headers, sorted by request order
+	From    uint64              // [em/62] Requested chain element index (used for skeleton fills only)
+	Hashes  map[common.Hash]int // [em/61] Requested hashes with their insertion index (priority)
+	Headers []*types.Header     // [em/62] Requested headers, sorted by request order
 	Time    time.Time           // Time when the request was made
 }
 
@@ -64,28 +64,28 @@ type queue struct {
 	mode          SyncMode // Synchronisation mode to decide on the block parts to schedule for fetching
 	fastSyncPivot uint64   // Block number where the fast sync pivots into archive synchronisation mode
 
-	headerHead common.Hash // [aoa/62] Hash of the last queued header to verify order
+	headerHead common.Hash // [em/62] Hash of the last queued header to verify order
 
 	// Headers are "special", they download in batches, supported by a skeleton chain
-	headerTaskPool  map[uint64]*types.Header       // [aoa/62] Pending header retrieval tasks, mapping starting indexes to skeleton headers
-	headerTaskQueue *prque.Prque                   // [aoa/62] Priority queue of the skeleton indexes to fetch the filling headers for
-	headerPeerMiss  map[string]map[uint64]struct{} // [aoa/62] Set of per-peer header batches known to be unavailable
-	headerPendPool  map[string]*fetchRequest       // [aoa/62] Currently pending header retrieval operations
-	headerResults   []*types.Header                // [aoa/62] Result cache accumulating the completed headers
-	headerProced    int                            // [aoa/62] Number of headers already processed from the results
-	headerOffset    uint64                         // [aoa/62] Number of the first header in the result cache
-	headerContCh    chan bool                      // [aoa/62] Channel to notify when header download finishes
+	headerTaskPool  map[uint64]*types.Header       // [em/62] Pending header retrieval tasks, mapping starting indexes to skeleton headers
+	headerTaskQueue *prque.Prque                   // [em/62] Priority queue of the skeleton indexes to fetch the filling headers for
+	headerPeerMiss  map[string]map[uint64]struct{} // [em/62] Set of per-peer header batches known to be unavailable
+	headerPendPool  map[string]*fetchRequest       // [em/62] Currently pending header retrieval operations
+	headerResults   []*types.Header                // [em/62] Result cache accumulating the completed headers
+	headerProced    int                            // [em/62] Number of headers already processed from the results
+	headerOffset    uint64                         // [em/62] Number of the first header in the result cache
+	headerContCh    chan bool                      // [em/62] Channel to notify when header download finishes
 
 	// All data retrievals below are based on an already assembles header chain
-	blockTaskPool  map[common.Hash]*types.Header // [aoa/62] Pending block (body) retrieval tasks, mapping hashes to headers
-	blockTaskQueue *prque.Prque                  // [aoa/62] Priority queue of the headers to fetch the blocks (bodies) for
-	blockPendPool  map[string]*fetchRequest      // [aoa/62] Currently pending block (body) retrieval operations
-	blockDonePool  map[common.Hash]struct{}      // [aoa/62] Set of the completed block (body) fetches
+	blockTaskPool  map[common.Hash]*types.Header // [em/62] Pending block (body) retrieval tasks, mapping hashes to headers
+	blockTaskQueue *prque.Prque                  // [em/62] Priority queue of the headers to fetch the blocks (bodies) for
+	blockPendPool  map[string]*fetchRequest      // [em/62] Currently pending block (body) retrieval operations
+	blockDonePool  map[common.Hash]struct{}      // [em/62] Set of the completed block (body) fetches
 
-	receiptTaskPool  map[common.Hash]*types.Header // [aoa/63] Pending receipt retrieval tasks, mapping hashes to headers
-	receiptTaskQueue *prque.Prque                  // [aoa/63] Priority queue of the headers to fetch the receipts for
-	receiptPendPool  map[string]*fetchRequest      // [aoa/63] Currently pending receipt retrieval operations
-	receiptDonePool  map[common.Hash]struct{}      // [aoa/63] Set of the completed receipt fetches
+	receiptTaskPool  map[common.Hash]*types.Header // [em/63] Pending receipt retrieval tasks, mapping hashes to headers
+	receiptTaskQueue *prque.Prque                  // [em/63] Priority queue of the headers to fetch the receipts for
+	receiptPendPool  map[string]*fetchRequest      // [em/63] Currently pending receipt retrieval operations
+	receiptDonePool  map[common.Hash]struct{}      // [em/63] Set of the completed receipt fetches
 
 	resultCache  []*fetchResult // Downloaded but not yet delivered fetch results
 	resultOffset uint64         // Offset of the first cached fetch result in the block chain
@@ -686,10 +686,10 @@ func (q *queue) DeliverHeaders(id string, headers []*types.Header, headerProcCh 
 	accepted := len(headers) == MaxHeaderFetch
 	if accepted {
 		if headers[0].Number.Uint64() != request.From {
-			log.Debug("First header broke chain ordering", "peer", id, "number", headers[0].Number, "hash", headers[0].Hash(), request.From)
+			log.Trace("First header broke chain ordering", "peer", id, "number", headers[0].Number, "hash", headers[0].Hash(), request.From)
 			accepted = false
 		} else if headers[len(headers)-1].Hash() != target {
-			log.Debug("Last header broke skeleton structure ", "peer", id, "number", headers[len(headers)-1].Number, "hash", headers[len(headers)-1].Hash(), "expected", target)
+			log.Trace("Last header broke skeleton structure ", "peer", id, "number", headers[len(headers)-1].Number, "hash", headers[len(headers)-1].Hash(), "expected", target)
 			accepted = false
 		}
 	}
@@ -710,7 +710,7 @@ func (q *queue) DeliverHeaders(id string, headers []*types.Header, headerProcCh 
 	}
 	// If the batch of headers wasn't accepted, mark as unavailable
 	if !accepted {
-		log.Debug("Skeleton filling not accepted", "peer", id, "from", request.From)
+		log.Trace("Skeleton filling not accepted", "peer", id, "from", request.From)
 
 		miss := q.headerPeerMiss[id]
 		if miss == nil {
@@ -737,7 +737,7 @@ func (q *queue) DeliverHeaders(id string, headers []*types.Header, headerProcCh 
 
 		select {
 		case headerProcCh <- process:
-			log.Debug("Pre-scheduled new headers", "peer", id, "count", len(process), "from", process[0].Number)
+			log.Trace("Pre-scheduled new headers", "peer", id, "count", len(process), "from", process[0].Number)
 			q.headerProced += len(process)
 		default:
 		}

@@ -1,20 +1,20 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
-// Package enr implements Aurora Node Records as defined in EIP-778. A node record holds
+// Package enr implements eminer-pro Node Records as defined in EIP-778. A node record holds
 // arbitrary information about a node on the peer-to-peer network.
 //
 // Records contain named keys. To store and retrieve key/values in a record, use the Entry
@@ -35,9 +35,9 @@ import (
 	"io"
 	"sort"
 
-	"github.com/Aurorachain/go-aoa/crypto"
-	"github.com/Aurorachain/go-aoa/rlp"
-	"golang.org/x/crypto/sha3"
+	"github.com/Aurorachain-io/go-aoa/crypto"
+	"github.com/Aurorachain-io/go-aoa/crypto/sha3"
+	"github.com/Aurorachain-io/go-aoa/rlp"
 )
 
 const SizeLimit = 300 // maximum encoded size of a node record in bytes
@@ -243,7 +243,7 @@ func (r *Record) signAndEncode(privkey *ecdsa.PrivateKey) error {
 	list = r.appendPairs(list)
 
 	// Sign the tail of the list.
-	h := sha3.NewLegacyKeccak256()
+	h := sha3.NewKeccak256()
 	rlp.Encode(h, list[1:])
 	sig, err := crypto.Sign(h.Sum(nil), privkey)
 	if err != nil {
@@ -281,7 +281,7 @@ func (r *Record) verifySignature() error {
 	// Verify the signature.
 	list := make([]interface{}, 0, len(r.pairs)*2+1)
 	list = r.appendPairs(list)
-	h := sha3.NewLegacyKeccak256()
+	h := sha3.NewKeccak256()
 	rlp.Encode(h, list)
 	if !crypto.VerifySignature(entry, h.Sum(nil), r.signature) {
 		return errInvalidSig

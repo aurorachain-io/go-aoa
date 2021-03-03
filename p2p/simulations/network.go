@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package simulations
 
@@ -24,11 +24,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Aurorachain/go-aoa/event"
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/p2p"
-	"github.com/Aurorachain/go-aoa/p2p/discover"
-	"github.com/Aurorachain/go-aoa/p2p/simulations/adapters"
+	"github.com/Aurorachain-io/go-aoa/event"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/p2p"
+	"github.com/Aurorachain-io/go-aoa/p2p/discover"
+	"github.com/Aurorachain-io/go-aoa/p2p/simulations/adapters"
 )
 
 var dialBanTimeout = 200 * time.Millisecond
@@ -132,7 +132,7 @@ func (self *Network) NewNodeWithConfig(conf *adapters.NodeConfig) (*Node, error)
 		Node:   adapterNode,
 		Config: conf,
 	}
-	log.Debug(fmt.Sprintf("node %v created", id))
+	log.Trace(fmt.Sprintf("node %v created", id))
 	self.nodeMap[id] = len(self.Nodes)
 	self.Nodes = append(self.Nodes, node)
 
@@ -188,7 +188,7 @@ func (self *Network) startWithSnapshots(id discover.NodeID, snapshots map[string
 	if node.Up {
 		return fmt.Errorf("node %v already up", id)
 	}
-	log.Debug(fmt.Sprintf("starting node %v: %v using %v", id, node.Up, self.nodeAdapter.Name()))
+	log.Trace(fmt.Sprintf("starting node %v: %v using %v", id, node.Up, self.nodeAdapter.Name()))
 	if err := node.Start(snapshots); err != nil {
 		log.Warn(fmt.Sprintf("start up failed: %v", err))
 		return err
@@ -279,7 +279,7 @@ func (self *Network) Stop(id discover.NodeID) error {
 // Connect connects two nodes together by calling the "admin_addPeer" RPC
 // method on the "one" node so that it connects to the "other" node
 func (self *Network) Connect(oneID, otherID discover.NodeID) error {
-	log.Info(fmt.Sprintf("connecting %s to %s", oneID, otherID))
+	log.Debug(fmt.Sprintf("connecting %s to %s", oneID, otherID))
 	conn, err := self.InitConn(oneID, otherID)
 	if err != nil {
 		return err
@@ -493,7 +493,7 @@ func (self *Network) InitConn(oneID, otherID discover.NodeID) (*Conn, error) {
 // Shutdown stops all nodes in the network and closes the quit channel
 func (self *Network) Shutdown() {
 	for _, node := range self.Nodes {
-		log.Info(fmt.Sprintf("stopping node %s", node.ID().TerminalString()))
+		log.Debug(fmt.Sprintf("stopping node %s", node.ID().TerminalString()))
 		if err := node.Stop(); err != nil {
 			log.Warn(fmt.Sprintf("error stopping node %s", node.ID().TerminalString()), "err", err)
 		}
@@ -709,15 +709,15 @@ func (self *Network) Subscribe(events chan *Event) {
 }
 
 func (self *Network) executeControlEvent(event *Event) {
-	log.Debugf("execute control event, type=%v, event=%v",  event.Type, event)
+	log.Trace("execute control event", "type", event.Type, "event", event)
 	switch event.Type {
 	case EventTypeNode:
 		if err := self.executeNodeEvent(event); err != nil {
-			log.Errorf("error executing node event, type=%v, event=%v", event, err)
+			log.Error("error executing node event", "event", event, "err", err)
 		}
 	case EventTypeConn:
 		if err := self.executeConnEvent(event); err != nil {
-			log.Errorf("error executing conn event, event=%v, err=%v",  event, err)
+			log.Error("error executing conn event", "event", event, "err", err)
 		}
 	case EventTypeMsg:
 		log.Warn("ignoring control msg event")

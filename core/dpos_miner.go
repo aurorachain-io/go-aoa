@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package core
 
@@ -20,19 +20,19 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"fmt"
-	"github.com/Aurorachain/go-aoa/accounts"
-	aa "github.com/Aurorachain/go-aoa/accounts/walletType"
-	"github.com/Aurorachain/go-aoa/aoadb"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/common/hexutil"
-	"github.com/Aurorachain/go-aoa/consensus"
-	"github.com/Aurorachain/go-aoa/consensus/delegatestate"
-	"github.com/Aurorachain/go-aoa/core/state"
-	"github.com/Aurorachain/go-aoa/core/types"
-	"github.com/Aurorachain/go-aoa/core/vm"
-	"github.com/Aurorachain/go-aoa/crypto"
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/params"
+	"github.com/Aurorachain-io/go-aoa/accounts"
+	aa "github.com/Aurorachain-io/go-aoa/accounts/walletType"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/common/hexutil"
+	"github.com/Aurorachain-io/go-aoa/consensus"
+	"github.com/Aurorachain-io/go-aoa/consensus/delegatestate"
+	"github.com/Aurorachain-io/go-aoa/core/state"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/core/vm"
+	"github.com/Aurorachain-io/go-aoa/crypto"
+	"github.com/Aurorachain-io/go-aoa/aoadb"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/params"
 	"github.com/pkg/errors"
 	"math/big"
 	"strings"
@@ -54,11 +54,11 @@ type DposMiner struct {
 	blockChan                 chan *types.Block
 	mu                        sync.Mutex
 	extra                     []byte // maybe can be set by rpc
-	aoa                       Backend
+	dac                       Backend
 	config                    *params.ChainConfig
 	current                   *worker
 	engine                    consensus.Engine
-	currentNewRoundHash       *types.ShuffleData // 本轮洗牌列表的Hex,洗牌的块高
+	currentNewRoundHash       *types.ShuffleData
 	shuffleHashChan           chan *types.ShuffleData
 	delegateInfoMap           map[string]*ecdsa.PrivateKey
 	AddDelegateWalletCallback func(data *aa.DelegateWalletInfo)
@@ -78,11 +78,11 @@ type worker struct {
 	currentMu  sync.Mutex
 }
 
-func NewDposMiner(config *params.ChainConfig, aoa Backend, engine consensus.Engine) *DposMiner {
+func NewDposMiner(config *params.ChainConfig, dac Backend, engine consensus.Engine) *DposMiner {
 
 	dposMiner := &DposMiner{
 		blockChan:       make(chan *types.Block),
-		aoa:             aoa,
+		dac:             dac,
 		config:          config,
 		engine:          engine,
 		shuffleHashChan: make(chan *types.ShuffleData),
@@ -95,7 +95,7 @@ func NewDposMiner(config *params.ChainConfig, aoa Backend, engine consensus.Engi
 		}
 		address := strings.ToLower(data.Address)
 		if _, ok := dposMiner.delegateInfoMap[address]; !ok {
-			log.Infof("dposMiner add delegate privateKey, address=%v", address)
+			log.Info("dposMiner add delegate privateKey", "address", address)
 			dposMiner.delegateInfoMap[address] = data.PrivateKey
 		}
 	}
@@ -112,7 +112,7 @@ func NewDposMiner(config *params.ChainConfig, aoa Backend, engine consensus.Engi
 
 		tstamp := candidate.WorkTime
 		blockTime := big.NewInt(int64(tstamp))
-		parent := dposMiner.aoa.BlockChain().CurrentBlock()
+		parent := dposMiner.dac.BlockChain().CurrentBlock()
 
 		lastBlockNumber := parent.Number()
 		gasLimit := CalcGasLimit(parent)
@@ -124,7 +124,7 @@ func NewDposMiner(config *params.ChainConfig, aoa Backend, engine consensus.Engi
 		encodeBytes := hexutil.Encode([]byte(candidate.NickName))
 		agentName := hexutil.MustDecode(encodeBytes)
 		shuffleData := dposMiner.currentNewRoundHash
-		log.Infof("dpos|produceBlockCallback, shuffleHash=%s, shuffleBlockNumber=%d", shuffleData.ShuffleHash.Hex(), shuffleData.ShuffleBlockNumber)
+		log.Info("dpos|produceBlockCallback", "shuffleHash", shuffleData.ShuffleHash.Hex(), "shuffleBlockNumber", shuffleData.ShuffleBlockNumber)
 		header := &types.Header{
 			ParentHash:         parent.Hash(),
 			Number:             lastBlockNumber.Add(lastBlockNumber, common.Big1),
@@ -136,25 +136,25 @@ func NewDposMiner(config *params.ChainConfig, aoa Backend, engine consensus.Engi
 			ShuffleHash:        *shuffleData.ShuffleHash,
 			ShuffleBlockNumber: shuffleData.ShuffleBlockNumber,
 		}
-		log.Infof("dpos|produceBlockCallback, blockNumber=%v, blockGasLimit=%v, beginTime=%v, currentTime=%v, coinbase=%v", header.Number.Uint64(), gasLimit, tstamp, time.Now().Unix(), header.Coinbase.Hex())
+		log.Info("dpos|produceBlockCallback", "blockNumber", header.Number.Uint64(), "blockGasLimit", gasLimit, "beginTime", tstamp, "currentTime", time.Now().Unix(), "coinbase", header.Coinbase.Hex())
 
-		if err := engine.Prepare(dposMiner.aoa.BlockChain(), header); err != nil {
+		if err := engine.Prepare(dposMiner.dac.BlockChain(), header); err != nil {
 			log.Error("dpos|Failed to prepare header", "err", err)
 			return
 		}
 
 		if err := dposMiner.makeCurrent(parent, header); err != nil {
-			log.Error("Failed to create dpos produce context, err=%s", err)
+			log.Error("Failed to create dpos produce context", "err", err)
 			return
 		}
 
-		//pending, err := dposMiner.aoa.TxPool().Pending()
+		//pending, err := dposMiner.em.TxPool().Pending()
 		now := time.Now()
-		pending, err := dposMiner.aoa.TxPool().PendingTxsByPrice()
-		log.Infof("PendingTxsByPrice end, timestamp=%v", time.Now().Sub(now))
+		pending, err := dposMiner.dac.TxPool().PendingTxsByPrice()
+		log.Info("PendingTxsByPrice end", "timestamp", time.Now().Sub(now))
 
 		if err != nil {
-			log.Error("Failed to fetch pending transactions, err=%s", err)
+			log.Error("Failed to fetch pending transactions", "err", err)
 			return
 		}
 		work := dposMiner.current
@@ -162,19 +162,19 @@ func NewDposMiner(config *params.ChainConfig, aoa Backend, engine consensus.Engi
 		txs := types.NewTransactionsByPriceAndNonce2(work.signer, pending)
 		no := time.Now()
 		dposMiner.commitTransactions(txs, header.Coinbase)
-		log.Infof("commitTransactions end, timestamp=%v, whole Time=%s", time.Now().Sub(no), time.Now().Sub(now))
-		if work.Block, err = engine.Finalize(dposMiner.aoa.BlockChain(), header, work.state, work.delegatedb, work.txs, work.receipts); err != nil {
-			log.Error("Failed to finalize block for sealing, err=%s", err)
+		log.Info("commitTransactions end", "timestamp", time.Now().Sub(no), "whole Time", time.Now().Sub(now))
+		if work.Block, err = engine.Finalize(dposMiner.dac.BlockChain(), header, work.state, work.delegatedb, work.txs, work.receipts); err != nil {
+			log.Error("Failed to finalize block for sealing", "err", err)
 			return
 		}
 
 		if work.Block != nil {
 			err := dposMiner.signBlockWithoutWallet(work.Block, header.Coinbase)
 			if err != nil {
-				log.Errorf("dpos|produceBlockCallback|fail, err=%s", err)
+				log.Error("dpos|produceBlockCallback|fail", "err", err)
 				return
 			}
-			log.Infof("dpos|produceBlockCallback push block to chan, blockNumber=%d, trxLen=%d", work.Block.NumberU64(), work.Block.Transactions().Len())
+			log.Info("dpos|produceBlockCallback push block to chan", "blockNumber", work.Block.NumberU64(), "trxLen", work.Block.Transactions().Len())
 			go func() {
 				dposMiner.blockChan <- work.Block
 			}()
@@ -189,15 +189,15 @@ func NewDposMiner(config *params.ChainConfig, aoa Backend, engine consensus.Engi
 // sign block with coinbase,need to unlock wallet
 func (d *DposMiner) signBlock(block *types.Block, coinbase common.Address) error {
 	account := accounts.Account{Address: coinbase}
-	wallet, err := d.aoa.AccountManager().Find(account)
+	wallet, err := d.dac.AccountManager().Find(account)
 	if err != nil {
-		log.Error("Failed to find coinbase wallet, coinbaseAddress=%s, err=%s",coinbase.Hex(), err)
+		log.Error("Failed to find coinbase wallet", "coinbaseAddress", coinbase.Hex(), "err", err)
 		return errors.New("sign error")
 	}
 	// b := sha3.Sum256(block.Hash().Bytes())
 	signature, err := wallet.SignHash(account, block.Hash().Bytes())
 	if err != nil {
-		log.Error("Failed to sign block, coinbaseAddress=%s, err=%s", coinbase.Hex(), err)
+		log.Error("Failed to sign block", "coinbaseAddress", coinbase.Hex(), "err", err)
 		return errors.New("sign error")
 	}
 	block.Signature = signature
@@ -249,15 +249,15 @@ func (d *DposMiner) readNewShufflehash() {
 
 // makeCurrent creates a new environment for the current cycle
 func (d *DposMiner) makeCurrent(parent *types.Block, header *types.Header) error {
-	statedb, err := d.aoa.BlockChain().StateAt(parent.Root())
+	statedb, err := d.dac.BlockChain().StateAt(parent.Root())
 
 	if err != nil {
 		return err
 	}
-	delegatedb, err := d.aoa.BlockChain().DelegateStateAt(parent.DelegateRoot())
+	delegatedb, err := d.dac.BlockChain().DelegateStateAt(parent.DelegateRoot())
 
 	if err != nil {
-		log.Error("dposMiner|makeCurrent|delegatedb err, err=%s", err)
+		log.Error("dposMiner|makeCurrent|delegatedb err", "err", err)
 		return err
 	}
 	work := &worker{
@@ -282,7 +282,7 @@ func (d *DposMiner) Pending() (*types.Block, *state.StateDB) {
 }
 
 func (d *DposMiner) PendingBlock() *types.Block {
-	return d.aoa.BlockChain().CurrentBlock()
+	return d.dac.BlockChain().CurrentBlock()
 	//work := d.current
 	//work.currentMu.Lock()
 	//defer work.currentMu.Unlock()
@@ -303,7 +303,7 @@ func (d *DposMiner) commitTransactions(txs *types.TransactionsByPriceAndNonce, c
 	for {
 		// If we don't have enough gas for any further transactions then we're done
 		if gp.Gas() < params.TxGas {
-			log.Debugf("Not enough gas for further transactions, gp=%v", gp)
+			log.Trace("Not enough gas for further transactions", "gp", gp)
 			break
 		}
 		// Retrieve the next transaction and abort if all done
@@ -332,7 +332,7 @@ func (d *DposMiner) commitTransactions(txs *types.TransactionsByPriceAndNonce, c
 		// Check whether the tx is replay protected. If we're not in the EIP155 hf
 		// phase, start ignoring the sender until we do.
 		//if tx.Protected() {
-		//	log.Debug("Ignoring reply protected transaction", "hash", tx.Hash())
+		//	log.Trace("Ignoring reply protected transaction", "hash", tx.Hash())
 		//	txs.Pop()
 		//	continue
 		//}
@@ -340,7 +340,7 @@ func (d *DposMiner) commitTransactions(txs *types.TransactionsByPriceAndNonce, c
 		env.state.Prepare(tx.Hash(), common.Hash{}, env.tcount)
 
 		//now := time.Now()
-		err, gasUsed, logs := env.commitTransaction(tx, d.aoa.BlockChain(), coinbase, gp)
+		err, gasUsed, logs := env.commitTransaction(tx, d.dac.BlockChain(), coinbase, gp)
 		if isContract {
 			//now = time.Now()
 			*(*uint64)(contractGasLimit) -= gasUsed - 20000
@@ -350,32 +350,34 @@ func (d *DposMiner) commitTransactions(txs *types.TransactionsByPriceAndNonce, c
 			//} else {
 			//	*(*uint64)(contractGasLimit) -= uint64(gas)
 			//}
+			//log.Info("calculate cost", "timestamp", time.Now().Sub(now), "gas", gas, "gasUsed", gasUsed, "contractGasLimit", contractGasLimit)
 		}
+		//log.Debug("dposMiner|commitTransaction cost", "timestamp", time.Now().Sub(now))
 		switch err {
 		case ErrGasLimitReached:
 			// Pop the current out-of-gas transaction without shifting in the next from the account
 
-			//log.Debug("Gas limit exceeded for current block", "sender", from)
+			//log.Trace("Gas limit exceeded for current block", "sender", from)
 
-			log.Debugf("Gas limit exceeded for current block, hash=%v", tx.Hash().Hex())
+			log.Trace("Gas limit exceeded for current block", "tx", tx.Hash())
 
 			txs.Pop()
 
 		case ErrNonceTooLow:
 			// New head notification data race between the transaction pool and miner, shift
 
-			//log.Debug("Skipping transaction with low nonce", "sender", from, "nonce", tx.Nonce())
+			//log.Trace("Skipping transaction with low nonce", "sender", from, "nonce", tx.Nonce())
 
-			log.Debugf("Skipping transaction with low nonce, tx=%v, nonce=%v", tx.Hash().Hex(), tx.Nonce())
+			log.Trace("Skipping transaction with low nonce", "tx", tx.Hash(), "nonce", tx.Nonce())
 
 			txs.Shift()
 
 		case ErrNonceTooHigh:
 			// Reorg notification data race between the transaction pool and miner, skip account =
 
-			//log.Debug("Skipping account with hight nonce", "sender", from, "nonce", tx.Nonce())
+			//log.Trace("Skipping account with hight nonce", "sender", from, "nonce", tx.Nonce())
 
-			log.Debugf("Skipping account with hight nonce, tx=%v, nonce=%v", tx.Hash(), tx.Nonce())
+			log.Trace("Skipping account with hight nonce", "tx", tx.Hash(), "nonce", tx.Nonce())
 			txs.Pop()
 
 		case nil:
@@ -385,14 +387,14 @@ func (d *DposMiner) commitTransactions(txs *types.TransactionsByPriceAndNonce, c
 			txs.Shift()
 
 		case ErrCancelAgent, ErrSubVote, ErrDuplicateRegisterAgent, ErrSubVoteNotEnough, ErrAddVote:
-			log.Debugf("Skipping transaction with error vote action, tx=%v, nonce=%v", tx.Hash().Hex(), tx.Nonce())
+			log.Trace("Skipping transaction with error vote action", "tx", tx.Hash(), "nonce", tx.Nonce())
 			txs.Shift()
 
 		default:
 
 			// Strange error, discard the transaction and get the next in line (note, the
 			// nonce-too-high clause will prevent us from executing in vain).
-			log.Infof("Transaction failed, account skipped, hash=%v, err=%v", tx.Hash(), err)
+			log.Debug("Transaction failed, account skipped", "hash", tx.Hash(), "err", err)
 			txs.Shift()
 
 		}
@@ -416,8 +418,9 @@ func (env *worker) commitTransaction(tx *types.Transaction, bc *BlockChain, coin
 	delegateSnap := env.delegatedb.Snapshot()
 	//now := time.Now()
 	receipt, gasUsed, err := ApplyTransaction(env.config, bc, &coinbase, gp, env.state, env.header, tx, &env.header.GasUsed, vm.Config{}, env.delegatedb, env.header.Time.Uint64(), false)
+	// log.Debug("dposMiner|applyTransaction cost", "timestamp", time.Now().Sub(now), "err", err)
 	if err != nil {
-		env.state.RevertToSnapshot(snap, env.config.IsEpiphron(env.header.Number))
+		env.state.RevertToSnapshot(snap)
 		env.delegatedb.RevertToSnapshot(delegateSnap)
 		return err, gasUsed, nil
 	}

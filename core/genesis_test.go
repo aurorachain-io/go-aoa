@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package core
 
@@ -20,24 +20,23 @@ import (
 	"math/big"
 	"reflect"
 	"testing"
-
 	"encoding/json"
 	"fmt"
-	"github.com/Aurorachain/go-aoa/common"
 	"github.com/davecgh/go-spew/spew"
-	"github.com/Aurorachain/go-aoa/aoadb"
-	"github.com/Aurorachain/go-aoa/common/hexutil"
-	"github.com/Aurorachain/go-aoa/core/types"
-	"github.com/Aurorachain/go-aoa/params"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/common/hexutil"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/emdb"
+	"github.com/Aurorachain-io/go-aoa/params"
+	"github.com/Aurorachain-io/go-aoa/rlp"
 	"io/ioutil"
 	"os"
-	"github.com/Aurorachain/go-aoa/rlp"
 	"strconv"
 )
 
 func TestDefaultGenesisBlock(t *testing.T) {
-	file, _ := os.Open("/Users/name/workspace/go-workspace/github-workspace/src/github.com/Aurorachain/go-aoa/genesis.json")
-	data, _ := ioutil.ReadFile("/Users/name/workspace/go-workspace/github-workspace/src/github.com/Aurorachain/go-aoa/genesis.json")
+	file, _ := os.Open("/Users/admin/src/github.com/Aurorachain-io/go-aoa/genesis.json")
+	data, _ := ioutil.ReadFile("/Users/admin/github-workspace/src/github.com/Aurorachain-io/go-aoa/genesis.json")
 	geneJson := string(data)
 	fmt.Println(geneJson)
 	var aa Genesis
@@ -70,13 +69,11 @@ func TestDefaultGenesisBlock(t *testing.T) {
 func TestDefaultGenesisBlock2(t *testing.T) {
 	genesis := DefaultGenesisBlock()
 	block, _, _ := genesis.ToBlock()
-	fmt.Println("main genesisBlockHash = ",block.Hash().Hex())
-
-
+	fmt.Println("main genesisBlockHash = ", block.Hash().Hex())
 
 	genesis2 := DefaultTestnetGenesisBlock()
 	block2, _, _ := genesis2.ToBlock()
-	fmt.Println("test genesisBlockHash = ",block2.Hash().Hex())
+	fmt.Println("test genesisBlockHash = ", block2.Hash().Hex())
 }
 
 type testGenesis struct {
@@ -122,22 +119,22 @@ func TestSetupGenesis(t *testing.T) {
 	oldcustomg.Config = &params.ChainConfig{}
 	tests := []struct {
 		name       string
-		fn         func(aoadb.Database) (*params.ChainConfig, common.Hash, *Genesis, error)
+		fn         func(emdb.Database) (*params.ChainConfig, common.Hash, *Genesis, error)
 		wantConfig *params.ChainConfig
 		wantHash   common.Hash
 		wantErr    error
 	}{
 		{
 			name: "genesis without ChainConfig",
-			fn: func(db aoadb.Database) (*params.ChainConfig, common.Hash, *Genesis, error) {
+			fn: func(db emdb.Database) (*params.ChainConfig, common.Hash, *Genesis, error) {
 				return SetupGenesisBlock(db, new(Genesis))
 			},
-			wantErr:    errGenesisNoConfig,
+			wantErr: errGenesisNoConfig,
 			//wantConfig: params.AllEthashProtocolChanges,
 		},
 		{
 			name: "no block in DB, genesis == nil",
-			fn: func(db aoadb.Database) (*params.ChainConfig, common.Hash, *Genesis, error) {
+			fn: func(db emdb.Database) (*params.ChainConfig, common.Hash, *Genesis, error) {
 				return SetupGenesisBlock(db, nil)
 			},
 			wantHash:   params.MainnetGenesisHash,
@@ -145,7 +142,7 @@ func TestSetupGenesis(t *testing.T) {
 		},
 		{
 			name: "mainnet block in DB, genesis == nil",
-			fn: func(db aoadb.Database) (*params.ChainConfig, common.Hash, *Genesis, error) {
+			fn: func(db emdb.Database) (*params.ChainConfig, common.Hash, *Genesis, error) {
 				DefaultGenesisBlock().MustCommit(db)
 				return SetupGenesisBlock(db, nil)
 			},
@@ -154,7 +151,7 @@ func TestSetupGenesis(t *testing.T) {
 		},
 		{
 			name: "custom block in DB, genesis == nil",
-			fn: func(db aoadb.Database) (*params.ChainConfig, common.Hash, *Genesis, error) {
+			fn: func(db emdb.Database) (*params.ChainConfig, common.Hash, *Genesis, error) {
 				customg.MustCommit(db)
 				return SetupGenesisBlock(db, nil)
 			},
@@ -163,7 +160,7 @@ func TestSetupGenesis(t *testing.T) {
 		},
 		{
 			name: "custom block in DB, genesis == testnet",
-			fn: func(db aoadb.Database) (*params.ChainConfig, common.Hash, *Genesis, error) {
+			fn: func(db emdb.Database) (*params.ChainConfig, common.Hash, *Genesis, error) {
 				customg.MustCommit(db)
 				return SetupGenesisBlock(db, DefaultTestnetGenesisBlock())
 			},
@@ -173,7 +170,7 @@ func TestSetupGenesis(t *testing.T) {
 		},
 		{
 			name: "compatible config in DB",
-			fn: func(db aoadb.Database) (*params.ChainConfig, common.Hash, *Genesis, error) {
+			fn: func(db emdb.Database) (*params.ChainConfig, common.Hash, *Genesis, error) {
 				oldcustomg.MustCommit(db)
 				return SetupGenesisBlock(db, &customg)
 			},
@@ -183,7 +180,7 @@ func TestSetupGenesis(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		db, _ := aoadb.NewMemDatabase()
+		db, _ := emdb.NewMemDatabase()
 		config, hash, _, err := test.fn(db)
 		// Check the return values.
 		if !reflect.DeepEqual(err, test.wantErr) {
@@ -238,7 +235,7 @@ func TestGenesisAgents(t *testing.T) {
 		{"0xe92c157278abafa68e3547d4d5bd3ed4a5afccb3", uint64(1), "node2-2", 1492009146}, // 172.16.134.101
 		{"0x5ac2ff101f11ae3c2b7093e25f5300018252c2a3", uint64(1), "node2-3", 1492009146}, // 172.16.134.101
 	}
-	list = append(list,candidateList...)
+	list = append(list, candidateList...)
 
 	data, err := rlp.EncodeToBytes(list)
 	if err != nil {
@@ -246,9 +243,15 @@ func TestGenesisAgents(t *testing.T) {
 	}
 	result := strconv.QuoteToASCII(string(data))
 
-
 	list2 := decodeGenesisAgents(result)
 	fmt.Println("result = ", result)
 	fmt.Println("\n", list2)
 
+}
+
+func TestAmountToHex(t *testing.T) {
+	amount := new(big.Int).Mul(big.NewInt(2100_000_000), big.NewInt(1e+18))
+
+	result := fmt.Sprintf("%x", amount)
+	fmt.Println(result)
 }

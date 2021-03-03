@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package downloader
 
@@ -20,8 +20,8 @@ import (
 	"context"
 	"sync"
 
-	"github.com/Aurorachain/go-aoa"
-	"github.com/Aurorachain/go-aoa/rpc"
+	emchain "github.com/Aurorachain-io/go-aoa"
+	"github.com/Aurorachain-io/go-aoa/rpc"
 )
 
 // PublicDownloaderAPI provides an API which gives information about the current synchronisation status.
@@ -45,7 +45,7 @@ func NewPublicDownloaderAPI(d *Downloader) *PublicDownloaderAPI {
 	return api
 }
 
-// Syncing provides information when this nodes starts synchronising with the aurora network and when it's finished.
+// Syncing provides information when this nodes starts synchronising with the em network and when it's finished.
 func (api *PublicDownloaderAPI) Syncing(ctx context.Context) (*rpc.Subscription, error) {
 	notifier, supported := rpc.NotifierFromContext(ctx)
 	if !supported {
@@ -77,8 +77,8 @@ func (api *PublicDownloaderAPI) Syncing(ctx context.Context) (*rpc.Subscription,
 
 // SyncingResult provides information about the current synchronisation status for this node.
 type SyncingResult struct {
-	Syncing bool                `json:"syncing"`
-	Status  aurora.SyncProgress `json:"status"`
+	Syncing bool                 `json:"syncing"`
+	Status  emchain.SyncProgress `json:"status"`
 }
 
 // uninstallSyncSubscriptionRequest uninstalles a syncing subscription in the API event loop.

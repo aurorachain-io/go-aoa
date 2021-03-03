@@ -1,26 +1,26 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package console
 
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/rpc"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/rpc"
 	"github.com/robertkrimen/otto"
 	"io"
 	"strings"
@@ -30,7 +30,7 @@ import (
 // bridge is a collection of JavaScript utility methods to bride the .js runtime
 // environment and the Go RPC connection backing the remote method calls.
 type bridge struct {
-	client   *rpc.Client  // RPC client to execute Aurora requests through
+	client   *rpc.Client  // RPC client to execute eminer-pro requests through
 	prompter UserPrompter // Input prompter to allow interactive user feedback
 	printer  io.Writer    // Output writer to serialize any display strings to
 }
@@ -206,7 +206,7 @@ func (b *bridge) Sign(call otto.FunctionCall) (response otto.Value) {
 	return val
 }
 
-// Sleep will block the Aurorachain/go-aoa for the specified number of seconds.
+// Sleep will block the eminer-pro/go-eminer for the specified number of seconds.
 func (b *bridge) Sleep(call otto.FunctionCall) (response otto.Value) {
 	if call.Argument(0).IsNumber() {
 		sleep, _ := call.Argument(0).ToInteger()
@@ -216,7 +216,7 @@ func (b *bridge) Sleep(call otto.FunctionCall) (response otto.Value) {
 	return throwJSException("usage: sleep(<number of seconds>)")
 }
 
-// SleepBlocks will block the Aurorachain/go-aoa for a specified number of new blocks optionally
+// SleepBlocks will block the eminer-pro/go-eminer for a specified number of new blocks optionally
 // until the given timeout is reached.
 func (b *bridge) SleepBlocks(call otto.FunctionCall) (response otto.Value) {
 	var (
@@ -242,10 +242,10 @@ func (b *bridge) SleepBlocks(call otto.FunctionCall) (response otto.Value) {
 			throwJSException("expected number as second argument")
 		}
 	}
-	// go through the Aurora/go-Aurora, this will allow web3 to call the appropriate
+	// go through the eminer-pro/go-dacchain, this will allow web3 to call the appropriate
 	// callbacks if a delayed response or notification is received.
 	blockNumber := func() int64 {
-		result, err := call.Otto.Run("aoa.blockNumber")
+		result, err := call.Otto.Run("em.blockNumber")
 		if err != nil {
 			throwJSException(err.Error())
 		}

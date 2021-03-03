@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package adapters
 
@@ -35,12 +35,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/node"
-	"github.com/Aurorachain/go-aoa/p2p"
-	"github.com/Aurorachain/go-aoa/p2p/discover"
-	"github.com/Aurorachain/go-aoa/rpc"
 	"github.com/docker/docker/pkg/reexec"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/node"
+	"github.com/Aurorachain-io/go-aoa/p2p"
+	"github.com/Aurorachain-io/go-aoa/p2p/discover"
+	"github.com/Aurorachain-io/go-aoa/rpc"
 	"golang.org/x/net/websocket"
 )
 
@@ -352,11 +352,11 @@ func execP2PNode() {
 	// decode the config
 	confEnv := os.Getenv("_P2P_NODE_CONFIG")
 	if confEnv == "" {
-		log.Error("missing _P2P_NODE_CONFIG")
+		log.Crit("missing _P2P_NODE_CONFIG")
 	}
 	var conf execNodeConfig
 	if err := json.Unmarshal([]byte(confEnv), &conf); err != nil {
-		log.Error("error decoding _P2P_NODE_CONFIG", "err", err)
+		log.Crit("error decoding _P2P_NODE_CONFIG", "err", err)
 	}
 	conf.Stack.P2P.PrivateKey = conf.Node.PrivateKey
 	conf.Stack.Logger = log.New("node.id", conf.Node.ID.String())
@@ -365,14 +365,14 @@ func execP2PNode() {
 	externalIP := func() string {
 		addrs, err := net.InterfaceAddrs()
 		if err != nil {
-			log.Error("error getting IP address", "err", err)
+			log.Crit("error getting IP address", "err", err)
 		}
 		for _, addr := range addrs {
 			if ip, ok := addr.(*net.IPNet); ok && !ip.IP.IsLoopback() {
 				return ip.IP.String()
 			}
 		}
-		log.Error("unable to determine explicit IP address")
+		log.Crit("unable to determine explicit IP address")
 		return ""
 	}
 	if strings.HasPrefix(conf.Stack.P2P.ListenAddr, ":") {
@@ -385,7 +385,7 @@ func execP2PNode() {
 	// initialize the devp2p stack
 	stack, err := node.New(&conf.Stack)
 	if err != nil {
-		log.Error("error creating node stack", "err", err)
+		log.Crit("error creating node stack", "err", err)
 	}
 
 	// register the services, collecting them into a map so we can wrap
@@ -394,7 +394,7 @@ func execP2PNode() {
 	for _, name := range serviceNames {
 		serviceFunc, exists := serviceFuncs[name]
 		if !exists {
-			log.Error("unknown node service", "name", name)
+			log.Crit("unknown node service", "name", name)
 		}
 		constructor := func(nodeCtx *node.ServiceContext) (node.Service, error) {
 			ctx := &ServiceContext{
@@ -413,7 +413,7 @@ func execP2PNode() {
 			return service, nil
 		}
 		if err := stack.Register(constructor); err != nil {
-			log.Error("error starting service", "name", name, "err", err)
+			log.Crit("error starting service", "name", name, "err", err)
 		}
 	}
 
@@ -421,12 +421,12 @@ func execP2PNode() {
 	if err := stack.Register(func(ctx *node.ServiceContext) (node.Service, error) {
 		return &snapshotService{services}, nil
 	}); err != nil {
-		log.Error("error starting snapshot service", "err", err)
+		log.Crit("error starting snapshot service", "err", err)
 	}
 
 	// start the stack
 	if err := stack.Start(); err != nil {
-		log.Error("error stating node stack", "err", err)
+		log.Crit("error stating node stack", "err", err)
 	}
 
 	// stop the stack if we get a SIGTERM signal

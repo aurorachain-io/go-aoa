@@ -1,20 +1,20 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
-// Package aoaclient provides a client for the Aurora RPC API.
+// Package emclient provides a client for the dacchain RPC API.
 package aoaclient
 
 import (
@@ -22,16 +22,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/Aurorachain/go-aoa"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/common/hexutil"
-	"github.com/Aurorachain/go-aoa/core/types"
-	"github.com/Aurorachain/go-aoa/rlp"
-	"github.com/Aurorachain/go-aoa/rpc"
+	emchain "github.com/Aurorachain-io/go-aoa"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/common/hexutil"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/rlp"
+	"github.com/Aurorachain-io/go-aoa/rpc"
 	"math/big"
 )
 
-// Client defines typed wrappers for the Aurora RPC API.
+// Client defines typed wrappers for the dacchain RPC API.
 type Client struct {
 	c *rpc.Client
 }
@@ -81,7 +81,7 @@ func (ec *Client) getBlock(ctx context.Context, method string, args ...interface
 	if err != nil {
 		return nil, err
 	} else if len(raw) == 0 {
-		return nil, aurora.NotFound
+		return nil, emchain.NotFound
 	}
 	// Decode header and transactions.
 	var head *types.Header
@@ -115,7 +115,7 @@ func (ec *Client) HeaderByHash(ctx context.Context, hash common.Hash) (*types.He
 	var head *types.Header
 	err := ec.c.CallContext(ctx, &head, "aoa_getBlockByHash", hash, false)
 	if err == nil && head == nil {
-		err = aurora.NotFound
+		err = emchain.NotFound
 	}
 	return head, err
 }
@@ -126,7 +126,7 @@ func (ec *Client) HeaderByNumber(ctx context.Context, number *big.Int) (*types.H
 	var head *types.Header
 	err := ec.c.CallContext(ctx, &head, "aoa_getBlockByNumber", toBlockNumArg(number), false)
 	if err == nil && head == nil {
-		err = aurora.NotFound
+		err = emchain.NotFound
 	}
 	return head, err
 }
@@ -156,7 +156,7 @@ func (ec *Client) TransactionByHash(ctx context.Context, hash common.Hash) (tx *
 	if err != nil {
 		return nil, false, err
 	} else if json == nil {
-		return nil, false, aurora.NotFound
+		return nil, false, emchain.NotFound
 	} else if _, r, _ := json.tx.RawSignatureValues(); r == nil {
 		return nil, false, fmt.Errorf("server returned transaction without signature")
 	}
@@ -202,7 +202,7 @@ func (ec *Client) TransactionInBlock(ctx context.Context, blockHash common.Hash,
 	err := ec.c.CallContext(ctx, &json, "aoa_getTransactionByBlockHashAndIndex", blockHash, hexutil.Uint64(index))
 	if err == nil {
 		if json == nil {
-			return nil, aurora.NotFound
+			return nil, emchain.NotFound
 		} else if _, r, _ := json.tx.RawSignatureValues(); r == nil {
 			return nil, fmt.Errorf("server returned transaction without signature")
 		}
@@ -218,7 +218,7 @@ func (ec *Client) TransactionReceipt(ctx context.Context, txHash common.Hash) (*
 	err := ec.c.CallContext(ctx, &r, "aoa_getTransactionReceipt", txHash)
 	if err == nil {
 		if r == nil {
-			return nil, aurora.NotFound
+			return nil, emchain.NotFound
 		}
 	}
 	return r, err
@@ -241,7 +241,7 @@ type rpcProgress struct {
 
 // SyncProgress retrieves the current progress of the sync algorithm. If there's
 // no sync currently running, it returns nil.
-func (ec *Client) SyncProgress(ctx context.Context) (*aurora.SyncProgress, error) {
+func (ec *Client) SyncProgress(ctx context.Context) (*emchain.SyncProgress, error) {
 	var raw json.RawMessage
 	if err := ec.c.CallContext(ctx, &raw, "aoa_syncing"); err != nil {
 		return nil, err
@@ -255,7 +255,7 @@ func (ec *Client) SyncProgress(ctx context.Context) (*aurora.SyncProgress, error
 	if err := json.Unmarshal(raw, &progress); err != nil {
 		return nil, err
 	}
-	return &aurora.SyncProgress{
+	return &emchain.SyncProgress{
 		StartingBlock: uint64(progress.StartingBlock),
 		CurrentBlock:  uint64(progress.CurrentBlock),
 		HighestBlock:  uint64(progress.HighestBlock),
@@ -266,7 +266,7 @@ func (ec *Client) SyncProgress(ctx context.Context) (*aurora.SyncProgress, error
 
 // SubscribeNewHead subscribes to notifications about the current blockchain head
 // on the given channel.
-func (ec *Client) SubscribeNewHead(ctx context.Context, ch chan<- *types.Header) (aurora.Subscription, error) {
+func (ec *Client) SubscribeNewHead(ctx context.Context, ch chan<- *types.Header) (emchain.Subscription, error) {
 	return ec.c.EthSubscribe(ctx, ch, "newHeads", map[string]struct{}{})
 }
 
@@ -332,18 +332,18 @@ func (ec *Client) NonceAt(ctx context.Context, account common.Address, blockNumb
 // Filters
 
 // FilterLogs executes a filter query.
-func (ec *Client) FilterLogs(ctx context.Context, q aurora.FilterQuery) ([]types.Log, error) {
+func (ec *Client) FilterLogs(ctx context.Context, q emchain.FilterQuery) ([]types.Log, error) {
 	var result []types.Log
 	err := ec.c.CallContext(ctx, &result, "aoa_getLogs", toFilterArg(q))
 	return result, err
 }
 
 // SubscribeFilterLogs subscribes to the results of a streaming filter query.
-func (ec *Client) SubscribeFilterLogs(ctx context.Context, q aurora.FilterQuery, ch chan<- types.Log) (aurora.Subscription, error) {
+func (ec *Client) SubscribeFilterLogs(ctx context.Context, q emchain.FilterQuery, ch chan<- types.Log) (emchain.Subscription, error) {
 	return ec.c.EthSubscribe(ctx, ch, "logs", toFilterArg(q))
 }
 
-func toFilterArg(q aurora.FilterQuery) interface{} {
+func toFilterArg(q emchain.FilterQuery) interface{} {
 	arg := map[string]interface{}{
 		"fromBlock": toBlockNumArg(q.FromBlock),
 		"toBlock":   toBlockNumArg(q.ToBlock),
@@ -404,7 +404,7 @@ func (ec *Client) PendingTransactionCount(ctx context.Context) (uint, error) {
 // blockNumber selects the block height at which the call runs. It can be nil, in which
 // case the code is taken from the latest known block. Note that state from very old
 // blocks might not be available.
-func (ec *Client) CallContract(ctx context.Context, msg aurora.CallMsg, blockNumber *big.Int) ([]byte, error) {
+func (ec *Client) CallContract(ctx context.Context, msg emchain.CallMsg, blockNumber *big.Int) ([]byte, error) {
 	var hex hexutil.Bytes
 	err := ec.c.CallContext(ctx, &hex, "aoa_call", toCallArg(msg), toBlockNumArg(blockNumber))
 	if err != nil {
@@ -415,7 +415,7 @@ func (ec *Client) CallContract(ctx context.Context, msg aurora.CallMsg, blockNum
 
 // PendingCallContract executes a message call transaction using the EVM.
 // The state seen by the contract call is the pending state.
-func (ec *Client) PendingCallContract(ctx context.Context, msg aurora.CallMsg) ([]byte, error) {
+func (ec *Client) PendingCallContract(ctx context.Context, msg emchain.CallMsg) ([]byte, error) {
 	var hex hexutil.Bytes
 	err := ec.c.CallContext(ctx, &hex, "aoa_call", toCallArg(msg), "pending")
 	if err != nil {
@@ -438,7 +438,7 @@ func (ec *Client) SuggestGasPrice(ctx context.Context) (*big.Int, error) {
 // the current pending state of the backend blockchain. There is no guarantee that this is
 // the true gas limit requirement as other transactions may be added or removed by miners,
 // but it should provide a basis for setting a reasonable default.
-func (ec *Client) EstimateGas(ctx context.Context, msg aurora.CallMsg) (uint64, error) {
+func (ec *Client) EstimateGas(ctx context.Context, msg emchain.CallMsg) (uint64, error) {
 	var hex hexutil.Uint64
 	err := ec.c.CallContext(ctx, &hex, "aoa_estimateGas", toCallArg(msg))
 	if err != nil {
@@ -459,7 +459,7 @@ func (ec *Client) SendTransaction(ctx context.Context, tx *types.Transaction) er
 	return ec.c.CallContext(ctx, nil, "aoa_sendRawTransaction", common.ToHex(data))
 }
 
-func toCallArg(msg aurora.CallMsg) interface{} {
+func toCallArg(msg emchain.CallMsg) interface{} {
 	arg := map[string]interface{}{
 		"from": msg.From,
 		"to":   msg.To,

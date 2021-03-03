@@ -1,31 +1,31 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package node
 
 import (
 	"crypto/ecdsa"
 	"fmt"
-	"github.com/Aurorachain/go-aoa/accounts"
-	"github.com/Aurorachain/go-aoa/accounts/keystore"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/crypto"
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/p2p"
-	"github.com/Aurorachain/go-aoa/p2p/discover"
+	"github.com/Aurorachain-io/go-aoa/accounts"
+	"github.com/Aurorachain-io/go-aoa/accounts/keystore"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/crypto"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/p2p"
+	"github.com/Aurorachain-io/go-aoa/p2p/discover"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -46,7 +46,7 @@ const (
 // all registered services.
 type Config struct {
 	// Name sets the instance name of the node. It must not contain the / character and is
-	// used in the devp2p node identifier. The instance name of aoa is "aoa". If no
+	// used in the devp2p node identifier. The instance name of aoa is "em". If no
 	// value is specified, the basename of the current executable is used.
 	Name string `toml:"-"`
 
@@ -134,6 +134,8 @@ type Config struct {
 	// private APIs to untrusted users is a major security risk.
 	WSExposeAll bool `toml:",omitempty"`
 
+	// Logger is a custom logger to use with the p2p.Server.
+	Logger log.Logger
 }
 
 // IPCEndpoint resolves an IPC endpoint based on a configured value, taking into
@@ -216,7 +218,7 @@ func (c *Config) NodeName() string {
 	name := c.name()
 	// Backwards compatibility: previous versions used title-cased "Geth", keep that.
 	if name == "aoa" || name == "aoa-testnet" {
-		name = "Aurora"
+		name = "aurorachain"
 	}
 	if c.UserIdent != "" {
 		name += "/" + c.UserIdent
@@ -291,7 +293,7 @@ func (c *Config) NodeKey() *ecdsa.PrivateKey {
 	if c.DataDir == "" {
 		key, err := crypto.GenerateKey()
 		if err != nil {
-			log.Error(fmt.Sprintf("Failed to generate ephemeral node key: %v", err))
+			log.Crit(fmt.Sprintf("Failed to generate ephemeral node key: %v", err))
 		}
 		return key
 	}
@@ -303,7 +305,7 @@ func (c *Config) NodeKey() *ecdsa.PrivateKey {
 	// No persistent key found, generate and store a new one.
 	key, err := crypto.GenerateKey()
 	if err != nil {
-		log.Error(fmt.Sprintf("Failed to generate node key: %v", err))
+		log.Crit(fmt.Sprintf("Failed to generate node key: %v", err))
 	}
 	instanceDir := filepath.Join(c.DataDir, c.name())
 	if err := os.MkdirAll(instanceDir, 0700); err != nil {
@@ -392,7 +394,7 @@ func makeAccountManager(conf *Config) (*accounts.Manager, string, error) {
 	var ephemeral string
 	if keydir == "" {
 		// There is no datadir.
-		keydir, err = ioutil.TempDir("", "go-Aurora-keystore")
+		keydir, err = ioutil.TempDir("", "go-dacchain-keystore")
 		ephemeral = keydir
 	}
 

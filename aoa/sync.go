@@ -1,27 +1,27 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package aoa
 
 import (
-	"github.com/Aurorachain/go-aoa/aoa/downloader"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/core/types"
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/p2p/discover"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/aoa/downloader"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/p2p/discover"
 	"math/big"
 	"math/rand"
 	"sync/atomic"
@@ -86,7 +86,7 @@ func (pm *ProtocolManager) txsyncLoop() {
 			delete(pending, s.p.ID())
 		}
 		// Send the pack in the background.
-		log.Debug("Sending batch of transactions", "count", len(pack.txs), "bytes", size)
+		s.p.Log().Trace("Sending batch of transactions", "count", len(pack.txs), "bytes", size)
 		sending = true
 		go func() { done <- pack.p.SendTransactions(pack.txs) }()
 	}
@@ -118,7 +118,7 @@ func (pm *ProtocolManager) txsyncLoop() {
 			sending = false
 			// Stop tracking peers that cause send failures.
 			if err != nil {
-				log.Info("Transaction send failed", "err", err)
+				pack.p.Log().Debug("Transaction send failed", "err", err)
 				delete(pending, pack.p.ID())
 			}
 			// Schedule the next send.
@@ -174,14 +174,14 @@ func (pm *ProtocolManager) synchroniseWithHigherPeers(peer *peer, block *types.B
 	// genesis(0) difficult is 1,so block parent difficult is block number
 	peerId := block.Number().Int64()
 	pHead, pTd := peer.Head()
-	log.Info("ProtocolManager|synchroniseWithBestPeers start ", " currentPeerTD=", td.Uint64(), " remotePeerTD=", peerId, " peerId=", peer.id)
+	log.Info("ProtocolManager|synchroniseWithBestPeers start", "currentPeerTD", td.Uint64(), "remotePeerTD", peerId, "peerId", peer.id)
 	if peerId-td.Int64() <= 0 {
 		return
 	}
 	peer.SetHead(block.ParentHash(), big.NewInt(peerId))
 	mode := downloader.FullSync
 	err := pm.downloader.Synchronise(peer.id, pHead, pTd, mode)
-	log.Info("ProtocolManager|synchroniseWithBestPeers end ", " currentPeerTD=", td.Uint64(), " remotePeerTD=", pTd.Uint64(), " err:", err)
+	log.Info("ProtocolManager|synchroniseWithBestPeers end", "currentPeerTD", td.Uint64(), "remotePeerTD", pTd.Uint64(), "err", err)
 }
 
 // synchronise tries to sync up our local block chain with a remote peer.
@@ -197,7 +197,7 @@ func (pm *ProtocolManager) synchronise(peer *peer) {
 	if pTd.Cmp(td) <= 0 {
 		return
 	}
-	log.Info("ProtocolManager|synchronise start ", " currentPeerTD=", td.Uint64(), " remotePeerTD=", pTd.Uint64())
+	log.Info("ProtocolManager|synchronise start", "currentPeerTD", td.Uint64(), "remotePeerTD", pTd.Uint64())
 	// Otherwise try to sync with the downloader
 	mode := downloader.FullSync
 	if atomic.LoadUint32(&pm.fastSync) == 1 {

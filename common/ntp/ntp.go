@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package ntp
 
@@ -21,12 +21,12 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"net"
-	"time"
 	"golang.org/x/net/ipv4"
+	"net"
 	"os/exec"
 	"strconv"
 	"syscall"
+	"time"
 )
 
 // The LeapIndicator is used to warn if a leap second should be inserted
@@ -564,9 +564,7 @@ func toInterval(t int8) time.Duration {
 	}
 }
 
-// 设置Ntp时间到当前系统
 func SetNtpToLocal(ntpTimeStamp int64) error {
-	// 转换时间戳
 	l, _ := strconv.ParseInt(fmt.Sprintf("%s", ntpTimeStamp), 10, 64)
 	times := syscall.NsecToTimeval(l)
 	//if err := syscall.Settimeofday(&times); err != nil {

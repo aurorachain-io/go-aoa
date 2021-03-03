@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package common
 
@@ -23,8 +23,8 @@ import (
 	"math/rand"
 	"reflect"
 
-	"github.com/Aurorachain/go-aoa/common/hexutil"
-	"golang.org/x/crypto/sha3"
+	"github.com/Aurorachain-io/go-aoa/common/hexutil"
+	"github.com/Aurorachain-io/go-aoa/crypto/sha3"
 	"strings"
 )
 
@@ -34,8 +34,9 @@ const (
 )
 
 var (
-	hashT    = reflect.TypeOf(Hash{})
-	addressT = reflect.TypeOf(Address{})
+	hashT         = reflect.TypeOf(Hash{})
+	addressT      = reflect.TypeOf(Address{})
+	AddressPrefix = "AOA"
 )
 
 // Hash represents the 32 byte Keccak256 hash of arbitrary data.
@@ -136,7 +137,7 @@ func (h UnprefixedHash) MarshalText() ([]byte, error) {
 
 /////////// Address
 
-// Address represents the 20 byte address of an Aurora account.
+// Address represents the 20 byte address of an eminer-pro account.
 type Address [AddressLength]byte
 
 func BytesToAddress(b []byte) Address {
@@ -148,13 +149,13 @@ func StringToAddress(s string) Address { return BytesToAddress([]byte(s)) }
 func BigToAddress(b *big.Int) Address  { return BytesToAddress(b.Bytes()) }
 func HexToAddress(s string) Address {
 	if hasAOAPrefix(s) {
-		return BytesToAddress(FromAoAHex(s))
+		return BytesToAddress(FromAoaHex(s))
 	}
 	return BytesToAddress(FromHex(s))
 }
 
 // IsHexAddress verifies whether a string can represent a valid hex-encoded
-// Aurora address or not.
+// eminer-pro address or not.
 func IsHexAddress(s string) bool {
 	if hasHexPrefix(s) {
 		s = s[2:]
@@ -162,7 +163,7 @@ func IsHexAddress(s string) bool {
 	return len(s) == 2*AddressLength && isHex(s)
 }
 
-func IsAOAAddress(s string) bool {
+func IsAoaAddress(s string) bool {
 	if hasAOAPrefix(s) {
 		s = s[3:]
 	}
@@ -178,7 +179,7 @@ func (a Address) Hash() Hash    { return BytesToHash(a[:]) }
 // Hex returns an EIP55-compliant hex string representation of the address.
 func (a Address) Hex() string {
 	//unchecksummed := hex.EncodeToString(a[:])
-	//sha := sha3.NewLegacyKeccak256()
+	//sha := sha3.NewKeccak256()
 	//sha.Write([]byte(unchecksummed))
 	//hash := sha.Sum(nil)
 	//
@@ -196,7 +197,7 @@ func (a Address) Hex() string {
 	//}
 	//return "0x" + string(result)
 	unchecksummed := hex.EncodeToString(a[:])
-	sha := sha3.NewLegacyKeccak256()
+	sha := sha3.NewKeccak256()
 	sha.Write([]byte(unchecksummed))
 	hash := sha.Sum(nil)
 
@@ -212,12 +213,12 @@ func (a Address) Hex() string {
 			result[i] -= 32
 		}
 	}
-	return "AOA" + strings.ToLower(string(result))
+	return AddressPrefix + strings.ToLower(string(result))
 }
 
 func (a Address) AoaHex() string {
 	unchecksummed := hex.EncodeToString(a[:])
-	sha := sha3.NewLegacyKeccak256()
+	sha := sha3.NewKeccak256()
 	sha.Write([]byte(unchecksummed))
 	hash := sha.Sum(nil)
 
@@ -233,7 +234,7 @@ func (a Address) AoaHex() string {
 			result[i] -= 32
 		}
 	}
-	return "AOA" + strings.ToLower(string(result))
+	return AddressPrefix + strings.ToLower(string(result))
 }
 
 // String implements the stringer interface and is used also by the logger.
@@ -267,7 +268,7 @@ func (a *Address) Set(other Address) {
 
 // MarshalText returns the hex representation of a.
 func (a Address) MarshalText() ([]byte, error) {
-	return hexutil.Bytes(a[:]).MarshalAoAText()
+	return hexutil.Bytes(a[:]).MarshalAoaText()
 }
 
 // UnmarshalText parses a hash in hex syntax.

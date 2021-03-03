@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 // +build darwin,!ios freebsd linux,!arm64 netbsd solaris
 
@@ -21,7 +21,7 @@ package keystore
 import (
 	"time"
 
-	"github.com/Aurorachain/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/log"
 	"github.com/rjeczalik/notify"
 )
 
@@ -63,14 +63,15 @@ func (w *watcher) loop() {
 		w.starting = false
 		w.ac.mu.Unlock()
 	}()
+	logger := log.New("path", w.ac.keydir)
 
 	if err := notify.Watch(w.ac.keydir, w.ev, notify.All); err != nil {
-		log.Debugf("Failed to watch keystore folder, err=%v", err)
+		logger.Trace("Failed to watch keystore folder", "err", err)
 		return
 	}
 	defer notify.Stop(w.ev)
-	log.Debug("Started watching keystore folder")
-	defer log.Debug("Stopped watching keystore folder")
+	logger.Trace("Started watching keystore folder")
+	defer logger.Trace("Stopped watching keystore folder")
 
 	w.ac.mu.Lock()
 	w.running = true

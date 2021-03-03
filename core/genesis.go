@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package core
 
@@ -22,29 +22,29 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/Aurorachain/go-aoa/aoadb"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/common/hexutil"
-	"github.com/Aurorachain/go-aoa/common/math"
-	"github.com/Aurorachain/go-aoa/consensus/delegatestate"
-	"github.com/Aurorachain/go-aoa/core/state"
-	"github.com/Aurorachain/go-aoa/core/types"
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/params"
-	"github.com/Aurorachain/go-aoa/rlp"
-	"github.com/Aurorachain/go-aoa/util"
-	"golang.org/x/crypto/sha3"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/common/hexutil"
+	"github.com/Aurorachain-io/go-aoa/common/math"
+	"github.com/Aurorachain-io/go-aoa/consensus/delegatestate"
+	"github.com/Aurorachain-io/go-aoa/core/state"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/crypto/sha3"
+	"github.com/Aurorachain-io/go-aoa/aoadb"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/params"
+	"github.com/Aurorachain-io/go-aoa/rlp"
+	"github.com/Aurorachain-io/go-aoa/util"
 	"math/big"
 	"strings"
 )
 
 //go:generate gencodec -type Genesis -field-override genesisSpecMarshaling -out gen_genesis.go
 //go:generate gencodec -type GenesisAccount -field-override genesisAccountMarshaling -out gen_genesis_account.go
-//go:generate go run genMkAgentsFile.go -number 6 -password password -keystore-dir .
+//go:generate go run genMkAgentsFile.go -number 6 -password yujian -keystore-dir .
 
 var errGenesisNoConfig = errors.New("genesis has no chain configuration")
 
-const genesisExtra = "AOA genesis"
+const genesisExtra = "EM genesis"
 
 // Genesis specifies the header fields, state of a genesis block. It also defines hard
 // fork switch-over blocks through the chain configuration.
@@ -153,7 +153,7 @@ func (e *GenesisMismatchError) Error() string {
 // The returned chain configuration is never nil.
 func SetupGenesisBlock(db aoadb.Database, genesis *Genesis) (*params.ChainConfig, common.Hash, *Genesis, error) {
 	if genesis != nil && genesis.Config == nil {
-		return params.AllAuroraProtocolChanges, common.Hash{}, genesis, errGenesisNoConfig
+		return params.AllDacchainProtocolChanges, common.Hash{}, genesis, errGenesisNoConfig
 	}
 
 	// Just commit the new block if there is no stored genesis block.
@@ -217,7 +217,7 @@ func (g *Genesis) configOrDefault(ghash common.Hash) *params.ChainConfig {
 	case ghash == params.TestnetGenesisHash:
 		return params.TestnetChainConfig
 	default:
-		return params.AllAuroraProtocolChanges
+		return params.AllDacchainProtocolChanges
 	}
 }
 
@@ -252,7 +252,7 @@ func (g *Genesis) ToBlock() (*types.Block, *state.StateDB, *delegatestate.Delega
 	shuffleList := types.ShuffleList{ShuffleDels: shuffleNewRound}
 	rlpShufflehash := rlpHash(shuffleList)
 
-	encodeBytes := hexutil.Encode([]byte("AOA official"))
+	encodeBytes := hexutil.Encode([]byte("EM official"))
 	agentName := hexutil.MustDecode(encodeBytes)
 
 	head := &types.Header{
@@ -308,7 +308,7 @@ func (g *Genesis) Commit(db aoadb.Database) (*types.Block, error) {
 	}
 	config := g.Config
 	if config == nil {
-		config = params.AllAuroraProtocolChanges
+		config = params.AllDacchainProtocolChanges
 	}
 	return block, WriteChainConfig(db, block.Hash(), config)
 }
@@ -329,7 +329,7 @@ func GenesisBlockForTesting(db aoadb.Database, addr common.Address, balance *big
 	return g.MustCommit(db)
 }
 
-// DefaultGenesisBlock returns the Aurora main net genesis block.
+// DefaultGenesisBlock returns the eminer-pro main net genesis block.
 func DefaultGenesisBlock() *Genesis {
 	encodeBytes := hexutil.Encode([]byte(genesisExtra))
 	agentName := hexutil.MustDecode(encodeBytes)
@@ -357,18 +357,29 @@ func DefaultTestnetGenesisBlock() *Genesis {
 	}
 }
 
-// DeveloperGenesisBlock returns the 'aoa --dev' genesis block. Note, this must
+// DefaultRinkebyGenesisBlock returns the Rinkeby network genesis block.
+func DefaultRinkebyGenesisBlock() *Genesis {
+	encodeBytes := hexutil.Encode([]byte(genesisExtra))
+	agentName := hexutil.MustDecode(encodeBytes)
+	return &Genesis{
+		Config:    params.AllDacchainProtocolChanges,
+		Timestamp: 1492009146,
+		ExtraData: agentName,
+		GasLimit:  4700000,
+		Alloc:     decodePrealloc(rinkebyAllocData),
+	}
+}
+
+// DeveloperGenesisBlock returns the 'em --dev' genesis block. Note, this must
 // be seeded with the
-func DeveloperGenesisBlock(developers []common.Address) *Genesis {
+func DeveloperGenesisBlock(developer common.Address) *Genesis {
 	// Override the default period to the user requested one
-	config := *params.AllAuroraProtocolChanges
+	config := *params.AllDacchainProtocolChanges
 	encodeBytes := hexutil.Encode([]byte(genesisExtra))
 	agentName := hexutil.MustDecode(encodeBytes)
 	var geneAgents GenesisAgents
 	candidates := make([]types.Candidate, 0)
-	for _, developer := range developers {
-		candidates = append(candidates, types.Candidate{Address: strings.ToLower(developer.Hex()), Vote: 1, Nickname: developer.Hex(), RegisterTime: uint64(11111112111)})
-	}
+	candidates = append(candidates, types.Candidate{Address: strings.ToLower(developer.Hex()), Vote: 1, Nickname: developer.Hex(), RegisterTime: uint64(11111112111)})
 	geneAgents = append(geneAgents, candidates...)
 	// Assemble and return the genesis with the precompiles and faucet pre-funded
 	return &Genesis{
@@ -376,9 +387,7 @@ func DeveloperGenesisBlock(developers []common.Address) *Genesis {
 		ExtraData: agentName,
 		GasLimit:  250000000,
 		Alloc: map[common.Address]GenesisAccount{
-			developers[0]: {Balance: new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 256), big.NewInt(9))},
-			developers[1]: {Balance: new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 256), big.NewInt(9))},
-			developers[2]: {Balance: new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 256), big.NewInt(9))},
+			developer: {Balance: new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 256), big.NewInt(9))},
 		},
 		Agents:    geneAgents,
 		Timestamp: 1492009146,
@@ -406,7 +415,7 @@ func decodeGenesisAgents(data string) GenesisAgents {
 }
 
 func rlpHash(x interface{}) (h common.Hash) {
-	hw := sha3.NewLegacyKeccak256()
+	hw := sha3.NewKeccak256()
 	rlp.Encode(hw, x)
 	hw.Sum(h[:0])
 	return h

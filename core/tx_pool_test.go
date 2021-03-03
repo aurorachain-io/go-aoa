@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package core
 
@@ -21,12 +21,12 @@ import (
 	"container/heap"
 	"encoding/json"
 	"fmt"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/common/hexutil"
-	"github.com/Aurorachain/go-aoa/core/types"
-	"github.com/Aurorachain/go-aoa/crypto"
-	"github.com/Aurorachain/go-aoa/metrics"
-	"github.com/Aurorachain/go-aoa/rlp"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/common/hexutil"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/crypto"
+	"github.com/Aurorachain-io/go-aoa/metrics"
+	"github.com/Aurorachain-io/go-aoa/rlp"
 	"io"
 	"io/ioutil"
 	"math/big"
@@ -90,15 +90,15 @@ func TestNewTxPool(t *testing.T) {
 	//}
 
 	var trx trx
-	from := []string{"AOA0ac71830f52bda2046583d7cb2df07855922f74a",
-		"AOA793fae82c7a0e21fcd69e94b2d7403257422a255",
-		"AOA105376386c77adcf23df75505fc27fcb626ad611",
-		"AOAb06e33bc647f40d0ba3bddb471f9af8f9e2c6871",
-		"AOAa6a3e1d6ecea6bf644aefa684c15d7033876c5fe",
-		"AOAbc8276fca9a6be4967ea854bdee9c9aec0595c12",
-		"AOA4aef0f9045b5adc395260d8bd04b727471aa59f1",
-		"AOA8f20cc9d5edf64f3b8e7d25830f1599628465b0e",
-		"AOA3b106d19b75d52c9d9e1391039a7df7a2d585733"}
+	from := []string{"EM0ac71830f52bda2046583d7cb2df07855922f74a",
+		"EM793fae82c7a0e21fcd69e94b2d7403257422a255",
+		"EM105376386c77adcf23df75505fc27fcb626ad611",
+		"EMb06e33bc647f40d0ba3bddb471f9af8f9e2c6871",
+		"EMa6a3e1d6ecea6bf644aefa684c15d7033876c5fe",
+		"EMbc8276fca9a6be4967ea854bdee9c9aec0595c12",
+		"EM4aef0f9045b5adc395260d8bd04b727471aa59f1",
+		"EM8f20cc9d5edf64f3b8e7d25830f1599628465b0e",
+		"EM3b106d19b75d52c9d9e1391039a7df7a2d585733"}
 
 	start := time.Now()
 	count := 0
@@ -112,12 +112,12 @@ func TestNewTxPool(t *testing.T) {
 					} else {
 						trx.To = txTo
 					}
-					value := 10000000000000000 // 1 AOA
+					value := 10000000000000000 // 1 DAC
 					value += count
 					trx.Value = fmt.Sprintf("%#x", value)
 					trx.Action = 0
 					wg.Add(1)
-					go aoaSendTransacion(1, trx)
+					go dacSendTransacion(1, trx)
 					count++
 				}
 			}
@@ -128,10 +128,10 @@ func TestNewTxPool(t *testing.T) {
 		fmt.Println("transaction a second", useTime/float64(count))
 	}
 }
-func aoaSendTransacion(id int, trx trx) {
+func dacSendTransacion(id int, trx trx) {
 	reqMap := make(map[string]interface{})
 	reqMap["jsonrpc"] = jsonrpc
-	reqMap["method"] = "aoa_sendTransaction"
+	reqMap["method"] = "dac_sendTransaction"
 	reqMap["id"] = id
 	params := make([]interface{}, 1)
 	params[0] = trx
@@ -141,7 +141,7 @@ func aoaSendTransacion(id int, trx trx) {
 		fmt.Println(result)
 	} else {
 		//time.Sleep(10 * time.Second)
-		fmt.Errorf("error:%v", err)
+		fmt.Printf("error: %v", err)
 	}
 	wg.Done()
 	return
@@ -183,7 +183,6 @@ func TestContractCallBench(t *testing.T) {
 			copy(datas[0:4], sha3FuncSig[:4])
 
 			var k common.Hash = common.BigToHash(kbase.Add(kbase, new(big.Int).SetInt64(x)))
-			//让 v == k ，直接copy到结果
 			copy(datas[4:36], k.Bytes())
 			copy(datas[36:], k.Bytes())
 			data := hexutil.Encode(datas)
@@ -191,11 +190,11 @@ func TestContractCallBench(t *testing.T) {
 
 			var trx fulltrx
 			trx.From = "0xdefee9edbf3a6da3a5bb96d006b86ac884d14f64"
-			trx.To = "0x108c73bd4d3e2936de4125ad201bd89b47135929" //合约地址
+			trx.To = "0x108c73bd4d3e2936de4125ad201bd89b47135929"
 			trx.Gas = "0x1000000"
 
 			trx.Data = data
-			str, err := AoaSendTransaction(int(x), trx)
+			str, err := DacSendTransaction(int(x), trx)
 			fmt.Printf("str: %s \tErr: %v \n", str, err)
 			wg.Done()
 		}(int64(i))
@@ -204,10 +203,10 @@ func TestContractCallBench(t *testing.T) {
 	fmt.Println("All Done.")
 }
 
-func AoaSendTransaction(id int, trx fulltrx) (string, error) {
+func DacSendTransaction(id int, trx fulltrx) (string, error) {
 	reqMap := make(map[string]interface{})
 	reqMap["jsonrpc"] = jsonrpc
-	reqMap["method"] = "aoa_sendTransaction"
+	reqMap["method"] = "dac_sendTransaction"
 	reqMap["id"] = id
 	params := make([]interface{}, 1)
 	params[0] = trx
@@ -245,7 +244,7 @@ func commonRequest(requestMap map[string]interface{}) (string, error) {
 }
 
 func TestCountBlockVote(t *testing.T) {
-	result, err := ioutil.ReadFile("D:\\aoa-test.txt")
+	result, err := ioutil.ReadFile("D:\\em-test.txt")
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -275,7 +274,7 @@ func TestDeleteBody(t *testing.T) {
 		normal := 0
 		contract := 0
 		b := fmt.Sprintf("%#x", startBlock)
-		res, err := aoaGetBlock(1, b)
+		res, err := dacGetBlock(1, b)
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -297,7 +296,7 @@ func TestDeleteBody(t *testing.T) {
 		}
 		for _, tx := range transactions {
 			transaction := tx.(string)
-			r, err := aoaGetTransaction(1, transaction)
+			r, err := dacGetTransaction(1, transaction)
 			if err != nil {
 				fmt.Println(err)
 				return
@@ -321,10 +320,10 @@ func TestDeleteBody(t *testing.T) {
 	}
 }
 
-func aoaGetBlock(id int, blockNum string) (string, error) {
+func dacGetBlock(id int, blockNum string) (string, error) {
 	reqMap := make(map[string]interface{})
 	reqMap["jsonrpc"] = jsonrpc
-	reqMap["method"] = "aoa_getBlockByNumber"
+	reqMap["method"] = "dac_getBlockByNumber"
 	reqMap["id"] = id
 	params := make([]interface{}, 2)
 	params[0] = blockNum
@@ -333,10 +332,10 @@ func aoaGetBlock(id int, blockNum string) (string, error) {
 	return commonRequest(reqMap)
 }
 
-func aoaGetTransaction(id int, txHash string) (string, error) {
+func dacGetTransaction(id int, txHash string) (string, error) {
 	reqMap := make(map[string]interface{})
 	reqMap["jsonrpc"] = jsonrpc
-	reqMap["method"] = "aoa_getTransactionByHash"
+	reqMap["method"] = "dac_getTransactionByHash"
 	reqMap["id"] = id
 	params := make([]interface{}, 1)
 	params[0] = txHash
@@ -380,16 +379,16 @@ func TestAddresssByHeartbeat_Len(t *testing.T) {
 }
 
 func TestGetTransaction(t *testing.T) {
-	s := "aoalxyz111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111黎"
+	s := "daclxyz111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111"
 	fmt.Println(len(s))
 }
 
 func TestAddresssByHeartbeat_Less(t *testing.T) {
 	a := "0x4dc92f64342f6a77e30c24d6008637bdfe0cd8526313907c65fbdad4e0f46741"
-	x := strings.Replace(a, "0x", "AOA", -1)
+	x := strings.Replace(a, "0x", "DAC", -1)
 	fmt.Println(x)
-	b := "AOA4dc92f64342f6a77e30c24d6008637bdfe0cd8526313907c65fbdad4e0f46741"
-	c := strings.Replace(b, "0x", "AOA", -1)
+	b := "DAC4dc92f64342f6a77e30c24d6008637bdfe0cd8526313907c65fbdad4e0f46741"
+	c := strings.Replace(b, "0x", "DAC", -1)
 	fmt.Println(c)
 }
 

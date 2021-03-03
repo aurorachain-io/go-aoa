@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package delegatestate
 
@@ -20,9 +20,9 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"github.com/Aurorachain/go-aoa/aoadb"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/emdb"
 	"math"
 	"math/big"
 	"math/rand"
@@ -34,7 +34,7 @@ import (
 )
 
 func TestUpdateLeaks(t *testing.T) {
-	db, err := aoadb.NewMemDatabase()
+	db, err := emdb.NewMemDatabase()
 	if err != nil {
 		t.Fatalf("create db err:%v\n", err)
 	}
@@ -60,7 +60,7 @@ func TestUpdateLeaks(t *testing.T) {
 }
 
 func TestDelegateDB_CommitTo(t *testing.T) {
-	db, _ := aoadb.NewMemDatabase()
+	db, _ := emdb.NewMemDatabase()
 	delegateDb, _ := New(common.Hash{}, NewDatabase(db))
 	address1 := common.Address{1}
 	root1 := delegateDb.IntermediateRoot(false)
@@ -104,7 +104,7 @@ func TestDelegateDB_CommitTo(t *testing.T) {
 }
 
 func TestDelegateDB_Suicide(t *testing.T) {
-	db, _ := aoadb.NewMemDatabase()
+	db, _ := emdb.NewMemDatabase()
 	delegateDb, _ := New(common.Hash{}, NewDatabase(db))
 	address1 := common.Address{1}
 
@@ -156,8 +156,8 @@ func TestDelegateDB_Suicide(t *testing.T) {
 }
 
 func TestIntermediateLeaks(t *testing.T) {
-	trDb, _ := aoadb.NewMemDatabase()
-	fiDb, _ := aoadb.NewMemDatabase()
+	trDb, _ := emdb.NewMemDatabase()
+	fiDb, _ := emdb.NewMemDatabase()
 	trDelegate, _ := New(common.Hash{}, NewDatabase(trDb))
 	fiDelegate, _ := New(common.Hash{}, NewDatabase(fiDb))
 
@@ -211,7 +211,7 @@ func TestIntermediateLeaks(t *testing.T) {
 // TestCopy tests theat copying a delegatestate object indeed makes the original and
 // the copy independent of each other.
 func TestCopy(t *testing.T) {
-	mem, _ := aoadb.NewMemDatabase()
+	mem, _ := emdb.NewMemDatabase()
 	orig, _ := New(common.Hash{}, NewDatabase(mem))
 
 	for i := byte(0); i < 255; i++ {
@@ -275,7 +275,7 @@ func TestSnapshotRandom(t *testing.T) {
 }
 
 func TestCreateDelegates(t *testing.T) {
-	db, err := aoadb.NewMemDatabase()
+	db, err := emdb.NewMemDatabase()
 	if err != nil {
 		t.Fatalf("create db err:%v\n", err)
 	}
@@ -284,12 +284,12 @@ func TestCreateDelegates(t *testing.T) {
 		t.Fatalf("create delegateDB err:%v\n", err)
 	}
 	snapshot := delegatedb.Snapshot()
-	d1 := delegatedb.GetOrNewStateObject(common.HexToAddress("AOA71af77518da8ee1e152068ea4727d1041d71b813"), "node-1", 1492009146)
-	d2 := delegatedb.GetOrNewStateObject(common.HexToAddress("AOAa51bac4fe71640157f29317c2fe233c26b71c6c8"), "node-1", 1492009146)
-	d3 := delegatedb.GetOrNewStateObject(common.HexToAddress("AOAb0b81949b3b6d6ff926336d6227cec04ceca88b2"), "node-1", 1492009146)
-	d4 := delegatedb.GetOrNewStateObject(common.HexToAddress("AOA4d8bfcdbc0192e3a2e189ed133ee4e98e4e381f8"), "node-1", 1492009146)
-	d5 := delegatedb.GetOrNewStateObject(common.HexToAddress("AOAe92c157278abafa68e3547d4d5bd3ed4a5afccb3"), "node-1", 1492009146)
-	d6 := delegatedb.GetOrNewStateObject(common.HexToAddress("AOA5ac2ff101f11ae3c2b7093e25f5300018252c2a3"), "node-1", 1492009146)
+	d1 := delegatedb.GetOrNewStateObject(common.HexToAddress("EM71af77518da8ee1e152068ea4727d1041d71b813"), "node-1", 1492009146)
+	d2 := delegatedb.GetOrNewStateObject(common.HexToAddress("EMa51bac4fe71640157f29317c2fe233c26b71c6c8"), "node-1", 1492009146)
+	d3 := delegatedb.GetOrNewStateObject(common.HexToAddress("EMb0b81949b3b6d6ff926336d6227cec04ceca88b2"), "node-1", 1492009146)
+	d4 := delegatedb.GetOrNewStateObject(common.HexToAddress("EM4d8bfcdbc0192e3a2e189ed133ee4e98e4e381f8"), "node-1", 1492009146)
+	d5 := delegatedb.GetOrNewStateObject(common.HexToAddress("EMe92c157278abafa68e3547d4d5bd3ed4a5afccb3"), "node-1", 1492009146)
+	d6 := delegatedb.GetOrNewStateObject(common.HexToAddress("EM5ac2ff101f11ae3c2b7093e25f5300018252c2a3"), "node-1", 1492009146)
 
 	d1.AddVote(big.NewInt(1))
 	d2.AddVote(big.NewInt(1))
@@ -335,7 +335,7 @@ type testAction struct {
 func (test *snapshotTest) run() bool {
 	// Run all actions and create snapshots.
 	var (
-		db, _        = aoadb.NewMemDatabase()
+		db, _        = emdb.NewMemDatabase()
 		state, _     = New(common.Hash{}, NewDatabase(db))
 		snapshotRevs = make([]int, len(test.snapshots))
 		sindex       = 0

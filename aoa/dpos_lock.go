@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package aoa
 
@@ -21,14 +21,14 @@ import (
 	"crypto/ecdsa"
 	"errors"
 	"fmt"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/core/types"
-	"github.com/Aurorachain/go-aoa/crypto"
-	"github.com/Aurorachain/go-aoa/crypto/secp256k1"
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/rlp"
-	"github.com/Aurorachain/go-aoa/task"
-	"golang.org/x/crypto/sha3"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/crypto"
+	"github.com/Aurorachain-io/go-aoa/crypto/secp256k1"
+	"github.com/Aurorachain-io/go-aoa/crypto/sha3"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/rlp"
+	"github.com/Aurorachain-io/go-aoa/task"
 	"sort"
 	"strings"
 	"sync"
@@ -105,7 +105,7 @@ func newBlockLockManager(insertBlockFunc func(blocks types.Blocks) (int, error),
 
 func (l *lockManager) addPendingBlock(b *types.Block) error {
 	startTime := time.Now().Nanosecond()
-	// log.Info("lockManager|add pending block start", "blockNumber", b.Number().Int64())
+	log.Debug("lockManager|add pending block start", "blockNumber", b.Number().Int64())
 	if l.isLock() {
 		log.Error("lockManager|add pending block fail|is locking", "blockNumber", b.Number().Int64())
 		return pendingBlockExist
@@ -127,7 +127,7 @@ func (l *lockManager) addPendingBlock(b *types.Block) error {
 	expireTime := time.Unix(expireTimeUnix, 0)
 	id := l.tw.AddTimer(expireTime, -1, blockTimeOutTask)
 	l.taskIds.Store(b.Hash().Hex(), id)
-	// log.Info("lockManager|add pending block success", "blockNumber", b.Number().Int64(), "coinbase", b.Coinbase().Hex(), "expireTime", expireTime, "costTime(ns)", time.Now().Nanosecond()-startTime)
+	log.Info("lockManager|add pending block success", "blockNumber", b.Number().Int64(), "coinbase", b.Coinbase().Hex(), "expireTime", expireTime, "costTime(ns)", time.Now().Nanosecond()-startTime)
 	return nil
 }
 
@@ -206,7 +206,7 @@ func (l *lockManager) dealBlockSign(storeSign *storeSigns) {
 		signMap = newBlockSignMap()
 		signMap.put(address, types.VoteSign{Sign: storeSign.sign, VoteAction: storeSign.action})
 		l.signMap.put(blockHashHex, signMap)
-		log.Info("lockBlockManager|add sign success", "blockHash", blockHashHex, "signLength", len(signMap.data), "approveVoteCount", signMap.countApproveVote())
+		log.Debug("lockBlockManager|add sign success", "blockHash", blockHashHex, "signLength", len(signMap.data), "approveVoteCount", signMap.countApproveVote())
 		timeOutTask := &task.OnTimeOut{
 			Callback: func(ctx context.Context) {
 				l.signMap.delete(blockHashHex)
@@ -223,7 +223,7 @@ func (l *lockManager) dealBlockSign(storeSign *storeSigns) {
 		if !signMap.exist(address) {
 			signMap.put(address, types.VoteSign{Sign: storeSign.sign, VoteAction: storeSign.action})
 			// l.signMap.put(blockHashHex, signMap)
-			log.Info("lockBlockManager|add sign success", "blockHash", blockHashHex, "signLength", len(signMap.data), "approveVoteCount", signMap.approveVotes)
+			log.Debug("lockBlockManager|add sign success", "blockHash", blockHashHex, "signLength", len(signMap.data), "approveVoteCount", signMap.approveVotes)
 		}
 
 	}
@@ -240,13 +240,12 @@ func (l *lockManager) dealBlockSign(storeSign *storeSigns) {
 				}
 			}
 		}
-		// 执行广播的callback
 		go l.blockGenerateCallback(signs, blockHashHex)
 	}
 }
 
 func (l *lockManager) blockGenerateCallback(signs []types.VoteSign, blockHash string) {
-	log.Info("lockBlockManager|blockGenerateCallback|start", "blockHash", blockHash, "lenSign", len(signs))
+	log.Debug("lockBlockManager|blockGenerateCallback|start", "blockHash", blockHash, "lenSign", len(signs))
 	pendingBlock := l.getPendingBlock()
 	// go l.blockSignCallback(signs, blockHash)
 	if pendingBlock != nil {
@@ -274,7 +273,7 @@ func (l *lockManager) blockSignCallback(signs []types.VoteSign, blockHash string
 		sort.Sort(voteSignSlice(signs))
 	}
 	l.signaturesChan <- &signaturesBlockMsg{Signatures: signs, BlockHash: bHash.Bytes()}
-	log.Info("lockManager|blockSignCallback|success", "blockHash", bHash.Hex())
+	log.Debug("lockManager|blockSignCallback|success", "blockHash", bHash.Hex())
 }
 
 func (l *lockManager) newBlockCallback(signs []types.VoteSign, block *types.Block) error {
@@ -293,7 +292,7 @@ func (l *lockManager) newBlockCallback(signs []types.VoteSign, block *types.Bloc
 	blocks = append(blocks, block)
 	result, err := l.insertBlockFunc(blocks)
 	log.Info("lockManager|newBlockCallback|insertBlockFunc", "blockNumber", block.NumberU64(), "result", result, "err", err)
-	log.Info("lockManager|newBlockCallback|broadcast block start", "blockNumber", block.NumberU64(), "coinbase", block.Coinbase().Hex())
+	log.Debug("lockManager|newBlockCallback|broadcast block start", "blockNumber", block.NumberU64(), "coinbase", block.Coinbase().Hex())
 	l.broadcastBlockChan <- block
 	return nil
 

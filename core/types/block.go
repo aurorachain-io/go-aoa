@@ -1,29 +1,29 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
-// Package walletType contains data walletType related to Aurora consensus.
+// Package walletType contains data walletType related to eminer-pro consensus.
 package types
 
 import (
 	"encoding/binary"
 	"fmt"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/common/hexutil"
-	"github.com/Aurorachain/go-aoa/rlp"
-	"golang.org/x/crypto/sha3"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/common/hexutil"
+	"github.com/Aurorachain-io/go-aoa/crypto/sha3"
+	"github.com/Aurorachain-io/go-aoa/rlp"
 	"io"
 	"math/big"
 	"sort"
@@ -65,7 +65,7 @@ func (n *BlockNonce) UnmarshalText(input []byte) error {
 
 //go:generate gencodec -type Header -field-override headerMarshaling -out gen_header_json.go
 
-// Header represents a block header in the Aurora blockchain.
+// Header represents a block header in the eminer-pro blockchain.
 type Header struct {
 	ParentHash common.Hash `json:"parentHash"       gencodec:"required"`
 	// UncleHash    common.Hash    `json:"sha3Uncles"       gencodec:"required"`
@@ -80,12 +80,12 @@ type Header struct {
 	GasUsed  uint64   `json:"gasUsed"          gencodec:"required"`
 	Time     *big.Int `json:"timestamp"        gencodec:"required"`
 	Extra    []byte   `json:"extraData"        gencodec:"required"`
-	// MixDigest    common.Hash    `json:"mixHash"          gencodec:"required"` // pow 相关,可以干掉
-	// Nonce              BlockNonce  `json:"nonce"            gencodec:"required"` // pow 相关,可以干掉
+	// MixDigest    common.Hash    `json:"mixHash"          gencodec:"required"`
+	// Nonce              BlockNonce  `json:"nonce"            gencodec:"required"`
 	AgentName          []byte      `json:"agentName"        gencodec:"required"`
-	DelegateRoot       common.Hash `json:"delegateRoot"     gencodec:"required"`          // delegate root
-	ShuffleHash        common.Hash `json:"shuffleHash"      gencodec:"required"`          // 洗牌的101列表的hash
-	ShuffleBlockNumber *big.Int    `json:"shuffleBlockNumber"        gencodec:"required"` // 洗牌的块高
+	DelegateRoot       common.Hash `json:"delegateRoot"     gencodec:"required"`
+	ShuffleHash        common.Hash `json:"shuffleHash"      gencodec:"required"`
+	ShuffleBlockNumber *big.Int    `json:"shuffleBlockNumber"        gencodec:"required"`
 }
 
 // field type overrides for gencodec
@@ -127,7 +127,7 @@ func (h *Header) HashNoNonce() common.Hash {
 }
 
 func rlpHash(x interface{}) (h common.Hash) {
-	hw := sha3.NewLegacyKeccak256()
+	hw := sha3.NewKeccak256()
 	rlp.Encode(hw, x)
 	hw.Sum(h[:0])
 	return h
@@ -140,7 +140,7 @@ type Body struct {
 	// Uncles       []*Header
 }
 
-// Block represents an entire block in the Aurora blockchain.
+// Block represents an entire block in the eminer-pro blockchain.
 type Block struct {
 	header       *Header
 	transactions Transactions
@@ -153,7 +153,7 @@ type Block struct {
 	// of the chain up to and including the block.
 	td *big.Int
 
-	// These fields are used by package aoa to track
+	// These fields are used by package em to track
 	// inter-peer block relay.
 	ReceivedAt     time.Time
 	ReceivedFrom   interface{}
@@ -168,20 +168,20 @@ func (b *Block) DeprecatedTd() *big.Int {
 	return b.td
 }
 
-// [deprecated by aoa/63]
+// [deprecated by em/63]
 // StorageBlock defines the RLP encoding of a Block stored in the
 // state database. The StorageBlock encoding contains fields that
 // would otherwise need to be recomputed.
 type StorageBlock Block
 
-// "external" block encoding. used for aoa protocol, etc.
+// "external" block encoding. used for em protocol, etc.
 type extblock struct {
 	Header    *Header
 	Txs       []*Transaction
 	Signature []byte
 }
 
-// [deprecated by aoa/63]
+// [deprecated by em/63]
 // "storage" block encoding. used for database.
 type storageblock struct {
 	Header    *Header
@@ -245,7 +245,7 @@ func CopyHeader(h *Header) *Header {
 	return &cpy
 }
 
-// DecodeRLP decodes the Aurora
+// DecodeRLP decodes the eminer-pro
 func (b *Block) DecodeRLP(s *rlp.Stream) error {
 	var eb extblock
 	_, size, _ := s.Kind()
@@ -257,7 +257,7 @@ func (b *Block) DecodeRLP(s *rlp.Stream) error {
 	return nil
 }
 
-// EncodeRLP serializes b into the Aurora RLP block format.
+// EncodeRLP serializes b into the eminer-pro RLP block format.
 func (b *Block) EncodeRLP(w io.Writer) error {
 	return rlp.Encode(w, extblock{
 		Header:    b.header,
@@ -266,7 +266,7 @@ func (b *Block) EncodeRLP(w io.Writer) error {
 	})
 }
 
-// [deprecated by aoa/63]
+// [deprecated by em/63]
 func (b *StorageBlock) DecodeRLP(s *rlp.Stream) error {
 	var sb storageblock
 	if err := s.Decode(&sb); err != nil {

@@ -1,29 +1,29 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package aoa
 
 import (
 	"crypto/ecdsa"
 	"fmt"
-	"github.com/Aurorachain/go-aoa/accounts"
-	"github.com/Aurorachain/go-aoa/accounts/keystore"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/core/types"
-	"github.com/Aurorachain/go-aoa/crypto"
+	"github.com/Aurorachain-io/go-aoa/accounts"
+	"github.com/Aurorachain-io/go-aoa/accounts/keystore"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/crypto"
 	"math/big"
 	"strings"
 	"sync"
@@ -35,7 +35,7 @@ func TestNew(t *testing.T) {
 
 	scryptN := keystore.StandardScryptN
 	scryptP := keystore.StandardScryptP
-	keydir := "/Users/name/aurora-workspace/chain-dev/node3/keystore"
+	keydir := "/Users/yujian/abtc-workspace/chain-dev/node3/keystore"
 	backends := []accounts.Backend{
 		keystore.NewKeyStore(keydir, scryptN, scryptP),
 	}
@@ -49,7 +49,7 @@ func TestNew(t *testing.T) {
 	}
 
 	d := 300 * time.Second
-	password := "name"
+	password := "yujian"
 
 	shuffleDels := make([]types.ShuffleDel, 0, len(addresses))
 	currentShuffleRound := &types.ShuffleList{ShuffleDels: shuffleDels}

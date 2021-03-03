@@ -1,20 +1,20 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of go-aurora.
+// Copyright 2021 The go-aoa Authors
+// This file is part of go-eminer.
 //
-// go-aurora is free software: you can redistribute it and/or modify
+// go-eminer is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// go-aurora is distributed in the hope that it will be useful,
+// go-eminer is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with go-aurora. If not, see <http://www.gnu.org/licenses/>.
+// along with go-eminer. If not, see <http://www.gnu.org/licenses/>.
 
-// Contains the aoa command usage template and generator.
+// Contains the em command usage template and generator.
 
 package main
 
@@ -22,8 +22,8 @@ import (
 	"io"
 	"sort"
 
-	"github.com/Aurorachain/go-aoa/cmd/utils"
-	"github.com/Aurorachain/go-aoa/internal/debug"
+	"github.com/Aurorachain-io/go-aoa/cmd/utils"
+	"github.com/Aurorachain-io/go-aoa/internal/debug"
 	"gopkg.in/urfave/cli.v1"
 	"strings"
 )
@@ -32,7 +32,7 @@ import (
 var AppHelpTemplate = `NAME:
    {{.App.Name}} - {{.App.Usage}}
 
-   Copyright 2013-2017 The go-aurora Authors
+   Copyright 2013-2017 The go-eminer Authors
 
 USAGE:
    {{.App.HelpName}} [options]{{if .App.Commands}} command [command options]{{end}} {{if .App.ArgsUsage}}{{.App.ArgsUsage}}{{else}}[arguments...]{{end}}
@@ -64,7 +64,7 @@ type flagGroup struct {
 // AppHelpFlagGroups is the application flags, grouped by functionality.
 var AppHelpFlagGroups = []flagGroup{
 	{
-		Name: "aurora",
+		Name: "eminer",
 		Flags: []cli.Flag{
 			configFileFlag,
 			utils.DataDirFlag,
@@ -169,7 +169,7 @@ var AppHelpFlagGroups = []flagGroup{
 		Flags: []cli.Flag{
 			utils.MiningEnabledFlag,
 			utils.MinerThreadsFlag,
-			utils.AurorabaseFlag,
+			utils.AoachainbaseFlag,
 			utils.TargetGasLimitFlag,
 			utils.GasPriceFlag,
 			utils.ExtraDataFlag,
@@ -286,7 +286,7 @@ func init() {
 			}
 			// Render out custom usage screen
 			originalHelpPrinter(w, tmpl, helpData{data, AppHelpFlagGroups})
-		} else if tmpl == utils.CommandHelpTemplate {
+		} else if tmpl == utils.CommandHelpTaoaplate {
 			// Iterate over all command specific flags and categorize them
 			categorized := make(map[string][]cli.Flag)
 			for _, flag := range data.(cli.Command).Flags {

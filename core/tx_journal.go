@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package core
 
@@ -20,11 +20,10 @@ import (
 	"errors"
 	"io"
 	"os"
-
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/core/types"
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/rlp"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/rlp"
 )
 
 // errNoActiveJournal is returned if a transaction is attempted to be inserted
@@ -89,12 +88,12 @@ func (journal *txJournal) load(add func(*types.Transaction) error) error {
 		// Import the transaction and bump the appropriate progress counters
 		total++
 		if err = add(tx); err != nil {
-			log.Info("Failed to add journaled transaction", "err", err)
+			log.Debug("Failed to add journaled transaction", "err", err)
 			dropped++
 			continue
 		}
 	}
-	log.Infof("Loaded local transaction journal, transactions=%v, dropped=%v", total, dropped)
+	log.Info("Loaded local transaction journal", "transactions", total, "dropped", dropped)
 
 	return failure
 }
@@ -146,7 +145,7 @@ func (journal *txJournal) rotate(all map[common.Address]types.Transactions) erro
 		return err
 	}
 	journal.writer = sink
-	log.Infof("Regenerated local transaction journal, transactions=%v, accounts=%v", journaled, len(all))
+	log.Info("Regenerated local transaction journal", "transactions", journaled, "accounts", len(all))
 
 	return nil
 }

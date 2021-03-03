@@ -1,44 +1,44 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package aoa
 
 import (
 	"errors"
 	"fmt"
-	"github.com/Aurorachain/go-aoa/aoa/downloader"
-	"github.com/Aurorachain/go-aoa/aoa/fetcher"
-	"github.com/Aurorachain/go-aoa/aoadb"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/consensus"
-	"github.com/Aurorachain/go-aoa/core"
-	"github.com/Aurorachain/go-aoa/core/types"
-	"github.com/Aurorachain/go-aoa/event"
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/p2p"
-	"github.com/Aurorachain/go-aoa/p2p/discover"
-	"github.com/Aurorachain/go-aoa/params"
+	"github.com/Aurorachain-io/go-aoa/aoadb"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/consensus"
+	"github.com/Aurorachain-io/go-aoa/core"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/aoa/downloader"
+	"github.com/Aurorachain-io/go-aoa/aoa/fetcher"
+	"github.com/Aurorachain-io/go-aoa/event"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/p2p"
+	"github.com/Aurorachain-io/go-aoa/p2p/discover"
+	"github.com/Aurorachain-io/go-aoa/params"
 	"math/big"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"crypto/ecdsa"
-	aa "github.com/Aurorachain/go-aoa/accounts/walletType"
-	"github.com/Aurorachain/go-aoa/crypto"
+	aa "github.com/Aurorachain-io/go-aoa/accounts/walletType"
+	"github.com/Aurorachain-io/go-aoa/crypto"
 	"math"
 	"sort"
 	"strings"
@@ -98,8 +98,8 @@ type ProtocolManager struct {
 	delegateWallets           map[string]*ecdsa.PrivateKey
 }
 
-// NewProtocolManager returns a new aurora sub protocol manager. The Aurora sub protocol manages peers capable
-// with the aurora network.
+// NewProtocolManager returns a new dacchain sub protocol manager. The dacchain sub protocol manages peers capable
+// with the dacchain network.
 func NewProtocolManager(config *params.ChainConfig, mode downloader.SyncMode, networkId uint64, txpool txPool, engine consensus.Engine, blockchain *core.BlockChain, chaindb aoadb.Database, taskManager *DposTaskManager, blockChan chan *types.Block, addDelegateWalletCallback func(data *aa.DelegateWalletInfo), delegateWallets map[string]*ecdsa.PrivateKey) (*ProtocolManager, error) {
 	// Create the protocol manager with the base fields
 
@@ -202,18 +202,18 @@ func NewProtocolManager(config *params.ChainConfig, mode downloader.SyncMode, ne
 	return manager, nil
 }
 
-// handle is the callback invoked to manage the life cycle of an aoa peer. When
+// handle is the callback invoked to manage the life cycle of an em peer. When
 // this function terminates, the peer is disconnected.
 func (pm *ProtocolManager) handle(p *peer) error {
 	if pm.peers.Len() >= pm.maxPeers {
 		return p2p.DiscTooManyPeers
 	}
-	log.Infof("Aurora peer connected, name=%v", p.Name())
+	p.Log().Debug("eminer-pro peer connected", "name", p.Name())
 
-	// Execute the Aurora handshake
+	// Execute the Em handshake
 	td, head, genesis := pm.blockchain.Status()
 	if err := p.Handshake(pm.networkId, td, head, genesis); err != nil {
-		log.Infof("Aurora handshake failed, %v", err)
+		p.Log().Debug("eminer-pro handshake failed", "err", err)
 		return err
 	}
 	if rw, ok := p.rw.(*meteredMsgReadWriter); ok {
@@ -221,14 +221,14 @@ func (pm *ProtocolManager) handle(p *peer) error {
 	}
 	// Register the peer locally
 	if err := pm.peers.Register(p); err != nil {
-		log.Errorf("Aurora peer registration failed, %v", err)
+		p.Log().Error("Dacchian peer registration failed", "err", err)
 		return err
 	}
 
 	// delegate p2p network
 	if p.netType == discover.ConsNet && pm.delegatePeers.Peer(p.id) == nil {
 		if err := pm.delegatePeers.Register(p); err != nil {
-			log.Error("Aurora delegate peer registration failed", "err", err)
+			p.Log().Error("Dacchian delegate peer registration failed", "err", err)
 			return err
 		}
 	}
@@ -246,9 +246,8 @@ func (pm *ProtocolManager) handle(p *peer) error {
 
 	// main loop. handle incoming messages.
 	for {
-		log.Infof("receive message from peer, ID=%v, LocalAddr=%v, remoteAddr=%v", p.id, p.Peer.LocalAddr().String(), p.Peer.RemoteAddr().String())
 		if err := pm.handleMsg(p); err != nil {
-			log.Infof("Aurora message handling failed, %v", err)
+			p.Log().Debug("eminer-pro message handling failed", "err", err)
 			return err
 		}
 	}
@@ -313,9 +312,9 @@ func (pm *ProtocolManager) removePeer(id string) {
 	if peer == nil {
 		return
 	}
-	log.Info("Removing Aurora peer", "peer", id)
+	log.Debug("Removing eminer-pro peer", "peer", id)
 
-	// Unregister the peer from the downloader and Aurora peer set
+	// Unregister the peer from the downloader and eminer-pro peer set
 	pm.downloader.UnregisterPeer(id)
 	if err := pm.peers.Unregister(id); err != nil {
 		log.Error("Peer removal failed", "peer", id, "err", err)
@@ -399,7 +398,7 @@ func (pm *ProtocolManager) singleSignToPendingBlock(block *types.Block, action u
 	signVotes = append(signVotes, types.VoteSign{Sign: sign, VoteAction: action})
 	tempErr := pm.lockBlockManager.addSignToPendingBlock(block.Hash(), sign, action, currentShuffleRound)
 	if tempErr != nil {
-		log.Info("ProtocolManager|addSignToPendingBlock fail", "err", tempErr)
+		log.Debug("ProtocolManager|addSignToPendingBlock fail", "err", tempErr)
 	}
 	if len(signVotes) > 1 {
 		sort.Sort(voteSignSlice(signVotes))
@@ -432,7 +431,7 @@ func (pm *ProtocolManager) signsToPendingBlock(block *types.Block, action uint64
 			voteSignChan <- types.VoteSign{Sign: sign, VoteAction: action}
 			tempErr := pm.lockBlockManager.addSignToPendingBlock(block.Hash(), sign, action, currentShuffleRound)
 			if tempErr != nil {
-				log.Info("ProtocolManager|addSignToPendingBlock fail", "err", tempErr)
+				log.Debug("ProtocolManager|addSignToPendingBlock fail", "err", tempErr)
 			}
 		}(address)
 	}
@@ -481,11 +480,10 @@ func (pm *ProtocolManager) getTopPeersFromCommonPeers(hash common.Hash) []*peer 
 // will only announce it's availability (depending what's requested).
 func (pm *ProtocolManager) BroadcastBlock(block *types.Block, propagate bool) {
 	hash := block.Hash()
-	// 获取到不知道该块到节点列表
 	// peers := pm.peers.PeersWithoutBlock(hash)
 	peers := pm.getTopPeersFromCommonPeers(hash)
 	// Add log
-	log.Infof("broadcastNewBlockMsg start, blockNumber=%v, unknownPeersNumber=%v", block.NumberU64(), len(peers))
+	log.Info("broadcastNewBlockMsg start", "blockNumber", block.NumberU64(), "unknownPeersNumber：", len(peers))
 
 	// If propagation is requested, send to a subset of the peer
 	if propagate {
@@ -494,7 +492,7 @@ func (pm *ProtocolManager) BroadcastBlock(block *types.Block, propagate bool) {
 		if parent := pm.blockchain.GetBlock(block.ParentHash(), block.NumberU64()-1); parent != nil {
 			td = new(big.Int).Add(types.BlockDifficult, pm.blockchain.GetTd(block.ParentHash(), block.NumberU64()-1))
 		} else {
-			log.Errorf("Propagating dangling block, number=%v, hash=%v", block.Number(), hash)
+			log.Error("Propagating dangling block", "number", block.Number(), "hash", hash)
 			return
 		}
 		// Send the block to a subset of our peers
@@ -502,7 +500,7 @@ func (pm *ProtocolManager) BroadcastBlock(block *types.Block, propagate bool) {
 		for _, peer := range peers {
 			peer.SendNewBlock(block, td)
 		}
-		log.Debugf("Propagated block, hash=%v, recipients=%v, duration=%v", hash, len(peers), common.PrettyDuration(time.Since(block.ReceivedAt)))
+		log.Trace("Propagated block", "hash", hash, "recipients", len(peers), "duration", common.PrettyDuration(time.Since(block.ReceivedAt)))
 		return
 	}
 	// Otherwise if the block is indeed in out own chain, announce it
@@ -510,10 +508,10 @@ func (pm *ProtocolManager) BroadcastBlock(block *types.Block, propagate bool) {
 		for _, peer := range peers {
 			peer.SendNewBlockHashes([]common.Hash{hash}, []uint64{block.NumberU64()})
 		}
-		log.Debugf("Announced block, hash=%v, recipients=%v, duration=%v", hash, len(peers), common.PrettyDuration(time.Since(block.ReceivedAt)))
+		log.Trace("Announced block", "hash", hash, "recipients", len(peers), "duration", common.PrettyDuration(time.Since(block.ReceivedAt)))
 	}
 	// Add log
-	log.Infof("broadcastNewBlockMsg end, blockInfo=%v", block.NumberU64())
+	log.Debug("broadcastNewBlockMsg end", "blockInfo:", block.NumberU64())
 }
 
 // broadcast to agent p2p network
@@ -521,7 +519,7 @@ func (pm *ProtocolManager) PreBroadcastBlock(block *types.Block) {
 	hash := block.Hash()
 	peers := pm.delegatePeers.PeersWithoutPreBlock(hash)
 	// transfer := peers[:int(math.Sqrt(float64(len(peers))))]
-	log.Infof("PreBroadcastBlock|start, blockNumber=%v, blockHash=%v, unKnownPeer=%v, topPeerCount=%v", block.NumberU64(), block.Hash().Hex(), len(peers), len(pm.delegatePeers.peers))
+	log.Info("PreBroadcastBlock|start", "blockNumber", block.NumberU64(), "blockHash", block.Hash().Hex(), "unKnownPeer", len(peers), "topPeerCount", len(pm.delegatePeers.peers))
 	for _, peer := range peers {
 		peer.SendNewPreBlock(block)
 	}
@@ -530,7 +528,7 @@ func (pm *ProtocolManager) PreBroadcastBlock(block *types.Block) {
 func (pm *ProtocolManager) BroadcastBlockSignatures(blockHash []byte, signs []types.VoteSign) {
 	peers := pm.delegatePeers.PeersWithoutSignatures(signs, blockHash)
 	// transfer := peers[:int(math.Sqrt(float64(len(peers))))]
-	log.Infof("BroadcastBlockSignatures|start, blockHash=%v, unKnownPeer=%v, topPeerCount=%v", common.BytesToHash(blockHash).Hex(), len(peers), len(pm.delegatePeers.peers))
+	log.Info("BroadcastBlockSignatures|start", "blockHash", common.BytesToHash(blockHash).Hex(), "unKnownPeer", len(peers), "topPeerCount", len(pm.delegatePeers.peers))
 	for _, peer := range peers {
 		peer.SendSignaturesBlockMsg(signaturesBlockMsg{BlockHash: blockHash, Signatures: signs})
 	}
@@ -542,7 +540,7 @@ func (pm *ProtocolManager) BroadcastCommitBlock(block types.CommitBlock) {
 	peers := pm.peers.PeersWithBlock(block.BlockHash)
 	// if the block is indeed in out own chain, announce it
 	if pm.blockchain.HasBlock(block.BlockHash, block.BlockNumber) {
-		log.Infof("broadcast commit block, hash=%v, peerCount=%v", block.BlockHash.Hex(), len(peers))
+		log.Info("broadcast commit block", "hash", block.BlockHash.Hex(), "peerCount", len(peers))
 		for _, peer := range peers {
 			peer.SendNewBlockHashWithSigns(block)
 		}
@@ -567,7 +565,7 @@ func (pm *ProtocolManager) Start(maxPeers int) {
 }
 
 func (pm *ProtocolManager) Stop() {
-	log.Info("Stopping Aurorachain protocol")
+	log.Info("Stopping eminer-pro protocol")
 
 	pm.txSub.Unsubscribe() // quits txBroadcastLoop
 	// Quit the sync loop.
@@ -586,7 +584,7 @@ func (pm *ProtocolManager) Stop() {
 	// Wait for all peer handler goroutines and the loops to come down.
 	pm.wg.Wait()
 
-	log.Info("Aurorachain protocol stopped")
+	log.Info("eminer-pro protocol stopped")
 }
 
 func (pm *ProtocolManager) txBroadcastLoop() {
@@ -607,13 +605,12 @@ func (pm *ProtocolManager) txBroadcastLoop() {
 // already have the given transaction.
 func (pm *ProtocolManager) BroadcastTx(hash common.Hash, tx *types.Transaction) {
 	// Broadcast transaction to a batch of peers not knowing about it
-	// 获取到不知道该笔交易到节点列表
 	peers := pm.peers.PeersWithoutTx(hash)
 	//FIXME include this again: peers = peers[:int(math.Sqrt(float64(len(peers))))]
 	for _, peer := range peers {
 		peer.SendTransactions(types.Transactions{tx})
 	}
-	log.Debugf("Broadcast transaction, hash=%v, recipients=%v", hash, len(peers))
+	log.Trace("Broadcast transaction", "hash", hash, "recipients", len(peers))
 }
 
 func (pm *ProtocolManager) GetAddDelegateWalletCallback() func(data *aa.DelegateWalletInfo) {
@@ -621,7 +618,7 @@ func (pm *ProtocolManager) GetAddDelegateWalletCallback() func(data *aa.Delegate
 }
 
 type NodeInfo struct {
-	Network uint64              `json:"network"` // Aurorachain network ID (1=Frontier)
+	Network uint64              `json:"network"` // eminer-pro network ID (1=Frontier)
 	Genesis common.Hash         `json:"genesis"` // SHA3 hash of the host's genesis block
 	Config  *params.ChainConfig `json:"config"`
 	Head    common.Hash         `json:"head"` // SHA3 hash of the host's best owned block

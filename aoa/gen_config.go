@@ -5,11 +5,11 @@ package aoa
 import (
 	"math/big"
 
-	"github.com/Aurorachain/go-aoa/aoa/downloader"
-	"github.com/Aurorachain/go-aoa/aoa/gasprice"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/common/hexutil"
-	"github.com/Aurorachain/go-aoa/core"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/common/hexutil"
+	"github.com/Aurorachain-io/go-aoa/core"
+	"github.com/Aurorachain-io/go-aoa/aoa/downloader"
+	"github.com/Aurorachain-io/go-aoa/aoa/gasprice"
 )
 
 var _ = (*configMarshaling)(nil)
@@ -43,7 +43,7 @@ func (c Config) MarshalTOML() (interface{}, error) {
 	enc.SkipBcVersionCheck = c.SkipBcVersionCheck
 	enc.DatabaseHandles = c.DatabaseHandles
 	enc.DatabaseCache = c.DatabaseCache
-	enc.Etherbase = c.Aurorabase
+	enc.Etherbase = c.Dacchainbase
 	enc.MinerThreads = c.MinerThreads
 	enc.ExtraData = c.ExtraData
 	enc.GasPrice = c.GasPrice
@@ -103,7 +103,7 @@ func (c *Config) UnmarshalTOML(unmarshal func(interface{}) error) error {
 		c.DatabaseCache = *dec.DatabaseCache
 	}
 	if dec.Etherbase != nil {
-		c.Aurorabase = *dec.Etherbase
+		c.Dacchainbase = *dec.Etherbase
 	}
 	if dec.MinerThreads != nil {
 		c.MinerThreads = *dec.MinerThreads

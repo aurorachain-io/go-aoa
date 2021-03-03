@@ -1,20 +1,20 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of go-aurora.
+// Copyright 2021 The go-aoa Authors
+// This file is part of go-eminer.
 //
-// go-aurora is free software: you can redistribute it and/or modify
+// go-eminer is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// go-aurora is distributed in the hope that it will be useful,
+// go-eminer is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with go-aurora. If not, see <http://www.gnu.org/licenses/>.
+// along with go-eminer. If not, see <http://www.gnu.org/licenses/>.
 
-// Package utils contains internal helper functions for go-aurora commands.
+// Package utils contains internal helper functions for go-dacchain commands.
 package utils
 
 import (
@@ -26,12 +26,12 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/Aurorachain/go-aoa/core"
-	"github.com/Aurorachain/go-aoa/core/types"
-	"github.com/Aurorachain/go-aoa/internal/debug"
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/node"
-	"github.com/Aurorachain/go-aoa/rlp"
+	"github.com/Aurorachain-io/go-aoa/core"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/internal/debug"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/node"
+	"github.com/Aurorachain-io/go-aoa/rlp"
 )
 
 const (
@@ -103,7 +103,7 @@ func ImportChain(chain *core.BlockChain, fn string) error {
 		}
 	}
 
-	log.Infof("Importing blockchain, file=%v", fn)
+	log.Info("Importing blockchain", "file", fn)
 	fh, err := os.Open(fn)
 	if err != nil {
 		return err
@@ -151,7 +151,7 @@ func ImportChain(chain *core.BlockChain, fn string) error {
 			return fmt.Errorf("interrupted")
 		}
 		if hasAllBlocks(chain, blocks[:i]) {
-			log.Infof("Skipping batch as all blocks present, batch=%v, first=%v, last=%v", batch, blocks[0].Hash(), blocks[i-1].Hash())
+			log.Info("Skipping batch as all blocks present", "batch", batch, "first", blocks[0].Hash(), "last", blocks[i-1].Hash())
 			continue
 		}
 
@@ -172,7 +172,7 @@ func hasAllBlocks(chain *core.BlockChain, bs []*types.Block) bool {
 }
 
 func ExportChain(blockchain *core.BlockChain, fn string) error {
-	log.Infof("Exporting blockchain, file=%v", fn)
+	log.Info("Exporting blockchain", "file", fn)
 	fh, err := os.OpenFile(fn, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.ModePerm)
 	if err != nil {
 		return err
@@ -188,13 +188,13 @@ func ExportChain(blockchain *core.BlockChain, fn string) error {
 	if err := blockchain.Export(writer); err != nil {
 		return err
 	}
-	log.Infof("Exported blockchain, file=%v", fn)
+	log.Info("Exported blockchain", "file", fn)
 
 	return nil
 }
 
 func ExportAppendChain(blockchain *core.BlockChain, fn string, first uint64, last uint64) error {
-	log.Infof("Exporting blockchain, file=%v", fn)
+	log.Info("Exporting blockchain", "file", fn)
 	fh, err := os.OpenFile(fn, os.O_CREATE|os.O_APPEND|os.O_WRONLY, os.ModePerm)
 	if err != nil {
 		return err
@@ -210,6 +210,6 @@ func ExportAppendChain(blockchain *core.BlockChain, fn string, first uint64, las
 	if err := blockchain.ExportN(writer, first, last); err != nil {
 		return err
 	}
-	log.Infof("Exported blockchain to, file=%v", fn)
+	log.Info("Exported blockchain to", "file", fn)
 	return nil
 }

@@ -1,43 +1,43 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
-// Package aoa implements the Aurora protocol.
+// Package em implements the eminer-pro protocol.
 package aoa
 
 import (
 	"fmt"
-	"github.com/Aurorachain/go-aoa/accounts"
-	"github.com/Aurorachain/go-aoa/aoa/downloader"
-	"github.com/Aurorachain/go-aoa/aoa/filters"
-	"github.com/Aurorachain/go-aoa/aoa/gasprice"
-	"github.com/Aurorachain/go-aoa/aoadb"
-	"github.com/Aurorachain/go-aoa/common/hexutil"
-	"github.com/Aurorachain/go-aoa/consensus"
-	"github.com/Aurorachain/go-aoa/consensus/dpos"
-	"github.com/Aurorachain/go-aoa/core"
-	"github.com/Aurorachain/go-aoa/core/bloombits"
-	"github.com/Aurorachain/go-aoa/core/types"
-	"github.com/Aurorachain/go-aoa/core/vm"
-	"github.com/Aurorachain/go-aoa/internal/aoaapi"
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/node"
-	"github.com/Aurorachain/go-aoa/p2p"
-	"github.com/Aurorachain/go-aoa/params"
-	"github.com/Aurorachain/go-aoa/rlp"
-	"github.com/Aurorachain/go-aoa/rpc"
+	"github.com/Aurorachain-io/go-aoa/accounts"
+	"github.com/Aurorachain-io/go-aoa/aoa/downloader"
+	"github.com/Aurorachain-io/go-aoa/aoa/filters"
+	"github.com/Aurorachain-io/go-aoa/aoa/gasprice"
+	"github.com/Aurorachain-io/go-aoa/aoadb"
+	"github.com/Aurorachain-io/go-aoa/common/hexutil"
+	"github.com/Aurorachain-io/go-aoa/consensus"
+	"github.com/Aurorachain-io/go-aoa/consensus/dpos"
+	"github.com/Aurorachain-io/go-aoa/core"
+	"github.com/Aurorachain-io/go-aoa/core/bloombits"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/core/vm"
+	"github.com/Aurorachain-io/go-aoa/internal/aoaapi"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/node"
+	"github.com/Aurorachain-io/go-aoa/p2p"
+	"github.com/Aurorachain-io/go-aoa/params"
+	"github.com/Aurorachain-io/go-aoa/rlp"
+	"github.com/Aurorachain-io/go-aoa/rpc"
 	"math/big"
 	"runtime"
 	"sync"
@@ -50,13 +50,13 @@ type LesServer interface {
 	SetBloomBitsIndexer(bbIndexer *core.ChainIndexer)
 }
 
-// Aurora implements the Aurora full node service.
-type Aurora struct {
+// eminer-pro implements the eminer-pro full node service.
+type Dacchain struct {
 	config      *Config
 	chainConfig *params.ChainConfig
 
 	// Channel for shutting down the service
-	shutdownChan  chan bool    // Channel for shutting down the aurora
+	shutdownChan  chan bool    // Channel for shutting down the dacchain
 	stopDbUpgrade func() error // stop chain db sequential key upgrade
 
 	// Handlers
@@ -68,15 +68,14 @@ type Aurora struct {
 	// DB interfaces
 	chainDb   aoadb.Database // Block chain database
 	watcherDb aoadb.Database // database for watch internal transactions
-	upgradeDb aoadb.Database // database for aoa upgrade
 
-	aoaEngine      consensus.Engine
+	dacEngine      consensus.Engine
 	accountManager *accounts.Manager
 
 	bloomRequests chan chan *bloombits.Retrieval // Channel receiving bloom data retrieval requests
 	bloomIndexer  *core.ChainIndexer             // Bloom indexer operating during block imports
 
-	ApiBackend *AoaApiBackend
+	ApiBackend *DacApiBackend
 
 	gasPrice *big.Int
 
@@ -88,23 +87,18 @@ type Aurora struct {
 	dposMiner       *core.DposMiner
 }
 
-func (aurora *Aurora) AddLesServer(ls LesServer) {
-	aurora.lesServer = ls
-	ls.SetBloomBitsIndexer(aurora.bloomIndexer)
+func (dacchain *Dacchain) AddLesServer(ls LesServer) {
+	dacchain.lesServer = ls
+	ls.SetBloomBitsIndexer(dacchain.bloomIndexer)
 }
 
-func scheduleUpgradeJob(){
-	core.UpgradeTimer(core.DoUpgrade)
-}
-
-const chainDataName = "chaindata"
-// New creates a new Aurora object (including the
-// initialisation of the common Aurora object)
-func New(ctx *node.ServiceContext, config *Config) (*Aurora, error) {
+// New creates a new eminer-pro object (including the
+// initialisation of the common eminer-pro object)
+func New(ctx *node.ServiceContext, config *Config) (*Dacchain, error) {
 	if !config.SyncMode.IsValid() {
 		return nil, fmt.Errorf("invalid sync mode %d", config.SyncMode)
 	}
-	chainDb, err := CreateDB(ctx, config, chainDataName)
+	chainDb, err := CreateDB(ctx, config, "chaindata")
 	if err != nil {
 		return nil, err
 	}
@@ -115,14 +109,6 @@ func New(ctx *node.ServiceContext, config *Config) (*Aurora, error) {
 			return nil, err
 		}
 	}
-
-	var upgradeDb aoadb.Database
-	upgradeDb, err = CreateDB(ctx, config, "upgradedata")
-	if err != nil {
-		return nil, err
-	}
-	core.SetUpgradeDb(upgradeDb)
-
 	stopDbUpgrade := upgradeDeduplicateData(chainDb)
 	chainConfig, genesisHash, _, genesisErr := core.SetupGenesisBlock(chainDb, config.Genesis)
 	if _, ok := genesisErr.(*params.ConfigCompatError); genesisErr != nil && !ok {
@@ -130,7 +116,7 @@ func New(ctx *node.ServiceContext, config *Config) (*Aurora, error) {
 	}
 	log.Info("Initialised chain configuration", "config", chainConfig)
 
-	aoa := &Aurora{
+	dac := &Dacchain{
 		config:         config,
 		chainDb:        chainDb,
 		chainConfig:    chainConfig,
@@ -141,53 +127,52 @@ func New(ctx *node.ServiceContext, config *Config) (*Aurora, error) {
 		gasPrice:       config.GasPrice,
 		bloomRequests:  make(chan chan *bloombits.Retrieval),
 		bloomIndexer:   NewBloomIndexer(chainDb, params.BloomBitsBlocks),
-		aoaEngine:      CreateAuroraConsensusEngine(),
+		dacEngine:      CreateDacchainConsensusEngine(),
 		watcherDb:      watcherDb,
-		upgradeDb:		upgradeDb,
 	}
 
-	log.Info("Initialising Aurora protocol", "versions", ProtocolVersions, "network", config.NetworkId)
+	log.Info("Initialising eminer-pro protocol", "versions", ProtocolVersions, "network", config.NetworkId)
 
 	if !config.SkipBcVersionCheck {
 		bcVersion := core.GetBlockChainVersion(chainDb)
 		if bcVersion != core.BlockChainVersion && bcVersion != 0 {
-			return nil, fmt.Errorf("Blockchain DB version mismatch (%d / %d). Run aoa upgradedb.\n", bcVersion, core.BlockChainVersion)
+			return nil, fmt.Errorf("Blockchain DB version mismatch (%d / %d). Run em upgradedb.\n", bcVersion, core.BlockChainVersion)
 		}
 		core.WriteBlockChainVersion(chainDb, core.BlockChainVersion)
 	}
 
 	vmConfig := vm.Config{EnablePreimageRecording: config.EnablePreimageRecording, WatchInnerTx: config.EnableInterTxWatching}
-	aoa.blockchain, err = core.NewBlockChain(chainDb, aoa.chainConfig, aoa.aoaEngine, vmConfig, watcherDb)
+	dac.blockchain, err = core.NewBlockChain(chainDb, dac.chainConfig, dac.dacEngine, vmConfig, watcherDb)
 	if err != nil {
 		return nil, err
 	}
 	// Rewind the chain in case of an incompatible config upgrade.
 	if compat, ok := genesisErr.(*params.ConfigCompatError); ok {
 		log.Warn("Rewinding chain to upgrade configuration", "err", compat)
-		aoa.blockchain.SetHead(compat.RewindTo)
+		dac.blockchain.SetHead(compat.RewindTo)
 		core.WriteChainConfig(chainDb, genesisHash, chainConfig)
 	}
-	aoa.bloomIndexer.Start(aoa.blockchain)
+	dac.bloomIndexer.Start(dac.blockchain)
 
 	if config.TxPool.Journal != "" {
 		config.TxPool.Journal = ctx.ResolvePath(config.TxPool.Journal)
 	}
 
-	aoa.txPool = core.NewTxPool(config.TxPool, aoa.chainConfig, aoa.blockchain)
-	aoa.dposMiner = core.NewDposMiner(aoa.chainConfig, aoa, aoa.aoaEngine)
-	aoa.dposTaskManager = NewDposTaskManager(ctx, aoa.blockchain, aoa.accountManager, aoa.dposMiner.GetProduceCallback(), aoa.dposMiner.GetShuffleHashChan())
-	if aoa.protocolManager, err = NewProtocolManager(aoa.chainConfig, config.SyncMode, config.NetworkId, aoa.txPool, aoa.aoaEngine, aoa.blockchain, chainDb, aoa.dposTaskManager, aoa.dposMiner.GetProduceBlockChan(), aoa.dposMiner.AddDelegateWalletCallback, aoa.dposMiner.GetDelegateWallets()); err != nil {
+	dac.txPool = core.NewTxPool(config.TxPool, dac.chainConfig, dac.blockchain)
+	dac.dposMiner = core.NewDposMiner(dac.chainConfig, dac, dac.dacEngine)
+	dac.dposTaskManager = NewDposTaskManager(ctx, dac.blockchain, dac.accountManager, dac.dposMiner.GetProduceCallback(), dac.dposMiner.GetShuffleHashChan())
+	if dac.protocolManager, err = NewProtocolManager(dac.chainConfig, config.SyncMode, config.NetworkId, dac.txPool, dac.dacEngine, dac.blockchain, chainDb, dac.dposTaskManager, dac.dposMiner.GetProduceBlockChan(), dac.dposMiner.AddDelegateWalletCallback, dac.dposMiner.GetDelegateWallets()); err != nil {
 		return nil, err
 	}
 
-	aoa.ApiBackend = &AoaApiBackend{aoa, nil}
+	dac.ApiBackend = &DacApiBackend{dac, nil}
 	gpoParams := config.GPO
 	if gpoParams.Default == nil {
 		gpoParams.Default = config.GasPrice
 	}
-	aoa.ApiBackend.gpo = gasprice.NewOracle(aoa.ApiBackend, gpoParams)
-	scheduleUpgradeJob()
-	return aoa, nil
+	dac.ApiBackend.gpo = gasprice.NewOracle(dac.ApiBackend, gpoParams)
+
+	return dac, nil
 }
 
 func makeExtraData(extra []byte) []byte {
@@ -213,128 +198,129 @@ func CreateDB(ctx *node.ServiceContext, config *Config, name string) (aoadb.Data
 	if err != nil {
 		return nil, err
 	}
-	if db, ok := db.(*aoadb.LDBDatabase); ok && chainDataName == name{
-		db.Meter("aoa/db/chaindata/")
+	if db, ok := db.(*aoadb.LDBDatabase); ok {
+		db.Meter("em/db/chaindata/")
 	}
 	return db, nil
 }
 
-func CreateAuroraConsensusEngine() consensus.Engine {
+func CreateDacchainConsensusEngine() consensus.Engine {
 	return dpos.New()
 }
 
-// APIs returns the collection of RPC services the aurora package offers.
+// APIs returns the collection of RPC services the dacchain package offers.
 // NOTE, some of these services probably need to be moved to somewhere else.
-func (aurora *Aurora) APIs() []rpc.API {
-	apis := aoaapi.GetAPIs(aurora.ApiBackend)
+func (dacchain *Dacchain) APIs() []rpc.API {
+	apis := aoaapi.GetAPIs(dacchain.ApiBackend)
 
 	// Append any APIs exposed explicitly by the consensus engine
-	apis = append(apis, aurora.aoaEngine.APIs(aurora.BlockChain())...)
+	apis = append(apis, dacchain.dacEngine.APIs(dacchain.BlockChain())...)
 
 	// Append all the local APIs and return
 	return append(apis, []rpc.API{
 		{
 			Namespace: "aoa",
 			Version:   "1.0",
-			Service:   downloader.NewPublicDownloaderAPI(aurora.protocolManager.downloader),
+			Service:   downloader.NewPublicDownloaderAPI(dacchain.protocolManager.downloader),
 			Public:    true,
 		}, {
 			Namespace: "aoa",
 			Version:   "1.0",
-			Service:   filters.NewPublicFilterAPI(aurora.ApiBackend, false),
+			Service:   filters.NewPublicFilterAPI(dacchain.ApiBackend, false),
 			Public:    true,
 		}, {
 			Namespace: "admin",
 			Version:   "1.0",
-			Service:   NewPrivateAdminAPI(aurora),
+			Service:   NewPrivateAdminAPI(dacchain),
 		}, {
 			Namespace: "debug",
 			Version:   "1.0",
-			Service:   NewPublicDebugAPI(aurora),
+			Service:   NewPublicDebugAPI(dacchain),
 			Public:    true,
 		}, {
 			Namespace: "debug",
 			Version:   "1.0",
-			Service:   NewPrivateDebugAPI(aurora.chainConfig, aurora),
+			Service:   NewPrivateDebugAPI(dacchain.chainConfig, dacchain),
 		}, {
 			Namespace: "net",
 			Version:   "1.0",
-			Service:   aurora.netRPCService,
+			Service:   dacchain.netRPCService,
 			Public:    true,
 		},
 	}...)
 }
 
-func (aurora *Aurora) ResetWithGenesisBlock(gb *types.Block) {
-	aurora.blockchain.ResetWithGenesisBlock(gb)
+func (dacchain *Dacchain) ResetWithGenesisBlock(gb *types.Block) {
+	dacchain.blockchain.ResetWithGenesisBlock(gb)
 }
 
-func (aurora *Aurora) AccountManager() *accounts.Manager  { return aurora.accountManager }
-func (aurora *Aurora) BlockChain() *core.BlockChain       { return aurora.blockchain }
-func (aurora *Aurora) TxPool() *core.TxPool               { return aurora.txPool }
-func (aurora *Aurora) Engine() consensus.Engine           { return aurora.aoaEngine }
-func (aurora *Aurora) ChainDb() aoadb.Database            { return aurora.chainDb }
-func (aurora *Aurora) WatcherDb() aoadb.Database          { return aurora.watcherDb }
-func (aurora *Aurora) IsListening() bool                  { return true } // Always listening
-func (aurora *Aurora) EthVersion() int                    { return int(aurora.protocolManager.SubProtocols[0].Version) }
-func (aurora *Aurora) NetVersion() uint64                 { return aurora.networkId }
-func (aurora *Aurora) Downloader() *downloader.Downloader { return aurora.protocolManager.downloader }
+func (dacchain *Dacchain) AccountManager() *accounts.Manager { return dacchain.accountManager }
+func (dacchain *Dacchain) BlockChain() *core.BlockChain      { return dacchain.blockchain }
+func (dacchain *Dacchain) TxPool() *core.TxPool              { return dacchain.txPool }
+func (dacchain *Dacchain) Engine() consensus.Engine          { return dacchain.dacEngine }
+func (dacchain *Dacchain) ChainDb() aoadb.Database            { return dacchain.chainDb }
+func (dacchain *Dacchain) WatcherDb() aoadb.Database          { return dacchain.watcherDb }
+func (dacchain *Dacchain) IsListening() bool                 { return true } // Always listening
+func (dacchain *Dacchain) EthVersion() int {
+	return int(dacchain.protocolManager.SubProtocols[0].Version)
+}
+func (dacchain *Dacchain) NetVersion() uint64 { return dacchain.networkId }
+func (dacchain *Dacchain) Downloader() *downloader.Downloader {
+	return dacchain.protocolManager.downloader
+}
 
 // Protocols implements node.Service, returning all the currently configured
 // network protocols to start.
-func (aurora *Aurora) Protocols() []p2p.Protocol {
-	if aurora.lesServer == nil {
-		return aurora.protocolManager.SubProtocols
+func (dacchain *Dacchain) Protocols() []p2p.Protocol {
+	if dacchain.lesServer == nil {
+		return dacchain.protocolManager.SubProtocols
 	}
-	return append(aurora.protocolManager.SubProtocols, aurora.lesServer.Protocols()...)
+	return append(dacchain.protocolManager.SubProtocols, dacchain.lesServer.Protocols()...)
 }
 
 // Start implements node.Service, starting all internal goroutines needed by the
-// Aurora protocol implementation.
-func (aurora *Aurora) Start(srvr *p2p.Server) error {
+// eminer-pro protocol implementation.
+func (dacchain *Dacchain) Start(srvr *p2p.Server) error {
 	// Start the bloom bits servicing goroutines
-	aurora.startBloomHandlers()
+	dacchain.startBloomHandlers()
 
 	// Start the RPC service
-	aurora.netRPCService = aoaapi.NewPublicNetAPI(srvr, aurora.NetVersion())
+	dacchain.netRPCService = aoaapi.NewPublicNetAPI(srvr, dacchain.NetVersion())
 
 	// Figure out a max peers count based on the server limits
 	maxPeers := srvr.MaxPeers
-	if aurora.config.LightServ > 0 {
-		maxPeers -= aurora.config.LightPeers
+	if dacchain.config.LightServ > 0 {
+		maxPeers -= dacchain.config.LightPeers
 		if maxPeers < srvr.MaxPeers/2 {
 			maxPeers = srvr.MaxPeers / 2
 		}
 	}
 	// Start the networking layer and the light server if requested
-	aurora.protocolManager.Start(maxPeers)
-	if aurora.lesServer != nil {
-		aurora.lesServer.Start(srvr)
+	dacchain.protocolManager.Start(maxPeers)
+	if dacchain.lesServer != nil {
+		dacchain.lesServer.Start(srvr)
 	}
 	return nil
 }
 
 // Stop implements node.Service, terminating all internal goroutines used by the
-// Aurora protocol.
-func (aurora *Aurora) Stop() error {
-	if aurora.stopDbUpgrade != nil {
-		aurora.stopDbUpgrade()
+// eminer-pro protocol.
+func (dacchain *Dacchain) Stop() error {
+	if dacchain.stopDbUpgrade != nil {
+		dacchain.stopDbUpgrade()
 	}
-	aurora.bloomIndexer.Close()
-	aurora.blockchain.Stop()
-	aurora.protocolManager.Stop()
-	if aurora.lesServer != nil {
-		aurora.lesServer.Stop()
+	dacchain.bloomIndexer.Close()
+	dacchain.blockchain.Stop()
+	dacchain.protocolManager.Stop()
+	if dacchain.lesServer != nil {
+		dacchain.lesServer.Stop()
 	}
-	aurora.txPool.Stop()
-	aurora.chainDb.Close()
-	if aurora.watcherDb != nil {
-		aurora.watcherDb.Close()
+	dacchain.txPool.Stop()
+	dacchain.chainDb.Close()
+	if dacchain.watcherDb != nil {
+		dacchain.watcherDb.Close()
 	}
-	if aurora.upgradeDb != nil {
-		aurora.upgradeDb.Close()
-	}
-	close(aurora.shutdownChan)
+	close(dacchain.shutdownChan)
 
 	return nil
 }

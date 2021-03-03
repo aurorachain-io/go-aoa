@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package params
 
@@ -21,26 +21,28 @@ var (
 )
 
 const (
-	GasLimitBoundDivisor   uint64 = 512                         // The bound divisor of the gas limit, used in update calculations.
-	MinGasLimit            uint64 = 200000000                   // Minimum the gas limit may ever be.
-	GenesisGasLimit        uint64 = 250000000                   // Gas limit of the Genesis block. In AOA, it's set to 250 million, meaning that a block can contain about 10 thousand transfer transactions.
-	MaxGasLimit            uint64 = 300000000                   // Max block GasLimit
-	MaximumExtraDataSize   uint64 = 16                          // Maximum size extra data may be after Genesis.
-	ExpByteGas             uint64 = 1                           // Times ceil(log256(exponent)) for the EXP instruction.
-	SloadGas               uint64 = 3                           // Multiplied by the number of 32-byte words that are copied (round up) for any *COPY operation and added.
-	CallValueTransferGas   uint64 = 550                         // Paid for CALL when the value transfer is non-zero.
-	CallNewAccountGas      uint64 = 1600                        // Paid for CALL when the destination address didn't exist prior.
-	TxGas                  uint64 = 25000                       // Per transaction not creating a contract. NOTE: Not payable on data of calls between transactions.
-	TxGasContractCreation  uint64 = 20000                       // Per transaction that creates a contract. NOTE: Not payable on data of calls between transactions.
-	TxGasAgentCreation            = "5000000000000000000000000" // 注册代理花费
-	TxDataZeroGas          uint64 = 1                           // Per byte of data attached to a transaction that equals zero. NOTE: Not payable on data of calls between transactions.
-	QuadCoeffDiv           uint64 = 1024                        // Divisor for the quadratic particle of the memory cost equation.
-	SstoreSetGas           uint64 = 1250                        // Once per SLOAD operation.
-	LogDataGas             uint64 = 1                           // Per byte in a LOG* operation's data.
-	CallStipend            uint64 = 1000                        // Free gas given at beginning of call.
-	TxGasAssetPublish      uint64 = 100000                      // Gas for publishing an asset.
-	MaxContractGasLimit    uint64 = 60000000                     //一个块合约最大GasLimit
-	MaxOneContractGasLimit uint64 = 1000000                      //一笔合约交易最大GasLimit
+	GasLimitBoundDivisor   uint64 = 512       // The bound divisor of the gas limit, used in update calculations.
+	MinGasLimit            uint64 = 200000000 // Minimum the gas limit may ever be.
+	GenesisGasLimit        uint64 = 250000000 // Gas limit of the Genesis block. In EM, it's set to 250 million, meaning that a block can contain about 10 thousand transfer transactions.
+	MaxGasLimit            uint64 = 300000000 // Max block GasLimit
+	MaximumExtraDataSize   uint64 = 16        // Maximum size extra data may be after Genesis.
+	ExpByteGas             uint64 = 1         // Times ceil(log256(exponent)) for the EXP instruction.
+	SloadGas               uint64 = 3         // Multiplied by the number of 32-byte words that are copied (round up) for any *COPY operation and added.
+	CallValueTransferGas   uint64 = 550       // Paid for CALL when the value transfer is non-zero.
+	CallNewAccountGas      uint64 = 1600      // Paid for CALL when the destination address didn't exist prior.
+	TxGas                  uint64 = 25000     // Per transaction not creating a contract. NOTE: Not payable on data of calls between transactions.
+	TxGasContractCreation  uint64 = 20000     // Per transaction that creates a contract. NOTE: Not payable on data of calls between transactions.
+	TxGasAgentCreation            = "50000000000000000000000" // change to 50000 aoa
+	TxGasAgentCreationOld         = "5000000000000000000000000" // change to 5000000 aoa
+	AgentChangeBlockNumber        = 812787
+	TxDataZeroGas          uint64 = 1      // Per byte of data attached to a transaction that equals zero. NOTE: Not payable on data of calls between transactions.
+	QuadCoeffDiv           uint64 = 1024   // Divisor for the quadratic particle of the memory cost equation.
+	SstoreSetGas           uint64 = 1250   // Once per SLOAD operation.
+	LogDataGas             uint64 = 1      // Per byte in a LOG* operation's data.
+	CallStipend            uint64 = 1000   // Free gas given at beginning of call.
+	TxGasAssetPublish      uint64 = 100000 // Gas for publishing an asset.
+	MaxContractGasLimit    uint64 = 60000000
+	MaxOneContractGasLimit uint64 = 1000000
 
 	// Multi-asset
 	BalanceOfGas     uint64 = 50

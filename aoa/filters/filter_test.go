@@ -1,31 +1,31 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package filters
 
 import (
 	"context"
-	"github.com/Aurorachain/go-aoa/aoadb"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/consensus/dpos"
-	"github.com/Aurorachain/go-aoa/core"
-	"github.com/Aurorachain/go-aoa/core/types"
-	"github.com/Aurorachain/go-aoa/crypto"
-	"github.com/Aurorachain/go-aoa/event"
-	"github.com/Aurorachain/go-aoa/params"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/consensus/dpos"
+	"github.com/Aurorachain-io/go-aoa/core"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/crypto"
+	"github.com/Aurorachain-io/go-aoa/emdb"
+	"github.com/Aurorachain-io/go-aoa/event"
+	"github.com/Aurorachain-io/go-aoa/params"
 	"io/ioutil"
 	"math/big"
 	"os"
@@ -33,7 +33,7 @@ import (
 )
 
 func makeReceipt(addr common.Address) *types.Receipt {
-	receipt := types.NewReceipt(nil, false, 0)
+	receipt := types.NewReceipt(false, 0)
 	receipt.Logs = []*types.Log{
 		{Address: addr},
 	}
@@ -49,7 +49,7 @@ func BenchmarkFilters(b *testing.B) {
 	defer os.RemoveAll(dir)
 
 	var (
-		db, _      = aoadb.NewLDBDatabase(dir, 0, 0)
+		db, _      = emdb.NewLDBDatabase(dir, 0, 0)
 		mux        = new(event.TypeMux)
 		txFeed     = new(event.Feed)
 		rmLogsFeed = new(event.Feed)
@@ -59,7 +59,7 @@ func BenchmarkFilters(b *testing.B) {
 		key1, _    = crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
 		addr1      = crypto.PubkeyToAddress(key1.PublicKey)
 		addr2      = common.BytesToAddress([]byte("jeff"))
-		addr3      = common.BytesToAddress([]byte("aurora"))
+		addr3      = common.BytesToAddress([]byte("dacchain"))
 		addr4      = common.BytesToAddress([]byte("random addresses please"))
 	)
 	defer db.Close()
@@ -114,7 +114,7 @@ func TestFilters(t *testing.T) {
 	defer os.RemoveAll(dir)
 
 	var (
-		db, _      = aoadb.NewLDBDatabase(dir, 0, 0)
+		db, _      = emdb.NewLDBDatabase(dir, 0, 0)
 		mux        = new(event.TypeMux)
 		txFeed     = new(event.Feed)
 		rmLogsFeed = new(event.Feed)
@@ -135,7 +135,7 @@ func TestFilters(t *testing.T) {
 	chain, receipts := core.GenerateChain(params.TestChainConfig, genesis, dpos.New(), db, 1000, func(i int, gen *core.BlockGen) {
 		switch i {
 		case 1:
-			receipt := types.NewReceipt(nil, false, 0)
+			receipt := types.NewReceipt(false, 0)
 			receipt.Logs = []*types.Log{
 				{
 					Address: addr,
@@ -144,7 +144,7 @@ func TestFilters(t *testing.T) {
 			}
 			gen.AddUncheckedReceipt(receipt)
 		case 2:
-			receipt := types.NewReceipt(nil, false, 0)
+			receipt := types.NewReceipt(false, 0)
 			receipt.Logs = []*types.Log{
 				{
 					Address: addr,
@@ -153,7 +153,7 @@ func TestFilters(t *testing.T) {
 			}
 			gen.AddUncheckedReceipt(receipt)
 		case 998:
-			receipt := types.NewReceipt(nil, false, 0)
+			receipt := types.NewReceipt(false, 0)
 			receipt.Logs = []*types.Log{
 				{
 					Address: addr,
@@ -162,7 +162,7 @@ func TestFilters(t *testing.T) {
 			}
 			gen.AddUncheckedReceipt(receipt)
 		case 999:
-			receipt := types.NewReceipt(nil, false, 0)
+			receipt := types.NewReceipt(false, 0)
 			receipt.Logs = []*types.Log{
 				{
 					Address: addr,

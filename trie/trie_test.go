@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package trie
 
@@ -29,11 +29,11 @@ import (
 	"testing"
 	"testing/quick"
 
-	"github.com/Aurorachain/go-aoa/aoadb"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/crypto"
-	"github.com/Aurorachain/go-aoa/rlp"
 	"github.com/davecgh/go-spew/spew"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/crypto"
+	"github.com/Aurorachain-io/go-aoa/emdb"
+	"github.com/Aurorachain-io/go-aoa/rlp"
 )
 
 func init() {
@@ -43,21 +43,12 @@ func init() {
 
 // Used for testing
 func newEmpty() *Trie {
-	db, _ := aoadb.NewMemDatabase()
+	db, _ := emdb.NewMemDatabase()
 	trie, _ := New(common.Hash{}, db)
 	return trie
 }
 
 func TestEmptyTrie(t *testing.T) {
-	var trie Trie
-	res := trie.Hash()
-	exp := emptyRoot
-	if res != common.Hash(exp) {
-		t.Errorf("expected %x got %x", exp, res)
-	}
-}
-
-func TestEmptyTrie2(t *testing.T) {
 	var trie Trie
 	res := trie.Hash()
 	exp := emptyRoot
@@ -77,7 +68,7 @@ func TestNull(t *testing.T) {
 }
 
 func TestMissingRoot(t *testing.T) {
-	db, _ := aoadb.NewMemDatabase()
+	db, _ := emdb.NewMemDatabase()
 	trie, err := New(common.HexToHash("0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33"), db)
 	if trie != nil {
 		t.Error("New returned non-nil trie for invalid root")
@@ -88,11 +79,10 @@ func TestMissingRoot(t *testing.T) {
 }
 
 func TestMissingNode(t *testing.T) {
-	db, _ := aoadb.NewMemDatabase()
+	db, _ := emdb.NewMemDatabase()
 	trie, _ := New(common.Hash{}, db)
 	updateString(trie, "120000", "qwerqwerqwerqwerqwerqwerqwerqwer")
 	updateString(trie, "123456", "asdfasdfasdfasdfasdfasdfasdfasdf")
-	updateString(trie, "102456", "fdafdfdafdfdafdfdfdsfdsfsdfdsafd")
 	root, _ := trie.Commit()
 
 	trie, _ = New(root, db)
@@ -417,7 +407,7 @@ func (randTest) Generate(r *rand.Rand, size int) reflect.Value {
 }
 
 func runRandTest(rt randTest) bool {
-	db, _ := aoadb.NewMemDatabase()
+	db, _ := emdb.NewMemDatabase()
 	tr, _ := New(common.Hash{}, db)
 	values := make(map[string]string) // tracks content of the trie
 
@@ -544,7 +534,7 @@ func benchGet(b *testing.B, commit bool) {
 	b.StopTimer()
 
 	if commit {
-		ldb := trie.db.(*aoadb.LDBDatabase)
+		ldb := trie.db.(*emdb.LDBDatabase)
 		ldb.Close()
 		os.RemoveAll(ldb.Path())
 	}
@@ -600,7 +590,7 @@ func tempDB() (string, Database) {
 	if err != nil {
 		panic(fmt.Sprintf("can't create temporary directory: %v", err))
 	}
-	db, err := aoadb.NewLDBDatabase(dir, 256, 0)
+	db, err := emdb.NewLDBDatabase(dir, 256, 0)
 	if err != nil {
 		panic(fmt.Sprintf("can't create temporary database: %v", err))
 	}

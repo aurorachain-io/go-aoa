@@ -1,25 +1,25 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package vm
 
 import (
 	"math/big"
 
-	"github.com/Aurorachain/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/common"
 )
 
 // ContractRef is a reference to the contract's backing object
@@ -39,7 +39,7 @@ type AccountRef common.Address
 // Address casts AccountRef to a Address
 func (ar AccountRef) Address() common.Address { return (common.Address)(ar) }
 
-// Contract represents an aurora contract in the state database. It contains
+// Contract represents an eminer-pro contract in the state database. It contains
 // the contract code, calling arguments. Contract implements ContractRef
 type Contract struct {
 	// CallerAddress is the result of the caller which initialised this
@@ -56,7 +56,7 @@ type Contract struct {
 	CodeAddr *common.Address
 	Input    []byte
 
-	Gas   uint64 //剩余可用gas
+	Gas   uint64
 	value *big.Int
 	asset *common.Address
 
@@ -139,7 +139,7 @@ func (c *Contract) Value() *big.Int {
 	return c.value
 }
 
-// Asset returns the contracts asset (sent to it from it's caller), if nil it means aoa
+// Asset returns the contracts asset (sent to it from it's caller), if nil it means em
 func (c *Contract) Asset() *common.Address {
 	return c.asset
 }

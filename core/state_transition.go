@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package core
 
@@ -20,13 +20,12 @@ import (
 	"errors"
 	"math"
 	"math/big"
-
 	"fmt"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/core/types"
-	"github.com/Aurorachain/go-aoa/core/vm"
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/params"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/core/vm"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/params"
 )
 
 var (
@@ -51,11 +50,11 @@ The state transitioning model does all all the necessary work to work out a vali
 6) Derive new state root
 */
 type StateTransition struct {
-	gp         *GasPool //区块的gas池，代表剩余可继续包含交易的gas数。
+	gp         *GasPool
 	msg        Message
-	gas        uint64 //剩余可用gas，初始化时等于用户的gasLimit
+	gas        uint64
 	gasPrice   *big.Int
-	initialGas uint64 //用户提供的总gas，等于用户的gasLimit
+	initialGas uint64
 	value      *big.Int
 	data       []byte
 	state      vm.StateDB
@@ -91,7 +90,6 @@ func IntrinsicGas(data []byte, action uint64) (uint64, error) {
 	case types.ActionTrans:
 		gas = params.TxGas
 	case types.ActionRegister:
-		//当前注册扣费逻辑在别处，可能需考虑优化。
 		gas = params.TxGas
 	case types.ActionAddVote, types.ActionSubVote:
 		gas = params.TxGas
@@ -228,6 +226,7 @@ func (st *StateTransition) preCheck() error {
 // returning the result including the the used gas. It returns an error if it
 // failed. An error indicates a consensus issue.
 func (st *StateTransition) TransitionDb() (ret []byte, usedGas uint64, failed bool, err error) {
+	//log.Info("start transitiondb")
 	//defer func() {log.Info("End of transitiondb","err",err)}()
 	if err = st.preCheck(); err != nil {
 		return
@@ -247,9 +246,38 @@ func (st *StateTransition) TransitionDb() (ret []byte, usedGas uint64, failed bo
 		// vm errors do not effect consensus and are therefor
 		// not assigned to err, except for insufficient balance
 		// error.
-		vmerr error
+		vmerr    error
+		snapshot = st.state.Snapshot()
 	)
+
+	if msg.Action() != types.ActionTrans && msg.Action() != types.ActionPublishAsset && msg.Action() != types.ActionCreateContract && msg.Action() != types.ActionCallContract {
+		st.state.SetNonce(sender.Address(), st.state.GetNonce(sender.Address())+1)
+	}
+
 	switch msg.Action() {
+	case types.ActionRegister:
+		registerCost := new(big.Int)
+		registerCost.SetString(params.TxGasAgentCreation, 10)
+		if !evm.Context.CanTransfer(evm.StateDB, msg.From(), nil, registerCost) {
+			evm.StateDB.RevertToSnapshot(snapshot)
+			return nil, 0, true, vm.ErrInsufficientBalance
+		}
+		if _, ok := (*evm.DelegateList)[msg.From()]; ok {
+			evm.StateDB.RevertToSnapshot(snapshot)
+			return nil, 0, true, errors.New("Address " + msg.From().Hex() + " have already register delegate")
+		}
+	case types.ActionAddVote, types.ActionSubVote:
+		if len(msg.Vote()) == 0 {
+			evm.StateDB.RevertToSnapshot(snapshot)
+			return nil, 0, true, errors.New("empty vote list")
+		}
+		err = evm.Vote(evm.StateDB, msg.From(), msg.Vote(), evm.DelegateList, maxElectDelegate)
+		if err != nil {
+			log.Warn("HereVote", "err", err)
+			evm.StateDB.RevertToSnapshot(snapshot)
+			return nil, 0, true, err
+		}
+
 	case types.ActionCreateContract:
 		if len(st.data) == 0 {
 			return nil, 0, true, errors.New("Create contract but data is nil")
@@ -259,17 +287,16 @@ func (st *StateTransition) TransitionDb() (ret []byte, usedGas uint64, failed bo
 		/*
 		 when an error occurs, revert state db and refund the gas payed by IntrinsicGas
 		*/
-		snapshot := st.state.Snapshot()
 		err = st.publishAsset()
 		if err != nil {
-			st.state.RevertToSnapshot(snapshot, evm.ChainConfig().IsEpiphron(evm.BlockNumber))
+			st.state.RevertToSnapshot(snapshot)
 			log.Error("PublishAsset error", "from", st.from().Address().String(), "err", err)
 			return nil, 0, true, err
 		}
 	default:
 		// Increment the nonce for the next transaction
 		st.state.SetNonce(sender.Address(), st.state.GetNonce(sender.Address())+1)
-		ret, st.gas, vmerr = evm.Call(sender, st.to().Address(), st.data, st.gas, msg.Action(), st.value, msg.Vote(), msg.Asset())
+		ret, st.gas, vmerr = evm.Call(sender, st.to().Address(), st.data, st.gas, msg.Action(), st.value, msg.Asset())
 	}
 	if vmerr != nil {
 		log.Info("VM returned with error", "err", vmerr)
@@ -277,9 +304,6 @@ func (st *StateTransition) TransitionDb() (ret []byte, usedGas uint64, failed bo
 		// sufficient balance to make the transfer happen. The first
 		// balance transfer may never fail.
 		if vmerr == vm.ErrInsufficientBalance {
-			return nil, 0, false, vmerr
-		}
-		if vmerr == vm.ErrVote {
 			return nil, 0, false, vmerr
 		}
 	}
@@ -298,7 +322,7 @@ func (st *StateTransition) refundGas() {
 	}
 	st.gas += refund
 
-	// Return AOA for remaining gas, exchanged at the original rate.
+	// Return DAC for remaining gas, exchanged at the original rate.
 	sender := st.from()
 
 	remaining := new(big.Int).Mul(new(big.Int).SetUint64(st.gas), st.gasPrice)

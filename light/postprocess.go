@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package light
 
@@ -23,15 +23,15 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/Aurorachain/go-aoa/aoadb"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/common/bitutil"
-	"github.com/Aurorachain/go-aoa/core"
-	"github.com/Aurorachain/go-aoa/core/types"
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/params"
-	"github.com/Aurorachain/go-aoa/rlp"
-	"github.com/Aurorachain/go-aoa/trie"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/common/bitutil"
+	"github.com/Aurorachain-io/go-aoa/core"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/emdb"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/params"
+	"github.com/Aurorachain-io/go-aoa/rlp"
+	"github.com/Aurorachain-io/go-aoa/trie"
 )
 
 const (
@@ -90,7 +90,7 @@ type ChtNode struct {
 
 // GetChtRoot reads the CHT root assoctiated to the given section from the database
 // Note that sectionIdx is specified according to LES/1 CHT section size
-func GetChtRoot(db aoadb.Database, sectionIdx uint64, sectionHead common.Hash) common.Hash {
+func GetChtRoot(db emdb.Database, sectionIdx uint64, sectionHead common.Hash) common.Hash {
 	var encNumber [8]byte
 	binary.BigEndian.PutUint64(encNumber[:], sectionIdx)
 	data, _ := db.Get(append(append(chtPrefix, encNumber[:]...), sectionHead.Bytes()...))
@@ -99,13 +99,13 @@ func GetChtRoot(db aoadb.Database, sectionIdx uint64, sectionHead common.Hash) c
 
 // GetChtV2Root reads the CHT root assoctiated to the given section from the database
 // Note that sectionIdx is specified according to LES/2 CHT section size
-func GetChtV2Root(db aoadb.Database, sectionIdx uint64, sectionHead common.Hash) common.Hash {
+func GetChtV2Root(db emdb.Database, sectionIdx uint64, sectionHead common.Hash) common.Hash {
 	return GetChtRoot(db, (sectionIdx+1)*(ChtFrequency/ChtV1Frequency)-1, sectionHead)
 }
 
 // StoreChtRoot writes the CHT root assoctiated to the given section into the database
 // Note that sectionIdx is specified according to LES/1 CHT section size
-func StoreChtRoot(db aoadb.Database, sectionIdx uint64, sectionHead, root common.Hash) {
+func StoreChtRoot(db emdb.Database, sectionIdx uint64, sectionHead, root common.Hash) {
 	var encNumber [8]byte
 	binary.BigEndian.PutUint64(encNumber[:], sectionIdx)
 	db.Put(append(append(chtPrefix, encNumber[:]...), sectionHead.Bytes()...), root.Bytes())
@@ -113,16 +113,16 @@ func StoreChtRoot(db aoadb.Database, sectionIdx uint64, sectionHead, root common
 
 // ChtIndexerBackend implements core.ChainIndexerBackend
 type ChtIndexerBackend struct {
-	db, cdb              aoadb.Database
+	db, cdb              emdb.Database
 	section, sectionSize uint64
 	lastHash             common.Hash
 	trie                 *trie.Trie
 }
 
 // NewBloomTrieIndexer creates a BloomTrie chain indexer
-func NewChtIndexer(db aoadb.Database, clientMode bool) *core.ChainIndexer {
-	cdb := aoadb.NewTable(db, ChtTablePrefix)
-	idb := aoadb.NewTable(db, "chtIndex-")
+func NewChtIndexer(db emdb.Database, clientMode bool) *core.ChainIndexer {
+	cdb := emdb.NewTable(db, ChtTablePrefix)
+	idb := emdb.NewTable(db, "chtIndex-")
 	var sectionSize, confirmReq uint64
 	if clientMode {
 		sectionSize = ChtFrequency
@@ -170,7 +170,7 @@ func (c *ChtIndexerBackend) Commit() error {
 	} else {
 		batch.Write()
 		if ((c.section+1)*c.sectionSize)%ChtFrequency == 0 {
-			log.Infof("Storing CHT, idx=%v, sectionHead=%v, root=%v", c.section*c.sectionSize/ChtFrequency, fmt.Sprintf("%064x", c.lastHash), fmt.Sprintf("%064x", root))
+			log.Info("Storing CHT", "idx", c.section*c.sectionSize/ChtFrequency, "sectionHead", fmt.Sprintf("%064x", c.lastHash), "root", fmt.Sprintf("%064x", root))
 		}
 		StoreChtRoot(c.db, c.section, c.lastHash, root)
 	}
@@ -189,7 +189,7 @@ var (
 )
 
 // GetBloomTrieRoot reads the BloomTrie root assoctiated to the given section from the database
-func GetBloomTrieRoot(db aoadb.Database, sectionIdx uint64, sectionHead common.Hash) common.Hash {
+func GetBloomTrieRoot(db emdb.Database, sectionIdx uint64, sectionHead common.Hash) common.Hash {
 	var encNumber [8]byte
 	binary.BigEndian.PutUint64(encNumber[:], sectionIdx)
 	data, _ := db.Get(append(append(bloomTriePrefix, encNumber[:]...), sectionHead.Bytes()...))
@@ -197,7 +197,7 @@ func GetBloomTrieRoot(db aoadb.Database, sectionIdx uint64, sectionHead common.H
 }
 
 // StoreBloomTrieRoot writes the BloomTrie root assoctiated to the given section into the database
-func StoreBloomTrieRoot(db aoadb.Database, sectionIdx uint64, sectionHead, root common.Hash) {
+func StoreBloomTrieRoot(db emdb.Database, sectionIdx uint64, sectionHead, root common.Hash) {
 	var encNumber [8]byte
 	binary.BigEndian.PutUint64(encNumber[:], sectionIdx)
 	db.Put(append(append(bloomTriePrefix, encNumber[:]...), sectionHead.Bytes()...), root.Bytes())
@@ -205,16 +205,16 @@ func StoreBloomTrieRoot(db aoadb.Database, sectionIdx uint64, sectionHead, root 
 
 // BloomTrieIndexerBackend implements core.ChainIndexerBackend
 type BloomTrieIndexerBackend struct {
-	db, cdb                                    aoadb.Database
+	db, cdb                                    emdb.Database
 	section, parentSectionSize, bloomTrieRatio uint64
 	trie                                       *trie.Trie
 	sectionHeads                               []common.Hash
 }
 
 // NewBloomTrieIndexer creates a BloomTrie chain indexer
-func NewBloomTrieIndexer(db aoadb.Database, clientMode bool) *core.ChainIndexer {
-	cdb := aoadb.NewTable(db, BloomTrieTablePrefix)
-	idb := aoadb.NewTable(db, "bltIndex-")
+func NewBloomTrieIndexer(db emdb.Database, clientMode bool) *core.ChainIndexer {
+	cdb := emdb.NewTable(db, BloomTrieTablePrefix)
+	idb := emdb.NewTable(db, "bltIndex-")
 	backend := &BloomTrieIndexerBackend{db: db, cdb: cdb}
 	var confirmReq uint64
 	if clientMode {
@@ -287,7 +287,7 @@ func (b *BloomTrieIndexerBackend) Commit() error {
 	} else {
 		batch.Write()
 		sectionHead := b.sectionHeads[b.bloomTrieRatio-1]
-		log.Infof("Storing BloomTrie, section=%v, sectionHead=%v, root=%v", b.section, fmt.Sprintf("%064x", sectionHead), fmt.Sprintf("%064x", root), "compression ratio", float64(compSize)/float64(decompSize))
+		log.Info("Storing BloomTrie", "section", b.section, "sectionHead", fmt.Sprintf("%064x", sectionHead), "root", fmt.Sprintf("%064x", root), "compression ratio", float64(compSize)/float64(decompSize))
 		StoreBloomTrieRoot(b.db, b.section, sectionHead, root)
 	}
 

@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of go-aurora.
+// Copyright 2021 The go-aoa Authors
+// This file is part of go-eminer.
 //
-// go-aurora is free software: you can redistribute it and/or modify
+// go-eminer is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// go-aurora is distributed in the hope that it will be useful,
+// go-eminer is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with go-aurora. If not, see <http://www.gnu.org/licenses/>.
+// along with go-eminer. If not, see <http://www.gnu.org/licenses/>.
 
 package main
 
@@ -22,13 +22,13 @@ import (
 	"os"
 	"testing"
 
-	"github.com/Aurorachain/go-aoa/internal/cmdtest"
 	"github.com/docker/docker/pkg/reexec"
+	"github.com/Aurorachain-io/go-aoa/internal/cmdtest"
 	"strings"
 )
 
 func tmpdir(t *testing.T) string {
-	dir, err := ioutil.TempDir("", "aoa-test")
+	dir, err := ioutil.TempDir("", "em-test")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -44,8 +44,8 @@ type testgeth struct {
 }
 
 func init() {
-	// Run the app if we've been exec'd as "aoa-test" in runGeth.
-	reexec.Register("aoa-test", func() {
+	// Run the app if we've been exec'd as "em-test" in runGeth.
+	reexec.Register("em-test", func() {
 		if err := app.Run(os.Args); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
@@ -62,7 +62,7 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-// spawns aoa with the given command line args. If the args don't set --datadir, the
+// spawns em with the given command line args. If the args don't set --datadir, the
 // child g gets a temporary data directory.
 func runGeth(t *testing.T, args ...string) *testgeth {
 	tt := &testgeth{}
@@ -91,9 +91,9 @@ func runGeth(t *testing.T, args ...string) *testgeth {
 		}()
 	}
 
-	// Boot "aoa". This actually runs the test binary but the TestMain
+	// Boot "em". This actually runs the test binary but the TestMain
 	// function will prevent any tests from running.
-	tt.Run("aoa-test", args...)
+	tt.Run("em-test", args...)
 
 	return tt
 }
@@ -109,7 +109,7 @@ func isSpace(r rune) bool {
 }
 
 func TestByCategory_Less(t *testing.T) {
-	s := "AOA5ccb115ac633e2ccfebe65fc4e18e75ce78642b4QWERTYUIOPASDFGHJKLZXCVBNMQWERTY"
+	s := "EM5ccb115ac633e2ccfebe65fc4e18e75ce78642b4QWERTYUIOPASDFGHJKLZXCVBNMQWERTY"
 	x := s[:(len(s)-32)] + strings.ToLower(s[(len(s)-32):])
 	fmt.Println(x)
 }

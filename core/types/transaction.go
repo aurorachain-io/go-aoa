@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package types
 
@@ -25,12 +25,12 @@ import (
 	"sync/atomic"
 
 	"encoding/json"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/common/hexutil"
-	"github.com/Aurorachain/go-aoa/crypto"
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/params"
-	"github.com/Aurorachain/go-aoa/rlp"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/common/hexutil"
+	"github.com/Aurorachain-io/go-aoa/crypto"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/params"
+	"github.com/Aurorachain-io/go-aoa/rlp"
 	"sort"
 )
 
@@ -77,7 +77,7 @@ type Transaction struct {
 
 type Vote struct {
 	Candidate *common.Address `json:"candidate"`
-	Operation uint            `json:"operation"` //0,投票;1,取消投票
+	Operation uint            `json:"operation"`
 }
 
 func VoteToBytes(vote []Vote) ([]byte, error) {
@@ -123,15 +123,15 @@ type txdata struct {
 	Amount       *big.Int        `json:"value"    gencodec:"required"`
 	Payload      []byte          `json:"input"    gencodec:"required"`
 
-	Action   uint64 `json:"action"  gencodec:"required"` // 参见当前包（当前文件）ActionXXX 常量定义
+	Action   uint64 `json:"action"  gencodec:"required"`
 	Vote     []byte `json:"vote" rlp:"nil"`
 	Nickname []byte `json:"nickname" rlp:"nil"`
 
-	//资产符号，作为资产的唯一标识。当Action 为ActionTrans时有意义。
+	//asset id
 	Asset *common.Address `json:"asset,omitempty" rlp:"nil"`
-	//资产信息，当Action 为 ActionPublishAsset 时有意义
+	//only when Action is ActionPublishAsset that this field make sense. use json encode rather then rlp encode for extensibility
 	AssetInfo []byte `json:"assetInfo,omitempty" rlp:"nil"`
-	//子地址，做归集资金使用
+	//sub address, for capital collection use.
 	SubAddress string `json:"subAddress,omitempty" rlp:"nil"`
 	// When create a contract, user can offer the ABI so that it can store on the block
 	Abi string `json:"abi,omitempty" rlp:"nil"`
@@ -156,11 +156,26 @@ type txdataMarshaling struct {
 	S            *hexutil.Big
 }
 
-func NewTransaction(nonce uint64, to common.Address, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte, action uint64, vote []byte, nickname []byte, asset *common.Address, assetInfo []byte, subAddress string) *Transaction {
-
-	return newTransaction(nonce, &to, amount, gasLimit, gasPrice, data, action, vote, nickname, asset, assetInfo, subAddress, "")
+func NewTransaction(nonce uint64, to common.Address, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte, action uint64, asset *common.Address, subAddress string) *Transaction {
+	return newTransaction(nonce, &to, amount, gasLimit, gasPrice, data, action, nil, nil, asset, nil, subAddress, "")
 }
 
+// create register delegate transaction
+func NewRegisterTransaction(nonce uint64, gasLimit uint64, gasPrice *big.Int, action uint64, nickname []byte) *Transaction {
+	return newTransaction(nonce, nil, big.NewInt(0), gasLimit, gasPrice, nil, action, nil, nickname, nil, nil, "", "")
+}
+
+// create vote delegate transaction
+func NewVoteTransaction(nonce uint64, gasLimit uint64, gasPrice *big.Int, action uint64, vote []byte) *Transaction {
+	return newTransaction(nonce, nil, big.NewInt(0), gasLimit, gasPrice, nil, action, vote, nil, nil, nil, "", "")
+}
+
+// create publish asset transaction
+func NewPublishAssetTransaction(nonce uint64, amount *big.Int, gasLimit uint64, gasPrice *big.Int, action uint64, assetInfo []byte) *Transaction {
+	return newTransaction(nonce, nil, amount, gasLimit, gasPrice, nil, action, nil, nil, nil, assetInfo, "", "")
+}
+
+// create contract creation transaction
 func NewContractCreation(nonce uint64, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte, abi string, asset *common.Address) *Transaction {
 	return newTransaction(nonce, nil, amount, gasLimit, gasPrice, data, ActionCreateContract, nil, nil, asset, nil, "", abi)
 }
@@ -398,6 +413,7 @@ func (tx *Transaction) AsMessage(s Signer) (Message, error) {
 	}
 	//now := time.Now()
 	msg.from, err = Sender(s, tx)
+	//log.Info("AsMessage", "time", time.Now().Sub(now))
 	return msg, err
 }
 
@@ -408,27 +424,30 @@ func (tx *Transaction) WithSignature(signer Signer, sig []byte) (*Transaction, e
 	if err != nil {
 		return nil, err
 	}
-	log.Infof("Transaction|WithSignature, V=%v",v.Int64())
+	log.Debug("Transaction|WithSignature", "v", v.Int64())
 	cpy := &Transaction{data: tx.data}
 	cpy.data.R, cpy.data.S, cpy.data.V = r, s, v
 	return cpy, nil
 }
 
-// AoaCost returns aoa required.
-func (tx *Transaction) AoaCost() *big.Int {
-	log.Debugf("Transaction|AoaCost, transaction=%v", tx.data)
+// EmCost returns em required.
+func (tx *Transaction) EmCost() *big.Int {
+	log.Info("Transaction|EmCost,", "transaction", tx.data)
 	total := new(big.Int).Mul(tx.data.Price, new(big.Int).SetUint64(tx.data.GasLimit))
 	// agent register cost
-	if tx.data.Action == ActionRegister {
+	switch tx.data.Action {
+	case ActionTrans:
+		total.Add(total, tx.data.Amount)
+	case ActionRegister:
 		registerCost := new(big.Int)
 		registerCost.SetString(params.TxGasAgentCreation, 10)
 		// 扣除100，精度是18位
 		total.Add(total, registerCost)
-		log.Infof("register agent cost, total=%v", total)
-	} else if (tx.data.Asset == nil || (*tx.data.Asset == common.Address{})) && (tx.data.Amount != nil && tx.data.Amount.Sign() > 0) {
-		total.Add(total, tx.data.Amount)
+		log.Info("register agent cost", "total", total)
+	default:
+
 	}
-	log.Infof("cost %v", total)
+	log.Debug("cost", "total", total)
 	return total
 }
 
@@ -598,6 +617,7 @@ func (s *TxByPrice) Remove(index int) common.Hash {
 }
 
 func SortByPriceAndNonce(signer Signer, txList TxByPrice) Transactions {
+	//log.Info("SortByPriceAndNonce start", "txList", len(txList))
 	txs := make(map[common.Address]chan *Transaction, len(txList))
 	for _, tx := range txList {
 		from, _ := Sender(signer, tx)
@@ -606,16 +626,19 @@ func SortByPriceAndNonce(signer Signer, txList TxByPrice) Transactions {
 		}
 		txs[from] <- tx
 	}
+	//log.Info("SortByPriceAndNonce 1 start", "txList", len(txList))
 	var sortResults []<-chan *Transaction
 	for _, txChannel := range txs {
 		sortResults = append(sortResults, inMemSort(txChannel))
 		close(txChannel)
 	}
+	//log.Info("SortByPriceAndNonce 2 start", "txList", len(txList))
 	finalSort := mergeNTxs(sortResults...)
 	result := make(Transactions, 0)
 	for tx := range finalSort {
 		result = append(result, tx)
 	}
+	//log.Info("SortByPriceAndNonce end", "txList", len(txList))
 	return result
 }
 

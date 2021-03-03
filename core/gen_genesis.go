@@ -5,11 +5,10 @@ package core
 import (
 	"encoding/json"
 	"errors"
-
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/common/hexutil"
-	"github.com/Aurorachain/go-aoa/common/math"
-	"github.com/Aurorachain/go-aoa/params"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/common/hexutil"
+	"github.com/Aurorachain-io/go-aoa/common/math"
+	"github.com/Aurorachain-io/go-aoa/params"
 )
 
 var _ = (*genesisSpecMarshaling)(nil)

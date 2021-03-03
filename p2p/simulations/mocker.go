@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 // Package simulations simulates p2p networks.
 // A mocker simulates starting and stopping real nodes in a network.
@@ -24,8 +24,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/p2p/discover"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/p2p/discover"
 )
 
 //a map of mocker names to its function
@@ -73,9 +73,9 @@ func startStop(net *Network, quit chan struct{}, nodeCount int) {
 			return
 		case <-tick.C:
 			id := nodes[rand.Intn(len(nodes))]
-			log.Infof("stopping node %v",  id)
+			log.Info("stopping node", "id", id)
 			if err := net.Stop(id); err != nil {
-				log.Errorf("error stopping node %v, err=%v", id, err)
+				log.Error("error stopping node", "id", id, "err", err)
 				return
 			}
 
@@ -86,9 +86,9 @@ func startStop(net *Network, quit chan struct{}, nodeCount int) {
 			case <-time.After(3 * time.Second):
 			}
 
-			log.Infof("starting node %v", id)
+			log.Debug("starting node", "id", id)
 			if err := net.Start(id); err != nil {
-				log.Errorf("error starting node %v, err=%v", id, err)
+				log.Error("error starting node", "id", id, "err", err)
 				return
 			}
 		}
@@ -140,7 +140,7 @@ func probabilistic(net *Network, quit chan struct{}, nodeCount int) {
 				return
 			case <-time.After(randWait):
 			}
-			log.Info(fmt.Sprintf("node %v shutting down", nodes[i]))
+			log.Debug(fmt.Sprintf("node %v shutting down", nodes[i]))
 			err := net.Stop(nodes[i])
 			if err != nil {
 				log.Error(fmt.Sprintf("Error stopping node %s", nodes[i]))
@@ -178,7 +178,7 @@ func connectNodesInRing(net *Network, nodeCount int) ([]discover.NodeID, error) 
 			log.Error("Error starting a node! %s", err)
 			return nil, err
 		}
-		log.Info(fmt.Sprintf("node %v starting up", id))
+		log.Debug(fmt.Sprintf("node %v starting up", id))
 	}
 	for i, id := range ids {
 		peerID := ids[(i+1)%len(ids)]

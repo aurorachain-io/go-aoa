@@ -1,31 +1,31 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
-// Package aoa implements the Aurora protocol.
+// Package em implements the eminer-pro protocol.
 package aoa
 
 import (
 	"bytes"
 	"time"
 
-	"github.com/Aurorachain/go-aoa/aoadb"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/core"
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/rlp"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/core"
+	"github.com/Aurorachain-io/go-aoa/aoadb"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/rlp"
 )
 
 var deduplicateData = []byte("dbUpgrade_20170714deduplicateData")
@@ -103,7 +103,7 @@ func upgradeDeduplicateData(db aoadb.Database) func() error {
 				it = db.(*aoadb.LDBDatabase).NewIterator()
 				it.Seek(key)
 
-				log.Infof("Deduplicating database entries, deduplicated=%v", converted)
+				log.Info("Deduplicating database entries", "deduped", converted)
 			}
 			// Check for termination, or continue after a bit of a timeout
 			select {
@@ -115,10 +115,10 @@ func upgradeDeduplicateData(db aoadb.Database) func() error {
 		}
 		// Upgrade finished, mark a such and terminate
 		if failed == nil {
-			log.Infof("Database deduplication successful, deduped=%v",  converted)
+			log.Info("Database deduplication successful", "deduped", converted)
 			db.Put(deduplicateData, []byte{42})
 		} else {
-			log.Errorf("Database deduplication failed, deduped=%v, err=%v", converted, failed)
+			log.Error("Database deduplication failed", "deduped", converted, "err", failed)
 		}
 		it.Release()
 		it = nil

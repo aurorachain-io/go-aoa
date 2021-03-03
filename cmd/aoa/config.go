@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of go-aurora.
+// Copyright 2021 The go-aoa Authors
+// This file is part of go-eminer.
 //
-// go-aurora is free software: you can redistribute it and/or modify
+// go-eminer is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// go-aurora is distributed in the hope that it will be useful,
+// go-eminer is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with go-aurora. If not, see <http://www.gnu.org/licenses/>.
+// along with go-eminer. If not, see <http://www.gnu.org/licenses/>.
 
 package main
 
@@ -20,10 +20,10 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"github.com/Aurorachain/go-aoa/aoa"
-	"github.com/Aurorachain/go-aoa/cmd/utils"
-	"github.com/Aurorachain/go-aoa/node"
-	"github.com/Aurorachain/go-aoa/params"
+	"github.com/Aurorachain-io/go-aoa/cmd/utils"
+	"github.com/Aurorachain-io/go-aoa/aoa"
+	"github.com/Aurorachain-io/go-aoa/node"
+	"github.com/Aurorachain-io/go-aoa/params"
 	"github.com/naoina/toml"
 	"gopkg.in/urfave/cli.v1"
 	"io"
@@ -66,19 +66,19 @@ var tomlSettings = toml.Config{
 	},
 }
 
-type aoastatsConfig struct {
+type dacstatsConfig struct {
 	URL string `toml:",omitempty"`
 }
 
-type gaoaConfig struct {
-	Aoa aoa.Config
+type gdacConfig struct {
+	Dac aoa.Config
 	// Shh       whisper.Config
 	Node     node.Config
-	Aoastats aoastatsConfig
+	Dacstats dacstatsConfig
 	// Dashboard dashboard.Config
 }
 
-func loadConfig(file string, cfg *gaoaConfig) error {
+func loadConfig(file string, cfg *gdacConfig) error {
 	f, err := os.Open(file)
 	if err != nil {
 		return err
@@ -103,10 +103,10 @@ func defaultNodeConfig() node.Config {
 	return cfg
 }
 
-func makeConfigNode(ctx *cli.Context) (*node.Node, gaoaConfig) {
+func makeConfigNode(ctx *cli.Context) (*node.Node, gdacConfig) {
 	// Load defaults.
-	cfg := gaoaConfig{
-		Aoa: aoa.DefaultConfig,
+	cfg := gdacConfig{
+		Dac: aoa.DefaultConfig,
 		// Shh:       whisper.DefaultConfig,
 		Node: defaultNodeConfig(),
 		// Dashboard: dashboard.DefaultConfig,
@@ -125,9 +125,9 @@ func makeConfigNode(ctx *cli.Context) (*node.Node, gaoaConfig) {
 	if err != nil {
 		utils.Fatalf("Failed to create the protocol stack: %v", err)
 	}
-	utils.SetAoaConfig(ctx, stack, &cfg.Aoa)
+	utils.SetaoaConfig(ctx, stack, &cfg.Dac)
 	if ctx.GlobalIsSet(utils.EthStatsURLFlag.Name) {
-		cfg.Aoastats.URL = ctx.GlobalString(utils.EthStatsURLFlag.Name)
+		cfg.Dacstats.URL = ctx.GlobalString(utils.EthStatsURLFlag.Name)
 	}
 
 	// utils.SetShhConfig(ctx, stack, &cfg.Shh)
@@ -149,7 +149,7 @@ func enableWhisper(ctx *cli.Context) bool {
 func makeFullNode(ctx *cli.Context) *node.Node {
 	stack, cfg := makeConfigNode(ctx)
 
-	utils.RegisterAoaService(stack, &cfg.Aoa)
+	utils.RegisteraoaService(stack, &cfg.Dac)
 
 	//if ctx.GlobalBool(utils.DashboardEnabledFlag.Name) {
 	//	utils.RegisterDashboardService(stack, &cfg.Dashboard, gitCommit)
@@ -167,9 +167,9 @@ func makeFullNode(ctx *cli.Context) *node.Node {
 	//	utils.RegisterShhService(stack, &cfg.Shh)
 	//}
 
-	// Add the Aurora Stats daemon if requested.
-	if cfg.Aoastats.URL != "" {
-		utils.RegisterAoaStatsService(stack, cfg.Aoastats.URL)
+	// Add the eminer-pro Stats daemon if requested.
+	if cfg.Dacstats.URL != "" {
+		utils.RegisteraoaStatsService(stack, cfg.Dacstats.URL)
 	}
 
 	return stack
@@ -180,8 +180,8 @@ func dumpConfig(ctx *cli.Context) error {
 	_, cfg := makeConfigNode(ctx)
 	comment := ""
 
-	if cfg.Aoa.Genesis != nil {
-		cfg.Aoa.Genesis = nil
+	if cfg.Dac.Genesis != nil {
+		cfg.Dac.Genesis = nil
 		comment += "# Note: this config doesn't contain the genesis block.\n\n"
 	}
 

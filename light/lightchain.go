@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package light
 
@@ -23,15 +23,15 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Aurorachain/go-aoa/aoadb"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/consensus"
-	"github.com/Aurorachain/go-aoa/core"
-	"github.com/Aurorachain/go-aoa/core/types"
-	"github.com/Aurorachain/go-aoa/event"
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/params"
-	"github.com/Aurorachain/go-aoa/rlp"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/consensus"
+	"github.com/Aurorachain-io/go-aoa/core"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/emdb"
+	"github.com/Aurorachain-io/go-aoa/event"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/params"
+	"github.com/Aurorachain-io/go-aoa/rlp"
 	"github.com/hashicorp/golang-lru"
 )
 
@@ -45,7 +45,7 @@ var (
 // interface. It only does header validation during chain insertion.
 type LightChain struct {
 	hc            *core.HeaderChain
-	chainDb       aoadb.Database
+	chainDb       emdb.Database
 	odr           OdrBackend
 	chainFeed     event.Feed
 	chainSideFeed event.Feed
@@ -71,7 +71,7 @@ type LightChain struct {
 }
 
 // NewLightChain returns a fully initialised light chain using information
-// available in the database. It initialises the default Aurora header
+// available in the database. It initialises the default eminer-pro header
 // validator.
 func NewLightChain(odr OdrBackend, config *params.ChainConfig, engine consensus.Engine) (*LightChain, error) {
 	bodyCache, _ := lru.New(bodyCacheLimit)
@@ -128,7 +128,7 @@ func (self *LightChain) addTrustedCheckpoint(cp trustedCheckpoint) {
 	if self.odr.BloomIndexer() != nil {
 		self.odr.BloomIndexer().AddKnownSectionHead(cp.sectionIdx, cp.sectionHead)
 	}
-	log.Infof("Added trusted checkpoint, chain name=%v", cp.name)
+	log.Info("Added trusted checkpoint", "chain name", cp.name)
 }
 
 func (self *LightChain) getProcInterrupt() bool {
@@ -155,7 +155,7 @@ func (self *LightChain) loadLastState() error {
 	// Issue a status log and return
 	header := self.hc.CurrentHeader()
 	headerTd := self.GetTd(header.Hash(), header.Number.Uint64())
-	log.Infof("Loaded most recent local header, number=%s, hash=%s, td=%s",  header.Number,  header.Hash().Hex(), headerTd)
+	log.Info("Loaded most recent local header", "number", header.Number, "hash", header.Hash(), "td", headerTd)
 
 	return nil
 }
@@ -217,10 +217,10 @@ func (bc *LightChain) ResetWithGenesisBlock(genesis *types.Block) {
 
 	// Prepare the genesis block and reinitialise the chain
 	if err := core.WriteTd(bc.chainDb, genesis.Hash(), genesis.NumberU64(), types.BlockDifficult); err != nil {
-		log.Error("Failed to write genesis block TD", "err", err)
+		log.Crit("Failed to write genesis block TD", "err", err)
 	}
 	if err := core.WriteBlock(bc.chainDb, genesis); err != nil {
-		log.Error("Failed to write genesis block", "err", err)
+		log.Crit("Failed to write genesis block", "err", err)
 	}
 	bc.genesisBlock = genesis
 	bc.hc.SetGenesis(bc.genesisBlock.Header())
@@ -237,7 +237,6 @@ func (bc *LightChain) Genesis() *types.Block {
 	return bc.genesisBlock
 }
 
-//TODO 轻量级报错修复，返回nil，后续处理
 func (bc *LightChain) GetDelegatePoll() (*map[common.Address]types.Candidate, error) {
 	return nil, nil
 }
@@ -394,11 +393,11 @@ func (self *LightChain) InsertHeaderChain(chain []*types.Header, checkFreq int) 
 
 		switch status {
 		case core.CanonStatTy:
-			log.Infof("Inserted new header, number=%v, hash=%v", header.Number, header.Hash().Hex())
+			log.Debug("Inserted new header", "number", header.Number, "hash", header.Hash())
 			events = append(events, core.ChainEvent{Block: types.NewBlockWithHeader(header), Hash: header.Hash()})
 
 		case core.SideStatTy:
-			log.Infof("Inserted forked header, number=%v, hash=%v", header.Number, header.Hash().Hex())
+			log.Debug("Inserted forked header", "number", header.Number, "hash", header.Hash())
 			events = append(events, core.ChainSideEvent{Block: types.NewBlockWithHeader(header)})
 		}
 		return err

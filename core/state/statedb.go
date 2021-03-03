@@ -1,20 +1,20 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
-// Package state provides a caching layer atop the Aurora state trie.
+// Package state provides a caching layer atop the eminer-pro state trie.
 package state
 
 import (
@@ -24,12 +24,12 @@ import (
 	"sync"
 
 	"bytes"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/core/types"
-	"github.com/Aurorachain/go-aoa/crypto"
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/rlp"
-	"github.com/Aurorachain/go-aoa/trie"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/crypto"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/rlp"
+	"github.com/Aurorachain-io/go-aoa/trie"
 	"github.com/pkg/errors"
 )
 
@@ -38,7 +38,7 @@ type revision struct {
 	journalIndex int
 }
 
-// StateDBs within the aurora protocol are used to store anything
+// StateDBs within the eminer-pro protocol are used to store anything
 // within the merkle trie. StateDBs take care of caching and storing
 // nested states. It's the general query interface to retrieve:
 // * Contracts
@@ -512,7 +512,7 @@ func (self *StateDB) createObject(addr common.Address) (newobj, prev *stateObjec
 //   1. sends funds to sha(account ++ (nonce + 1))
 //   2. tx_create(sha(account ++ nonce)) (note that this gets the address of 1)
 //
-// Carrying over the balance ensures that aoa doesn't disappear.
+// Carrying over the balance ensures that em doesn't disappear.
 func (self *StateDB) CreateAccount(addr common.Address) {
 	new, prev := self.createObject(addr)
 	if prev != nil {
@@ -583,7 +583,7 @@ func (self *StateDB) Snapshot() int {
 }
 
 // RevertToSnapshot reverts all state changes made since the given revision.
-func (self *StateDB) RevertToSnapshot(revid int, isEpiphron bool) {
+func (self *StateDB) RevertToSnapshot(revid int) {
 	// Find the snapshot in the stack of valid snapshots.
 	idx := sort.Search(len(self.validRevisions), func(i int) bool {
 		return self.validRevisions[i].id >= revid
@@ -595,13 +595,6 @@ func (self *StateDB) RevertToSnapshot(revid int, isEpiphron bool) {
 
 	// Replay the journal to undo changes.
 	for i := len(self.journal) - 1; i >= snapshot; i-- {
-		if !isEpiphron {
-			_, isAssetJournal := self.journal[i].(assetBalanceChange)
-			// Before Epiphron block, transfer asset value to a contract will always success
-			if isAssetJournal {
-				continue
-			}
-		}
 		self.journal[i].undo(self)
 	}
 	self.journal = self.journal[:snapshot]
@@ -699,7 +692,6 @@ func (s *StateDB) CommitTo(dbw trie.DatabaseWriter, deleteEmptyObjects bool) (ro
 	return root, err
 }
 
-//PublishAsset 指定地址发行新资产
 func (self *StateDB) PublishAsset(addr common.Address, assetInfo types.AssetInfo) error {
 	stateObject := self.GetOrNewStateObject(addr)
 	if nil == stateObject {
@@ -716,12 +708,14 @@ func (self *StateDB) PublishAsset(addr common.Address, assetInfo types.AssetInfo
 
 	id := crypto.CreateAddress(addr, nonce)
 	assetAccount, _ := self.createObject(id)
-	data, err := rlp.EncodeToBytes(assetInfo)
+	data, err := types.AssetInfoToBytes(assetInfo)
 	if nil != err {
 		return err
 	}
-	assetAccount.SetAssetData(crypto.Keccak256Hash(data), data)
-
+	err = assetAccount.SetAssetData(crypto.Keccak256Hash(data), data)
+	if nil != err {
+		return err
+	}
 	stateObject.AddAssetBalance(id, assetInfo.Supply)
 	return nil
 }
@@ -739,9 +733,8 @@ func (self *StateDB) GetAssetInfo(addr common.Address) (*types.AssetInfo, error)
 	if stateObject.IsAssetAccount() {
 		data, err := stateObject.AssetData(self.db)
 		if err == nil {
-			var ai types.AssetInfo
-			err := rlp.DecodeBytes(data, &ai)
-			return &ai, err
+			ai, err := types.BytesToAssetInfo(data)
+			return ai, err
 		} else {
 			return nil, err
 		}

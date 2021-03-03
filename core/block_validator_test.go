@@ -1,37 +1,37 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package core
 
 import (
-	"time"
-	"testing"
-	"github.com/Aurorachain/go-aoa/aoadb"
-	"github.com/Aurorachain/go-aoa/params"
-	"github.com/Aurorachain/go-aoa/consensus/dpos"
-	"github.com/Aurorachain/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/consensus/dpos"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/core/vm"
+	"github.com/Aurorachain-io/go-aoa/emdb"
+	"github.com/Aurorachain-io/go-aoa/params"
 	"runtime"
-	"github.com/Aurorachain/go-aoa/core/vm"
+	"testing"
+	"time"
 )
 
 // Tests that simple header verification works, for both good and bad blocks.
 func TestHeaderVerification(t *testing.T) {
 	// Create a simple chain to verify
 	var (
-		testdb, _ = aoadb.NewMemDatabase()
+		testdb, _ = emdb.NewMemDatabase()
 		gspec     = &Genesis{Config: params.TestChainConfig}
 		genesis   = gspec.MustCommit(testdb)
 		blocks, _ = GenerateChain(params.TestChainConfig, genesis, dpos.New(), testdb, 8, nil)
@@ -41,7 +41,7 @@ func TestHeaderVerification(t *testing.T) {
 		headers[i] = block.Header()
 	}
 	// Run the header checker for blocks one-by-one, checking for both valid and invalid nonces
-	chain, _ := NewBlockChain(testdb, params.TestChainConfig, dpos.New(), vm.Config{},nil)
+	chain, _ := NewBlockChain(testdb, params.TestChainConfig, dpos.New(), vm.Config{}, nil)
 	defer chain.Stop()
 
 	for i := 0; i < len(blocks); i++ {
@@ -79,7 +79,7 @@ func TestHeaderConcurrentVerification32(t *testing.T) { testHeaderConcurrentVeri
 func testHeaderConcurrentVerification(t *testing.T, threads int) {
 	// Create a simple chain to verify
 	var (
-		testdb, _ = aoadb.NewMemDatabase()
+		testdb, _ = emdb.NewMemDatabase()
 		gspec     = &Genesis{Config: params.TestChainConfig}
 		genesis   = gspec.MustCommit(testdb)
 		blocks, _ = GenerateChain(params.TestChainConfig, genesis, dpos.New(), testdb, 8, nil)
@@ -100,8 +100,8 @@ func testHeaderConcurrentVerification(t *testing.T, threads int) {
 	for i, valid := range []bool{true, false} {
 		var results <-chan error
 
-		chain, _ := NewBlockChain(testdb, params.TestChainConfig, dpos.New(), vm.Config{},nil)
-		_, results = chain.aoaEngine.VerifyHeaders(chain, headers)
+		chain, _ := NewBlockChain(testdb, params.TestChainConfig, dpos.New(), vm.Config{}, nil)
+		_, results = chain.dacEngine.VerifyHeaders(chain, headers)
 		chain.Stop()
 		// Wait for all the verification results
 		checks := make(map[int]error)
@@ -145,7 +145,7 @@ func TestHeaderConcurrentAbortion32(t *testing.T) { testHeaderConcurrentAbortion
 func testHeaderConcurrentAbortion(t *testing.T, threads int) {
 	// Create a simple chain to verify
 	var (
-		testdb, _ = aoadb.NewMemDatabase()
+		testdb, _ = emdb.NewMemDatabase()
 		gspec     = &Genesis{Config: params.TestChainConfig}
 		genesis   = gspec.MustCommit(testdb)
 		blocks, _ = GenerateChain(params.TestChainConfig, genesis, dpos.New(), testdb, 1024, nil)
@@ -162,10 +162,10 @@ func testHeaderConcurrentAbortion(t *testing.T, threads int) {
 	defer runtime.GOMAXPROCS(old)
 
 	// Start the verifications and immediately abort
-	chain, _ := NewBlockChain(testdb, params.TestChainConfig, dpos.New(), vm.Config{},nil)
+	chain, _ := NewBlockChain(testdb, params.TestChainConfig, dpos.New(), vm.Config{}, nil)
 	defer chain.Stop()
 
-	abort, results := chain.aoaEngine.VerifyHeaders(chain, headers)
+	abort, results := chain.dacEngine.VerifyHeaders(chain, headers)
 	close(abort)
 
 	// Deplete the results channel

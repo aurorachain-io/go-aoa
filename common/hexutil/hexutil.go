@@ -1,22 +1,22 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 /*
 Package hexutil implements hex encoding with 0x prefix.
-This encoding is used by the Aurora RPC API to transport binary data in JSON payloads.
+This encoding is used by the eminer-pro RPC API to transport binary data in JSON payloads.
 
 Encoding Rules
 
@@ -65,7 +65,7 @@ func Decode(input string) ([]byte, error) {
 	}
 	if hasAoaPrefix(input) {
 		input = input[3:]
-	}else {
+	} else {
 		input = input[2:]
 	}
 	b, err := hex.DecodeString(input)
@@ -193,8 +193,8 @@ func has0xPrefix(input string) bool {
 	return len(input) >= 2 && input[0] == '0' && (input[1] == 'x' || input[1] == 'X')
 }
 
-func hasAoaPrefix(input string) bool  {
-	return len(input) >= 3 && (input[0] == 'A' || input[0] == 'a') && (input[1] == 'O' || input[1] == 'o') && (input[2] == 'A' || input[2] == 'a')
+func hasAoaPrefix(input string) bool {
+	return len(input) >= 3 && (input[0] == 'a' || input[0] == 'A') && (input[1] == 'o' || input[1] == 'O') && (input[2] == 'a' || input[2] == 'A')
 }
 
 func checkNumber(input string) (raw string, err error) {
@@ -204,9 +204,9 @@ func checkNumber(input string) (raw string, err error) {
 	if !has0xPrefix(input) && !hasAoaPrefix(input) {
 		return "", ErrMissingPrefix
 	}
-	if hasAoaPrefix(input){
+	if hasAoaPrefix(input) {
 		input = input[3:]
-	}else {
+	} else {
 		input = input[2:]
 	}
 

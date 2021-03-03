@@ -1,20 +1,20 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of go-aurora.
+// Copyright 2021 The go-aoa Authors
+// This file is part of go-eminer.
 //
-// go-aurora is free software: you can redistribute it and/or modify
+// go-eminer is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// go-aurora is distributed in the hope that it will be useful,
+// go-eminer is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with go-aurora. If not, see <http://www.gnu.org/licenses/>.
+// along with go-eminer. If not, see <http://www.gnu.org/licenses/>.
 
-// aoa is the official command-line client for Aurora.
+// em is the official command-line client for eminer-pro.
 package main
 
 import (
@@ -25,16 +25,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Aurorachain/go-aoa/accounts"
-	"github.com/Aurorachain/go-aoa/accounts/keystore"
-	"github.com/Aurorachain/go-aoa/aoa"
-	"github.com/Aurorachain/go-aoa/aoaclient"
-	"github.com/Aurorachain/go-aoa/cmd/utils"
-	"github.com/Aurorachain/go-aoa/console"
-	"github.com/Aurorachain/go-aoa/internal/debug"
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/metrics"
-	"github.com/Aurorachain/go-aoa/node"
+	"github.com/Aurorachain-io/go-aoa/accounts"
+	"github.com/Aurorachain-io/go-aoa/accounts/keystore"
+	"github.com/Aurorachain-io/go-aoa/cmd/utils"
+	"github.com/Aurorachain-io/go-aoa/console"
+	"github.com/Aurorachain-io/go-aoa/aoa"
+	"github.com/Aurorachain-io/go-aoa/aoaclient"
+	"github.com/Aurorachain-io/go-aoa/internal/debug"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/metrics"
+	"github.com/Aurorachain-io/go-aoa/node"
 	"gopkg.in/urfave/cli.v1"
 )
 
@@ -46,7 +46,7 @@ var (
 	// Git SHA1 commit hash of the release (set via linker flags)
 	gitCommit = ""
 	// The app that holds all commands and flags.
-	app = utils.NewApp(gitCommit, "the go-aurora command line interface")
+	app = utils.NewApp(gitCommit, "the go-eminer command line interface")
 	// flags that configure the node
 	nodeFlags = []cli.Flag{
 		utils.IdentityFlag,
@@ -83,7 +83,7 @@ var (
 		utils.ListenPortFlag,
 		utils.MaxPeersFlag,
 		utils.MaxPendingPeersFlag,
-		utils.AurorabaseFlag,
+		utils.AoachainbaseFlag,
 		utils.GasPriceFlag,
 		utils.MinerThreadsFlag,
 		utils.MiningEnabledFlag,
@@ -126,10 +126,6 @@ var (
 		utils.IPCPathFlag,
 	}
 
-	systemFlags = []cli.Flag{
-		utils.LogLevelFlag,
-	}
-
 	whisperFlags = []cli.Flag{
 		//utils.WhisperEnabledFlag,
 		//utils.WhisperMaxMessageSizeFlag,
@@ -139,9 +135,9 @@ var (
 
 func init() {
 	// Initialize the CLI app and start Geth
-	app.Action = gAoa
+	app.Action = gDac
 	app.HideVersion = true // we have a command to print the version
-	app.Copyright = "Copyright 2013-2017 The go-aurora Authors"
+	app.Copyright = "Copyright 2013-2017 The go-eminer Authors"
 	app.Commands = []cli.Command{
 		// See chaincmd.go:
 		initCommand,
@@ -172,7 +168,6 @@ func init() {
 	app.Flags = append(app.Flags, consoleFlags...)
 	app.Flags = append(app.Flags, debug.Flags...)
 	app.Flags = append(app.Flags, whisperFlags...)
-	app.Flags = append(app.Flags, systemFlags...)
 
 	app.Before = func(ctx *cli.Context) error {
 		runtime.GOMAXPROCS(runtime.NumCPU())
@@ -204,10 +199,10 @@ func main() {
 	}
 }
 
-// aoa is the main entry point into the system if no special subcommand is ran.
+// em is the main entry point into the system if no special subcommand is ran.
 // It creates a default node based on the command line arguments and runs it in
 // blocking mode, waiting for it to be shut down.
-func gAoa(ctx *cli.Context) error {
+func gDac(ctx *cli.Context) error {
 	fullNode := makeFullNode(ctx)
 	startNode(ctx, fullNode)
 	fullNode.Wait()
@@ -220,7 +215,7 @@ func gAoa(ctx *cli.Context) error {
 func startNode(ctx *cli.Context, stack *node.Node) {
 	numCPU := runtime.NumCPU()
 	runtime.GOMAXPROCS(numCPU)
-	log.Infof("start with multiple CPU, cpu number=%v", numCPU)
+	log.Info("start with multiple CPU", "cpu number", numCPU)
 	// Start up the node itself
 	utils.StartNode(stack)
 
@@ -261,7 +256,7 @@ func startNode(ctx *cli.Context, stack *node.Node) {
 				}
 			case accounts.WalletOpened:
 				status, _ := event.Wallet.Status()
-				log.Infof("New wallet appeared, url=%v, status=%v", event.Wallet.URL(), status)
+				log.Info("New wallet appeared", "url", event.Wallet.URL(), "status", status)
 
 				if event.Wallet.URL().Scheme == "ledger" {
 					event.Wallet.SelfDerive(accounts.DefaultLedgerBaseDerivationPath, stateReader)
@@ -270,7 +265,7 @@ func startNode(ctx *cli.Context, stack *node.Node) {
 				}
 
 			case accounts.WalletDropped:
-				log.Infof("Old wallet dropped, url=%v", event.Wallet.URL())
+				log.Info("Old wallet dropped", "url", event.Wallet.URL())
 				event.Wallet.Close()
 			}
 		}
@@ -278,20 +273,20 @@ func startNode(ctx *cli.Context, stack *node.Node) {
 	// Start auxiliary services if enabled
 	if ctx.GlobalBool(utils.MiningEnabledFlag.Name) || ctx.GlobalBool(utils.DeveloperFlag.Name) {
 
-		var aurora *aoa.Aurora
-		if err := stack.Service(&aurora); err != nil {
-			utils.Fatalf("Aurora service not running: %v", err)
+		var emchain *aoa.Dacchain
+		if err := stack.Service(&emchain); err != nil {
+			utils.Fatalf("eminer service not running: %v", err)
 		}
 		// Use a reduced number of threads if requested
 		if threads := ctx.GlobalInt(utils.MinerThreadsFlag.Name); threads > 0 {
 			type threaded interface {
 				SetThreads(threads int)
 			}
-			if th, ok := aurora.Engine().(threaded); ok {
+			if th, ok := emchain.Engine().(threaded); ok {
 				th.SetThreads(threads)
 			}
 		}
 		// Set the gas price to the limits from the CLI and start mining
-		aurora.TxPool().SetGasPrice(utils.GlobalBig(ctx, utils.GasPriceFlag.Name))
+		emchain.TxPool().SetGasPrice(utils.GlobalBig(ctx, utils.GasPriceFlag.Name))
 	}
 }

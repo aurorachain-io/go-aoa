@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package aoadb
 
@@ -22,8 +22,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/metrics"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/metrics"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/errors"
 	"github.com/syndtr/goleveldb/leveldb/filter"
@@ -52,10 +52,12 @@ type LDBDatabase struct {
 	quitLock sync.Mutex      // Mutex protecting the quit channel access
 	quitChan chan chan error // Quit channel to stop the metrics collection before closing the database
 
+	log log.Logger // Contextual logger tracking the database path
 }
 
 // NewLDBDatabase returns a LevelDB wrapped object.
 func NewLDBDatabase(file string, cache int, handles int) (*LDBDatabase, error) {
+	logger := log.New("database", file)
 
 	// Ensure we have some minimal caching and file guarantees
 	if cache < 16 {
@@ -64,7 +66,7 @@ func NewLDBDatabase(file string, cache int, handles int) (*LDBDatabase, error) {
 	if handles < 16 {
 		handles = 16
 	}
-	log.Infof("Allocated cache and file handles, cache=%v, handles=%v", cache, handles)
+	logger.Info("Allocated cache and file handles", "cache", cache, "handles", handles)
 
 	// Open the db and recover any potential corruptions
 	db, err := leveldb.OpenFile(file, &opt.Options{
@@ -83,6 +85,7 @@ func NewLDBDatabase(file string, cache int, handles int) (*LDBDatabase, error) {
 	return &LDBDatabase{
 		fn:  file,
 		db:  db,
+		log: logger,
 	}, nil
 }
 
@@ -152,14 +155,14 @@ func (db *LDBDatabase) Close() {
 		errc := make(chan error)
 		db.quitChan <- errc
 		if err := <-errc; err != nil {
-			log.Error("Metrics collection failed", "err", err)
+			db.log.Error("Metrics collection failed", "err", err)
 		}
 	}
 	err := db.db.Close()
 	if err == nil {
-		log.Info("Database closed")
+		db.log.Info("Database closed")
 	} else {
-		log.Error("Failed to close database", "err", err)
+		db.log.Error("Failed to close database", "err", err)
 	}
 }
 
@@ -214,7 +217,7 @@ func (db *LDBDatabase) meter(refresh time.Duration) {
 		// Retrieve the database stats
 		stats, err := db.db.GetProperty("leveldb.stats")
 		if err != nil {
-			log.Error("Failed to read database stats", "err", err)
+			db.log.Error("Failed to read database stats", "err", err)
 			return
 		}
 		// Find the compaction table, skip the header
@@ -223,7 +226,7 @@ func (db *LDBDatabase) meter(refresh time.Duration) {
 			lines = lines[1:]
 		}
 		if len(lines) <= 3 {
-			log.Error("Compaction table not found")
+			db.log.Error("Compaction table not found")
 			return
 		}
 		lines = lines[3:]
@@ -240,7 +243,7 @@ func (db *LDBDatabase) meter(refresh time.Duration) {
 			for idx, counter := range parts[3:] {
 				value, err := strconv.ParseFloat(strings.TrimSpace(counter), 64)
 				if err != nil {
-					log.Error("Compaction entry parsing failed", "err", err)
+					db.log.Error("Compaction entry parsing failed", "err", err)
 					return
 				}
 				counters[i%2][idx] += value

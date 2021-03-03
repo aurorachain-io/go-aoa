@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of go-aurora.
+// Copyright 2021 The go-aoa Authors
+// This file is part of go-eminer.
 //
-// go-aurora is free software: you can redistribute it and/or modify
+// go-eminer is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// go-aurora is distributed in the hope that it will be useful,
+// go-eminer is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with go-aurora. If not, see <http://www.gnu.org/licenses/>.
+// along with go-eminer. If not, see <http://www.gnu.org/licenses/>.
 
 package main
 
@@ -26,24 +26,24 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/Aurorachain/go-aoa/cmd/internal/browser"
-	"github.com/Aurorachain/go-aoa/params"
+	"github.com/Aurorachain-io/go-aoa/cmd/internal/browser"
+	"github.com/Aurorachain-io/go-aoa/params"
 
-	"github.com/Aurorachain/go-aoa/cmd/utils"
+	"github.com/Aurorachain-io/go-aoa/cmd/utils"
 	cli "gopkg.in/urfave/cli.v1"
 )
 
 var bugCommand = cli.Command{
 	Action:    utils.MigrateFlags(reportBug),
 	Name:      "bug",
-	Usage:     "opens a window to report a bug on the aoa repo",
+	Usage:     "opens a window to report a bug on the em repo",
 	ArgsUsage: " ",
 	Category:  "MISCELLANEOUS COMMANDS",
 }
 
-const issueUrl = "https://github.com/Aurorachain/go-aoa/issues/new"
+const issueUrl = "https://github.com/Aurorachain-io/go-aoa/issues/new"
 
-// reportBug reports a bug by opening a new URL to the go-aurora GH issue
+// reportBug reports a bug by opening a new URL to the go-dacchain GH issue
 // tracker and setting default values as the issue body.
 func reportBug(ctx *cli.Context) error {
 	// execute template and write contents to buff

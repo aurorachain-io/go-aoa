@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 // Package discover implements the Node Discovery Protocol.
 //
@@ -32,9 +32,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/crypto"
-	"github.com/Aurorachain/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/crypto"
+	"github.com/Aurorachain-io/go-aoa/log"
 )
 
 const (
@@ -63,9 +63,7 @@ type Table struct {
 	mutex     sync.Mutex // protects buckets, their content, and nursery
 	consmutex sync.Mutex // protects consBuckets, their content, and nursery
 
-	//普通网络的Buckets
-	buckets [nBuckets]*bucket // index of known nodes by distance
-	//共识网络的Buckets
+	buckets     [nBuckets]*bucket // index of known nodes by distance
 	consBuckets [nBuckets]*bucket
 
 	nursery []*Node // bootstrap nodes
@@ -131,16 +129,13 @@ func newTable(t transport, ourID NodeID, ourAddr *net.UDPAddr, nodeDBPath string
 	for i := 0; i < cap(tab.bondslots); i++ {
 		tab.bondslots <- struct{}{}
 	}
-	//普通网络层
 	for i := range tab.buckets {
 		tab.buckets[i] = new(bucket)
 	}
-	//共识网络层
 	for i := range tab.consBuckets {
 		tab.consBuckets[i] = new(bucket)
 	}
 
-	//刷新网络
 	go tab.refreshLoop()
 	return tab, nil
 }
@@ -340,10 +335,10 @@ func (tab *Table) lookup(targetID NodeID, refreshIfEmpty bool, netType byte) []*
 						// Bump the failure counter to detect and evacuate non-bonded entries
 						fails := tab.db.findFails(n.ID) + 1
 						tab.db.updateFindFails(n.ID, fails)
-						log.Debugf("Bumping findnode failure counter, id=%v, failCount=%v", n.ID, fails)
+						log.Trace("Bumping findnode failure counter", "id", n.ID, "failcount", fails)
 
 						if fails >= maxFindnodeFailures {
-							log.Infof("Too many findnode failures, dropping, id=%v, failCount=%v", n.ID, fails)
+							log.Info("Too many findnode failures, dropping", "id", n.ID, "failcount", fails)
 							tab.delete(n, netType)
 						}
 					}
@@ -450,8 +445,8 @@ func (tab *Table) doRefresh(done chan struct{}) {
 			// log.Error("No discv4 seed nodes found")
 		}
 		for _, n := range seeds {
-			age := time.Since(tab.db.lastPong(n.ID))
-			log.Debugf("Query seed node, id=%v, addr=%v, age=%v",  n.ID,  n.addr(), age)
+			age := log.Lazy{Fn: func() time.Duration { return time.Since(tab.db.lastPong(n.ID)) }}
+			log.Trace("seed node", "id", n.ID, "addr", n.addr(), "age", age)
 		}
 		tab.mutex.Lock()
 		tab.stuff(seeds, CommNet)
@@ -462,7 +457,7 @@ func (tab *Table) doRefresh(done chan struct{}) {
 	}()
 
 	if tab.openTop {
-		log.Info("start to refresh top level KAD network")
+		log.Debug("kad flash start")
 		wg.Add(1)
 		go func() {
 			seeds = tab.bondall(append(seeds, tab.nursery...), ConsNet)
@@ -470,8 +465,8 @@ func (tab *Table) doRefresh(done chan struct{}) {
 				log.Error("No discv4 seed nodes found")
 			}
 			for _, n := range seeds {
-				age := time.Since(tab.db.lastPong(n.ID))
-				log.Errorf("Found seed node in database, id=%v, addr=%v, age=%v", n.ID, n.addr(),  age)
+				age := log.Lazy{Fn: func() time.Duration { return time.Since(tab.db.lastPong(n.ID)) }}
+				log.Error("Found seed node in database", "id", n.ID, "addr", n.addr(), "age", age)
 			}
 			tab.consmutex.Lock()
 			tab.stuff(seeds, ConsNet)
@@ -497,8 +492,8 @@ func (tab *Table) doRefreshConsNetRightNow() {
 		log.Error("No discv4 seed nodes found")
 	}
 	for _, n := range seeds {
-		age := time.Since(tab.db.lastPong(n.ID))
-		log.Debugf("Found seed node in database, id=%v, addr=%v, age=%v", n.ID, n.addr(), age)
+		age := log.Lazy{Fn: func() time.Duration { return time.Since(tab.db.lastPong(n.ID)) }}
+		log.Trace("Found seed node in database", "id", n.ID, "addr", n.addr(), "age", age)
 	}
 	tab.consmutex.Lock()
 	tab.stuff(seeds, ConsNet)
@@ -599,7 +594,7 @@ func (tab *Table) bond(pinged bool, id NodeID, addr *net.UDPAddr, tcpPort uint16
 	var result error
 	age := time.Since(tab.db.lastPong(id))
 	if node == nil || fails > 0 || age > nodeDBNodeExpiration {
-		log.Debugf("Starting bonding ping/pong, id=%v, known=%v, failCount=%v, age=%v", id, node != nil, fails, age)
+		log.Trace("Starting bonding ping/pong", "id", id, "known", node != nil, "failcount", fails, "age", age)
 
 		tab.bondmu.Lock()
 		w := tab.bonding[id]

@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package node
 
@@ -26,13 +26,13 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/Aurorachain/go-aoa/accounts"
-	"github.com/Aurorachain/go-aoa/aoadb"
-	"github.com/Aurorachain/go-aoa/event"
-	"github.com/Aurorachain/go-aoa/internal/debug"
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/p2p"
-	"github.com/Aurorachain/go-aoa/rpc"
+	"github.com/Aurorachain-io/go-aoa/accounts"
+	"github.com/Aurorachain-io/go-aoa/aoadb"
+	"github.com/Aurorachain-io/go-aoa/event"
+	"github.com/Aurorachain-io/go-aoa/internal/debug"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/p2p"
+	"github.com/Aurorachain-io/go-aoa/rpc"
 	"github.com/prometheus/prometheus/util/flock"
 )
 
@@ -68,6 +68,8 @@ type Node struct {
 
 	stop chan struct{} // Channel to wait for termination notifications
 	lock sync.RWMutex
+
+	log log.Logger
 }
 
 // New creates a new P2P node, ready for protocol registration.
@@ -95,10 +97,13 @@ func New(conf *Config) (*Node, error) {
 		return nil, errors.New(`Config.Name cannot end in ".ipc"`)
 	}
 	// Ensure that the AccountManager method works before the node has started.
-	// We rely on this in cmd/aoa.
+	// We rely on this in cmd/em.
 	am, ephemeralKeystore, err := makeAccountManager(conf)
 	if err != nil {
 		return nil, err
+	}
+	if conf.Logger == nil {
+		conf.Logger = log.New()
 	}
 	// Note: any interaction with Config that would create/touch files
 	// in the data directory or instance directory is delayed until Start.
@@ -111,6 +116,7 @@ func New(conf *Config) (*Node, error) {
 		httpEndpoint:      conf.HTTPEndpoint(),
 		wsEndpoint:        conf.WSEndpoint(),
 		eventmux:          new(event.TypeMux),
+		log:               conf.Logger,
 	}, nil
 }
 
@@ -145,6 +151,7 @@ func (n *Node) Start() error {
 	n.serverConfig = n.config.P2P
 	n.serverConfig.PrivateKey = n.config.NodeKey()
 	n.serverConfig.Name = n.config.NodeName()
+	n.serverConfig.Logger = n.log
 	if n.serverConfig.StaticNodes == nil {
 		n.serverConfig.StaticNodes = n.config.StaticNodes()
 	}
@@ -155,7 +162,7 @@ func (n *Node) Start() error {
 		n.serverConfig.NodeDatabase = n.config.NodeDB()
 	}
 	running := &p2p.Server{Config: n.serverConfig}
-	log.Infof("Starting peer-to-peer node, instance=%v", n.serverConfig.Name)
+	n.log.Info("Starting peer-to-peer node", "instance", n.serverConfig.Name)
 
 	// Otherwise copy and specialize the P2P configuration
 	services := make(map[reflect.Type]Service)
@@ -278,7 +285,7 @@ func (n *Node) startInProc(apis []rpc.API) error {
 		if err := handler.RegisterName(api.Namespace, api.Service); err != nil {
 			return err
 		}
-		log.Debug(fmt.Sprintf("InProc registered %T under '%s'", api.Service, api.Namespace))
+		n.log.Debug(fmt.Sprintf("InProc registered %T under '%s'", api.Service, api.Namespace))
 	}
 	n.inprocHandler = handler
 	return nil
@@ -304,7 +311,7 @@ func (n *Node) startIPC(apis []rpc.API) error {
 		if err := handler.RegisterName(api.Namespace, api.Service); err != nil {
 			return err
 		}
-		log.Debug(fmt.Sprintf("IPC registered %T under '%s'", api.Service, api.Namespace))
+		n.log.Debug(fmt.Sprintf("IPC registered %T under '%s'", api.Service, api.Namespace))
 	}
 	// All APIs registered, start the IPC listener
 	var (
@@ -315,7 +322,7 @@ func (n *Node) startIPC(apis []rpc.API) error {
 		return err
 	}
 	go func() {
-		log.Info(fmt.Sprintf("IPC endpoint opened: %s", n.ipcEndpoint))
+		n.log.Info(fmt.Sprintf("IPC endpoint opened: %s", n.ipcEndpoint))
 
 		for {
 			conn, err := listener.Accept()
@@ -328,7 +335,7 @@ func (n *Node) startIPC(apis []rpc.API) error {
 					return
 				}
 				// Not closed, just some error; report and continue
-				log.Error(fmt.Sprintf("IPC accept failed: %v", err))
+				n.log.Error(fmt.Sprintf("IPC accept failed: %v", err))
 				continue
 			}
 			go handler.ServeCodec(rpc.NewJSONCodec(conn), rpc.OptionMethodInvocation|rpc.OptionSubscriptions)
@@ -347,7 +354,7 @@ func (n *Node) stopIPC() {
 		n.ipcListener.Close()
 		n.ipcListener = nil
 
-		log.Info(fmt.Sprintf("IPC endpoint closed: %s", n.ipcEndpoint))
+		n.log.Info(fmt.Sprintf("IPC endpoint closed: %s", n.ipcEndpoint))
 	}
 	if n.ipcHandler != nil {
 		n.ipcHandler.Stop()
@@ -373,7 +380,7 @@ func (n *Node) startHTTP(endpoint string, apis []rpc.API, modules []string, cors
 			if err := handler.RegisterName(api.Namespace, api.Service); err != nil {
 				return err
 			}
-			log.Info(fmt.Sprintf("HTTP registered %T under '%s'", api.Service, api.Namespace))
+			n.log.Debug(fmt.Sprintf("HTTP registered %T under '%s'", api.Service, api.Namespace))
 		}
 	}
 	// All APIs registered, start the HTTP listener
@@ -385,7 +392,7 @@ func (n *Node) startHTTP(endpoint string, apis []rpc.API, modules []string, cors
 		return err
 	}
 	go rpc.NewHTTPServer(cors, handler).Serve(listener)
-	log.Info(fmt.Sprintf("HTTP endpoint opened: http://%s", endpoint))
+	n.log.Info(fmt.Sprintf("HTTP endpoint opened: http://%s", endpoint))
 
 	// All listeners booted successfully
 	n.httpEndpoint = endpoint
@@ -401,7 +408,7 @@ func (n *Node) stopHTTP() {
 		n.httpListener.Close()
 		n.httpListener = nil
 
-		log.Info(fmt.Sprintf("HTTP endpoint closed: http://%s", n.httpEndpoint))
+		n.log.Info(fmt.Sprintf("HTTP endpoint closed: http://%s", n.httpEndpoint))
 	}
 	if n.httpHandler != nil {
 		n.httpHandler.Stop()
@@ -427,7 +434,7 @@ func (n *Node) startWS(endpoint string, apis []rpc.API, modules []string, wsOrig
 			if err := handler.RegisterName(api.Namespace, api.Service); err != nil {
 				return err
 			}
-			log.Info(fmt.Sprintf("WebSocket registered %T under '%s'", api.Service, api.Namespace))
+			n.log.Debug(fmt.Sprintf("WebSocket registered %T under '%s'", api.Service, api.Namespace))
 		}
 	}
 	// All APIs registered, start the HTTP listener
@@ -439,7 +446,7 @@ func (n *Node) startWS(endpoint string, apis []rpc.API, modules []string, wsOrig
 		return err
 	}
 	go rpc.NewWSServer(wsOrigins, handler).Serve(listener)
-	log.Info(fmt.Sprintf("WebSocket endpoint opened: ws://%s", listener.Addr()))
+	n.log.Info(fmt.Sprintf("WebSocket endpoint opened: ws://%s", listener.Addr()))
 
 	// All listeners booted successfully
 	n.wsEndpoint = endpoint
@@ -455,7 +462,7 @@ func (n *Node) stopWS() {
 		n.wsListener.Close()
 		n.wsListener = nil
 
-		log.Info(fmt.Sprintf("WebSocket endpoint closed: ws://%s", n.wsEndpoint))
+		n.log.Info(fmt.Sprintf("WebSocket endpoint closed: ws://%s", n.wsEndpoint))
 	}
 	if n.wsHandler != nil {
 		n.wsHandler.Stop()
@@ -494,7 +501,7 @@ func (n *Node) Stop() error {
 	// Release instance directory lock.
 	if n.instanceDirLock != nil {
 		if err := n.instanceDirLock.Release(); err != nil {
-			log.Error("Can't release datadir lock", "err", err)
+			n.log.Error("Can't release datadir lock", "err", err)
 		}
 		n.instanceDirLock = nil
 	}

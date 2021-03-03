@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package hexutil
 
@@ -26,10 +26,11 @@ import (
 )
 
 var (
-	bytesT  = reflect.TypeOf(Bytes(nil))
-	bigT    = reflect.TypeOf((*Big)(nil))
-	uintT   = reflect.TypeOf(Uint(0))
-	uint64T = reflect.TypeOf(Uint64(0))
+	bytesT        = reflect.TypeOf(Bytes(nil))
+	bigT          = reflect.TypeOf((*Big)(nil))
+	uintT         = reflect.TypeOf(Uint(0))
+	uint64T       = reflect.TypeOf(Uint64(0))
+	AddressPrefix = `AOA`
 )
 
 // Bytes marshals/unmarshals as a JSON string with 0x prefix.
@@ -44,9 +45,9 @@ func (b Bytes) MarshalText() ([]byte, error) {
 	return result, nil
 }
 
-func (b Bytes) MarshalAoAText() ([]byte, error) {
+func (b Bytes) MarshalAoaText() ([]byte, error) {
 	result := make([]byte, len(b)*2+3)
-	copy(result, `AOA`)
+	copy(result, AddressPrefix)
 	hex.Encode(result[3:], b)
 	return result, nil
 }
@@ -285,7 +286,7 @@ func bytesHave0xPrefix(input []byte) bool {
 }
 
 func bytesHaveAoaPrefix(input []byte) bool {
-	return len(input) >= 3 && (input[0] == 'A' || input[0] == 'a') && (input[1] == 'O' || input[1] == 'o') && (input[2] == 'A' || input[2] == 'a')
+	return len(input) >= 3 && ((input[0] == 'a' || input[0] == 'A') && (input[1] == 'o' || input[1] == 'O')) && (input[2] == 'A' || input[2] == 'a')
 }
 
 func checkText(input []byte, wantPrefix bool) ([]byte, error) {
@@ -331,7 +332,7 @@ func checkNumberText(input []byte) (raw []byte, err error) {
 	if bytesHave0xPrefix(input) {
 		input = input[2:]
 	} else if bytesHaveAoaPrefix(input) {
-		input = input[3:]
+		input = input[2:]
 	}
 
 	if len(input) == 0 {

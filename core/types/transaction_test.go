@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package types
 
@@ -25,10 +25,10 @@ import (
 
 	"encoding/binary"
 	"fmt"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/common/hexutil"
-	"github.com/Aurorachain/go-aoa/crypto"
-	"github.com/Aurorachain/go-aoa/rlp"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/common/hexutil"
+	"github.com/Aurorachain-io/go-aoa/crypto"
+	"github.com/Aurorachain-io/go-aoa/rlp"
 	"io"
 	"regexp"
 	"sync/atomic"
@@ -40,7 +40,7 @@ var (
 		0,
 		common.HexToAddress("095e7baea6a6c7c4c2dfeb977efac326af552d87"),
 		big.NewInt(0), 0, big.NewInt(0),
-		nil, 0, nil, nil, nil, nil, "")
+		nil, 0, nil, "")
 
 	//rightvrsTx, _ = NewTransaction(
 	//	3,
@@ -97,7 +97,7 @@ func TestRecipientEmpty(t *testing.T) {
 		t.FailNow()
 	}
 
-	from, err := Sender(AuroraSigner{}, tx)
+	from, err := Sender(DacchainSigner{}, tx)
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
@@ -116,7 +116,7 @@ func TestRecipientNormal(t *testing.T) {
 		t.FailNow()
 	}
 
-	from, err := Sender(AuroraSigner{}, tx)
+	from, err := Sender(DacchainSigner{}, tx)
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
@@ -137,13 +137,13 @@ func TestTransactionPriceNonceSort(t *testing.T) {
 		keys[i], _ = crypto.GenerateKey()
 	}
 
-	signer := AuroraSigner{}
+	signer := DacchainSigner{}
 	// Generate a batch of transactions with overlapping values, but shifted nonces
 	groups := map[common.Address]Transactions{}
 	for start, key := range keys {
 		addr := crypto.PubkeyToAddress(key.PublicKey)
 		for i := 0; i < 25; i++ {
-			tx, _ := SignTx(NewTransaction(uint64(start+i), common.Address{}, big.NewInt(100), 100, big.NewInt(int64(start+i)), nil, 0, nil, nil, nil, nil, ""), signer, key)
+			tx, _ := SignTx(NewTransaction(uint64(start+i), common.Address{}, big.NewInt(100), 100, big.NewInt(int64(start+i)), nil, 0, nil, ""), signer, key)
 			groups[addr] = append(groups[addr], tx)
 		}
 	}
@@ -203,13 +203,13 @@ func TestTransactionJSON(t *testing.T) {
 		t.Fatalf("could not generate key: %v", err)
 	}
 
-	signer := AuroraSigner{chainId: common.Big1}
+	signer := DacchainSigner{chainId: common.Big1}
 
 	for i := uint64(0); i < 25; i++ {
 		var tx *Transaction
 		switch i % 2 {
 		case 0:
-			tx = NewTransaction(i, common.Address{1}, common.Big0, 1, common.Big2, []byte("abcdef"), 0, nil, nil, nil, nil, "")
+			tx = NewTransaction(i, common.Address{1}, common.Big0, 1, common.Big2, []byte("abcdef"), 0, nil, "")
 		case 1:
 
 			tx = NewContractCreation(i, common.Big0, 1, common.Big2, []byte("abcdef"), `[{"constant":true,"inputs":[],"name":"mybalance","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"payable":true,"stateMutability":"payable","type":"fallback"}]`, nil)
@@ -298,16 +298,14 @@ type tdata struct {
 	R *big.Int `json:"r" gencodec:"required"`
 	S *big.Int `json:"s" gencodec:"required"`
 
-	Action   uint   `json:"action"  gencodec:"required"` // 额外动作默认0, 1-代理注册, 2-投票操作。 投票传投票动作，即投xxx票
+	Action   uint   `json:"action"  gencodec:"required"`
 	Vote     []byte `json:"vote" rlp:"nil"`
 	Nickname []byte `json:"nickname" rlp:"nil"`
 
 	// This is only used when marshaling to JSON.
-	Hash *common.Hash `json:"hash" rlp:"-"`
-	//资产符号，作为资产的唯一标识。当Action 为ActionTrans时有意义。
-	AssetSymbol string `json:"assetSymbol,omitempty" rlp:"nil"`
-	//资产信息，当Action 为 ActionPublishAsset 时有意义
-	AssetInfo *AssetInfo `json:"assetInfo,omitempty" rlp:"nil"`
+	Hash        *common.Hash `json:"hash" rlp:"-"`
+	AssetSymbol string       `json:"assetSymbol,omitempty" rlp:"nil"`
+	AssetInfo   *AssetInfo   `json:"assetInfo,omitempty" rlp:"nil"`
 }
 
 // EncodeRLP implements rlp.Encoder
@@ -372,7 +370,7 @@ func TestRecoverFromAddress(t *testing.T) {
 	fmt.Println(tx)
 	//
 	//recoverPlain(s.Hash(tx), tx.data.R, tx.data.S, V, true)
-	//var f AuroraSigner
+	//var f DacchainSigner
 	//addresses, err := f.Sender(tx)
 	//if err != nil {
 	//	t.Fatal(err)
@@ -385,7 +383,7 @@ func TestAssetInfoToBytes(t *testing.T) {
 	var assetInfo AssetInfo
 	assetInfo.Desc = "aa"
 	assetInfo.Issuer = &common.Address{}
-	assetInfo.Name = "AOA"
+	assetInfo.Name = "EM"
 	assetInfo.Symbol = "A"
 	assetInfo.Supply = big.NewInt(1111)
 
@@ -402,12 +400,12 @@ func TestAssetInfoToBytes(t *testing.T) {
 
 }
 
-func TestAoaAddress(t *testing.T) {
-	to := "AOA60aac5adbb14ea09b3a01f04b56aa8b5db420f55"
-	match, err := regexp.MatchString("(?i:^AOA|0x)[0-9a-f]{40}[0-9A-Za-z]{0,32}$", to)
+func TestDacAddress(t *testing.T) {
+	to := "EM60aac5adbb14ea09b3a01f04b56aa8b5db420f55"
+	match, err := regexp.MatchString("(?i:^EM|0x)[0-9a-f]{40}[0-9A-Za-z]{0,32}$", to)
 
-	//"(?i:^AOA|0x)"
-	//match, err := regexp.MatchString("^AOA[0-9a-f]{40}[0-9A-Za-z]{0,32}$", to)
+	//"(?i:^EM|0x)"
+	//match, err := regexp.MatchString("^EM[0-9a-f]{40}[0-9A-Za-z]{0,32}$", to)
 	// match, err := regexp.MatchString("(^0-9A-Za-z)", to)
 	if err != nil {
 		t.Fatal(err)

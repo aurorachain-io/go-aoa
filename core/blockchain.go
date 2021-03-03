@@ -1,20 +1,20 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
-// Package core implements the Aurora consensus protocol.
+// Package core implements the eminer-pro consensus protocol.
 package core
 
 import (
@@ -26,24 +26,23 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
-	"github.com/Aurorachain/go-aoa/aoadb"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/common/mclock"
-	"github.com/Aurorachain/go-aoa/consensus"
-	"github.com/Aurorachain/go-aoa/core/state"
-	"github.com/Aurorachain/go-aoa/core/types"
-	"github.com/Aurorachain/go-aoa/core/vm"
-	"github.com/Aurorachain/go-aoa/crypto"
-	"github.com/Aurorachain/go-aoa/event"
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/metrics"
-	"github.com/Aurorachain/go-aoa/params"
-	"github.com/Aurorachain/go-aoa/rlp"
-	"github.com/Aurorachain/go-aoa/trie"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/common/mclock"
+	"github.com/Aurorachain-io/go-aoa/consensus"
+	"github.com/Aurorachain-io/go-aoa/core/state"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/core/vm"
+	"github.com/Aurorachain-io/go-aoa/crypto"
+	"github.com/Aurorachain-io/go-aoa/aoadb"
+	"github.com/Aurorachain-io/go-aoa/event"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/metrics"
+	"github.com/Aurorachain-io/go-aoa/params"
+	"github.com/Aurorachain-io/go-aoa/rlp"
+	"github.com/Aurorachain-io/go-aoa/trie"
 	"github.com/hashicorp/golang-lru"
-
-	"github.com/Aurorachain/go-aoa/consensus/delegatestate"
-	"github.com/Aurorachain/go-aoa/core/watch"
+	"github.com/Aurorachain-io/go-aoa/consensus/delegatestate"
+	"github.com/Aurorachain-io/go-aoa/core/watch"
 )
 
 var (
@@ -112,7 +111,7 @@ type BlockChain struct {
 	procInterrupt int32          // interrupt signaler for block processing
 	wg            sync.WaitGroup // chain processing wait group for shutting down
 
-	aoaEngine consensus.Engine
+	dacEngine consensus.Engine
 	processor Processor // block processor interface
 	validator Validator // block and state validator interface
 	vmConfig  vm.Config
@@ -123,9 +122,9 @@ type BlockChain struct {
 }
 
 // NewBlockChain returns a fully initialised block chain using information
-// available in the database. It initialises the default Aurora Validator and
+// available in the database. It initialises the default eminer-pro Validator and
 // Processor.
-func NewBlockChain(chainDb aoadb.Database, config *params.ChainConfig, aoaEngine consensus.Engine, vmConfig vm.Config, itxDb aoadb.Database) (*BlockChain, error) {
+func NewBlockChain(chainDb aoadb.Database, config *params.ChainConfig, dacEngine consensus.Engine, vmConfig vm.Config, itxDb aoadb.Database) (*BlockChain, error) {
 	bodyCache, _ := lru.New(bodyCacheLimit)
 	bodyRLPCache, _ := lru.New(bodyCacheLimit)
 	blockCache, _ := lru.New(blockCacheLimit)
@@ -145,14 +144,14 @@ func NewBlockChain(chainDb aoadb.Database, config *params.ChainConfig, aoaEngine
 		badBlocks:            badBlocks,
 		candidateWrapperChan: make(chan *types.CandidateWrapper),
 		delegateCache:        delegatestate.NewDatabase(chainDb),
-		aoaEngine:            aoaEngine,
+		dacEngine:            dacEngine,
 		innerTxDb:            watch.NewInnerTxDb(itxDb),
 	}
-	bc.SetValidator(NewBlockValidator(config, bc, aoaEngine))
-	bc.SetProcessor(NewStateProcessor(config, bc, aoaEngine))
+	bc.SetValidator(NewBlockValidator(config, bc, dacEngine))
+	bc.SetProcessor(NewStateProcessor(config, bc, dacEngine))
 
 	var err error
-	bc.hc, err = NewHeaderChain(chainDb, config, aoaEngine, bc.getProcInterrupt)
+	bc.hc, err = NewHeaderChain(chainDb, config, dacEngine, bc.getProcInterrupt)
 	if err != nil {
 		return nil, err
 	}
@@ -255,9 +254,9 @@ func (bc *BlockChain) loadLastState() error {
 	blockTd := bc.GetTd(bc.currentBlock.Hash(), bc.currentBlock.NumberU64())
 	fastTd := bc.GetTd(bc.currentFastBlock.Hash(), bc.currentFastBlock.NumberU64())
 
-	log.Infof("Loaded most recent local header, number=%s, hash=%s, td=%s", currentHeader.Number, currentHeader.Hash().Hex(), headerTd)
-	log.Infof("Loaded most recent local full block, number=%s, hash=%s, td=%s", bc.currentBlock.Number(), bc.currentBlock.Hash().Hex(), blockTd)
-	log.Infof("Loaded most recent local fast block, number=%s, hash=%s, td=%s", bc.currentFastBlock.Number(), bc.currentFastBlock.Hash().Hex(), fastTd)
+	log.Info("Loaded most recent local header", "number", currentHeader.Number, "hash", currentHeader.Hash(), "td", headerTd)
+	log.Info("Loaded most recent local full block", "number", bc.currentBlock.Number(), "hash", bc.currentBlock.Hash(), "td", blockTd)
+	log.Info("Loaded most recent local fast block", "number", bc.currentFastBlock.Number(), "hash", bc.currentFastBlock.Hash(), "td", fastTd)
 
 	return nil
 }
@@ -267,7 +266,7 @@ func (bc *BlockChain) loadLastState() error {
 // though, the head may be further rewound if block bodies are missing (non-archive
 // nodes after a fast sync).
 func (bc *BlockChain) SetHead(head uint64) error {
-	log.Warnf("Rewinding blockchain, target=%s", head)
+	log.Warn("Rewinding blockchain", "target", head)
 
 	bc.mu.Lock()
 	defer bc.mu.Unlock()
@@ -310,10 +309,10 @@ func (bc *BlockChain) SetHead(head uint64) error {
 		bc.currentFastBlock = bc.genesisBlock
 	}
 	if err := WriteHeadBlockHash(bc.chainDb, bc.currentBlock.Hash()); err != nil {
-		log.Error("Failed to reset head full block, err=%s", err)
+		log.Crit("Failed to reset head full block", "err", err)
 	}
 	if err := WriteHeadFastBlockHash(bc.chainDb, bc.currentFastBlock.Hash()); err != nil {
-		log.Error("Failed to reset head fast block, err=%s", err)
+		log.Crit("Failed to reset head fast block", "err", err)
 	}
 	return bc.loadLastState()
 }
@@ -445,10 +444,10 @@ func (bc *BlockChain) ResetWithGenesisBlock(genesis *types.Block) error {
 
 	// Prepare the genesis block and reinitialise the chain
 	if err := bc.hc.WriteTd(genesis.Hash(), genesis.NumberU64(), types.BlockDifficult); err != nil {
-		log.Error("Failed to write genesis block TD", "err", err)
+		log.Crit("Failed to write genesis block TD", "err", err)
 	}
 	if err := WriteBlock(bc.chainDb, genesis); err != nil {
-		log.Error("Failed to write genesis block", "err", err)
+		log.Crit("Failed to write genesis block", "err", err)
 	}
 	bc.genesisBlock = genesis
 	bc.insert(bc.genesisBlock)
@@ -501,10 +500,10 @@ func (bc *BlockChain) insert(block *types.Block) {
 
 	// Add the block to the canonical chain number scheme and mark as the head
 	if err := WriteCanonicalHash(bc.chainDb, block.Hash(), block.NumberU64()); err != nil {
-		log.Error("Failed to insert block number", "err", err)
+		log.Crit("Failed to insert block number", "err", err)
 	}
 	if err := WriteHeadBlockHash(bc.chainDb, block.Hash()); err != nil {
-		log.Error("Failed to insert head block hash", "err", err)
+		log.Crit("Failed to insert head block hash", "err", err)
 	}
 	bc.currentBlock = block
 
@@ -513,7 +512,7 @@ func (bc *BlockChain) insert(block *types.Block) {
 		bc.hc.SetCurrentHeader(block.Header())
 
 		if err := WriteHeadFastBlockHash(bc.chainDb, block.Hash()); err != nil {
-			log.Error("Failed to insert head fast block hash", "err", err)
+			log.Crit("Failed to insert head fast block hash", "err", err)
 		}
 		bc.currentFastBlock = block
 	}
@@ -611,7 +610,7 @@ func (bc *BlockChain) GetBlockByNumber(number uint64) *types.Block {
 }
 
 // GetBlocksFromHash returns the block corresponding to hash and up to n-1 ancestors.
-// [deprecated by aoa/62]
+// [deprecated by em/62]
 func (bc *BlockChain) GetBlocksFromHash(hash common.Hash, n int) (blocks []*types.Block) {
 	number := bc.hc.GetBlockNumber(hash)
 	for i := 0; i < n; i++ {
@@ -807,7 +806,7 @@ func (bc *BlockChain) InsertReceiptChain(blockChain types.Blocks, receiptChain [
 	if td := bc.GetTd(head.Hash(), head.NumberU64()); td != nil { // Rewind may have occurred, skip in that case
 		if bc.GetTd(bc.currentFastBlock.Hash(), bc.currentFastBlock.NumberU64()).Cmp(td) < 0 {
 			if err := WriteHeadFastBlockHash(bc.chainDb, head.Hash()); err != nil {
-				log.Error("Failed to update head fast block hash", "err", err)
+				log.Crit("Failed to update head fast block hash", "err", err)
 			}
 			bc.currentFastBlock = head
 		}
@@ -865,11 +864,11 @@ func (bc *BlockChain) WriteBlockAndState(block *types.Block, receipts []*types.R
 	// Second clause in the if statement reduces the vulnerability to selfish mining.
 	// Please refer to http://www.cs.cornell.edu/~ie53/publications/btcProcFC.pdf
 	reorg := externTd.Cmp(localTd) > 0
-	log.Infof("insertChain, externTd=%v, localTd=%v, reorg=%v", externTd, localTd, reorg)
+	log.Debug("insertChain", "externTd", externTd, "localTd", localTd, "reorg", reorg)
 	if !reorg && externTd.Cmp(localTd) == 0 {
 		// Split same-difficulty blocks by number, then at random
 		reorg = block.NumberU64() < bc.currentBlock.NumberU64() || (block.NumberU64() == bc.currentBlock.NumberU64() && mrand.Float64() < 0.5)
-		log.Infof("insertChain, externTd == localTd|reorg, reorg=%v", reorg)
+		log.Debug("insertChain", "externTd == localTd|reorg", reorg)
 	}
 	if reorg {
 		// Reorganise the chain if the parent is not the head block
@@ -945,12 +944,12 @@ func (bc *BlockChain) preInsertChain(block *types.Block) error {
 	headers = append(headers, block.Header())
 	log.Info("PreInsertBlock", "headers", headers)
 
-	abort, results := bc.aoaEngine.VerifyHeaders(bc, headers)
+	abort, results := bc.dacEngine.VerifyHeaders(bc, headers)
 	defer close(abort)
 	// Iterate over the blocks and insert when the verifier permits
 	// If the block is terminating, stop processing blocks
 	if atomic.LoadInt32(&bc.procInterrupt) == 1 {
-		log.Info("Premature abort during blocks processing")
+		log.Debug("Premature abort during blocks processing")
 		return nil
 	}
 	// If the header is a banned one, straight out abort
@@ -1000,18 +999,18 @@ func (bc *BlockChain) preInsertChain(block *types.Block) error {
 	state, err := state.New(parent.Root(), bc.stateCache)
 	//snapshot := state.Snapshot()
 	if err != nil {
-		log.Info("验证区块创建state error")
+		log.Info("valid block create state error")
 		return err
 	}
 	delegateState, err := delegatestate.New(parent.DelegateRoot(), bc.delegateCache)
 	if err != nil {
-		log.Info("验证区块创建 delegate state error")
+		log.Info("valid block create delegate state error")
 		return err
 	}
 	// Process block using the parent state as reference point.
 	receipts, _, usedGas, err := bc.processor.Process(block, state, bc.vmConfig, delegateState)
 	if err != nil {
-		log.Info("验证未通过")
+		log.Info("valid block create failed")
 		bc.reportBlock(block, receipts, err)
 		return err
 	}
@@ -1066,16 +1065,16 @@ func (bc *BlockChain) insertChain(chain types.Blocks, syncCallback ...func()) (i
 		seals[i] = true
 	}
 
-	abort, results := bc.aoaEngine.VerifyHeaders(bc, headers)
+	abort, results := bc.dacEngine.VerifyHeaders(bc, headers)
 	defer close(abort)
 
 	//var waitGroup sync.WaitGroup
 	// Iterate over the blocks and insert when the verifier permits
 	for i, block := range chain {
-		log.Infof("blockchain deal new block, blockNumber=%v, time=%v", block.NumberU64(), block.Header().Time)
+		log.Debug("blockchain deal new block", "block", block.NumberU64(), "time", block.Header().Time)
 		// If the chain is terminating, stop processing blocks
 		if atomic.LoadInt32(&bc.procInterrupt) == 1 {
-			log.Info("Premature abort during blocks processing")
+			log.Debug("Premature abort during blocks processing")
 			break
 		}
 		// If the header is a banned one, straight out abort
@@ -1090,10 +1089,10 @@ func (bc *BlockChain) insertChain(chain types.Blocks, syncCallback ...func()) (i
 		if err == nil {
 			err = bc.Validator().ValidateBody(block)
 		}
-		log.Infof("blockchain Validate block body, blockNumber=%v, err=%v", block.NumberU64(), err)
+		log.Debug("blockchain Validate block body", "block", block.NumberU64(), "err", err)
 		if err != nil {
 			if err == ErrKnownBlock {
-				log.Info("blockchain Already known block")
+				log.Debug("blockchain", "err", "Already known block")
 				stats.ignored++
 				continue
 			}
@@ -1130,7 +1129,7 @@ func (bc *BlockChain) insertChain(chain types.Blocks, syncCallback ...func()) (i
 		}
 		stateDB, err := state.New(parent.Root(), bc.stateCache)
 		if err != nil {
-			log.Info("Blockchain stateDB", "err", err)
+			log.Debug("Blockchain stateDB", "err", err)
 			return i, events, coalescedLogs, err
 		}
 		delegateDB, err := delegatestate.New(parent.DelegateRoot(), bc.delegateCache)
@@ -1138,9 +1137,9 @@ func (bc *BlockChain) insertChain(chain types.Blocks, syncCallback ...func()) (i
 			return i, events, coalescedLogs, err
 		}
 		// Process block using the parent stateDB as reference point.
-		log.Infof("blockchain process block start, blockNumber=%v", block.NumberU64())
+		log.Debug("blockchain process block start", "block", block.NumberU64())
 		receipts, logs, usedGas, err := bc.processor.Process(block, stateDB, bc.vmConfig, delegateDB)
-		log.Infof("blockchain process block end, blockNumber=%v, usedGas=%v, blockGasUsed=%v", block.NumberU64(), usedGas, block.GasUsed())
+		log.Debug("blockchain process block end", "block", block.NumberU64(), "usedGas", usedGas, "blockGasUsed", block.GasUsed())
 		if err != nil {
 			bc.reportBlock(block, receipts, err)
 			return i, events, coalescedLogs, err
@@ -1153,14 +1152,14 @@ func (bc *BlockChain) insertChain(chain types.Blocks, syncCallback ...func()) (i
 		}
 		// Write the block to the chain and get the status.
 		status, err := bc.WriteBlockAndState(block, receipts, stateDB, delegateDB)
-		log.Infof("blockchain write block end,blockNumber=%v", block.NumberU64())
+		log.Info("blockchain write block end", "block", block.NumberU64())
 		if err != nil {
 			return i, events, coalescedLogs, err
 		}
 		switch status {
 		case CanonStatTy:
-			log.Infof("Inserted new block, blockNumber=%v, hash=%v, transactions=%v, gas=%v, elapsed=%v", block.Number(), block.Hash().Hex(),
-				len(block.Transactions()), block.GasUsed(), common.PrettyDuration(time.Since(bstart)))
+			log.Debug("Inserted new block", "number", block.Number(), "hash", block.Hash(),
+				"txs", len(block.Transactions()), "gas", block.GasUsed(), "elapsed", common.PrettyDuration(time.Since(bstart)))
 
 			coalescedLogs = append(coalescedLogs, logs...)
 			blockInsertTimer.UpdateSince(bstart)
@@ -1170,8 +1169,8 @@ func (bc *BlockChain) insertChain(chain types.Blocks, syncCallback ...func()) (i
 			//candidateWrapper = CountBlockVote(block, *bc.delegateList, stateDB)
 
 		case SideStatTy:
-			log.Infof("Inserted forked block, blockNumber=%v, hash=%v, diff=%v, elapsed=%v, transactions=%v, gas=%v", block.Number(), block.Hash(), types.BlockDifficult,
-				common.PrettyDuration(time.Since(bstart)), len(block.Transactions()), block.GasUsed())
+			log.Debug("Inserted forked block", "number", block.Number(), "hash", block.Hash(), "diff", types.BlockDifficult, "elapsed",
+				common.PrettyDuration(time.Since(bstart)), "txs", len(block.Transactions()), "gas", block.GasUsed())
 
 			blockInsertTimer.UpdateSince(bstart)
 			events = append(events, ChainSideEvent{block})
@@ -1185,12 +1184,7 @@ func (bc *BlockChain) insertChain(chain types.Blocks, syncCallback ...func()) (i
 	if lastCanon != nil && bc.LastBlockHash() == lastCanon.Hash() {
 		events = append(events, ChainHeadEvent{lastCanon})
 	}
-	log.Info("Insert chain end")
-
-	// add for upgrade function start
-	SetCurrentHeight(bc.currentBlock.NumberU64())
-	// add for upgrade function end
-
+	log.Debug("Insert chain end")
 	return 0, events, coalescedLogs, nil
 }
 
@@ -1232,8 +1226,7 @@ func (st *insertStats) report(chain []*types.Block, index int) bool {
 		if st.ignored > 0 {
 			context = append(context, []interface{}{"ignored", st.ignored}...)
 		}
-		log.Infof("Imported new chain segment context=%v", context)
-		// TODO 在这里同步完成
+		log.Info("Imported new chain segment", context...)
 		*st = insertStats{startTime: now, lastIndex: index + 1}
 		return true
 
@@ -1317,7 +1310,7 @@ func (bc *BlockChain) reorg(oldBlock, newBlock *types.Block) error {
 	}
 	// Ensure the user sees large reorgs
 	if len(oldChain) > 0 && len(newChain) > 0 {
-		logFn := log.Info
+		logFn := log.Debug
 		if len(oldChain) > 63 {
 			logFn = log.Warn
 		}
@@ -1570,7 +1563,7 @@ func (bc *BlockChain) SetDelegatePoll(delegatePool *map[string]types.Candidate) 
 func (bc *BlockChain) Config() *params.ChainConfig { return bc.config }
 
 // Engine retrieves the blockchain's consensus engine.
-func (bc *BlockChain) Engine() consensus.Engine { return bc.aoaEngine }
+func (bc *BlockChain) Engine() consensus.Engine { return bc.dacEngine }
 
 // SubscribeRemovedLogsEvent registers a subscription of RemovedLogsEvent.
 func (bc *BlockChain) SubscribeRemovedLogsEvent(ch chan<- RemovedLogsEvent) event.Subscription {

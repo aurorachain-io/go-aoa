@@ -1,31 +1,31 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package core
 
 import (
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/consensus"
-	"github.com/Aurorachain/go-aoa/consensus/delegatestate"
-	"github.com/Aurorachain/go-aoa/core/state"
-	"github.com/Aurorachain/go-aoa/core/types"
-	"github.com/Aurorachain/go-aoa/core/vm"
-	"github.com/Aurorachain/go-aoa/crypto"
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/params"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/consensus"
+	"github.com/Aurorachain-io/go-aoa/consensus/delegatestate"
+	"github.com/Aurorachain-io/go-aoa/core/state"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/core/vm"
+	"github.com/Aurorachain-io/go-aoa/crypto"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/params"
 	"math/big"
 	"strings"
 )
@@ -49,7 +49,7 @@ func NewStateProcessor(config *params.ChainConfig, bc *BlockChain, engine consen
 	}
 }
 
-// Process processes the state changes according to the Aurora rules by running
+// Process processes the state changes according to the eminer-pro rules by running
 // the transaction messages using the statedb and applying any rewards to both
 // the processor (coinbase) and any included uncles.
 //
@@ -77,10 +77,7 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 		if err != nil {
 			return nil, nil, 0, err
 		}
-		// AOA upgrade start by rt
-		monitorUpgrade(*tx, receipt)
-		// AOA upgrade end by rt
-
+		//log.Info("Process", "usedGas", *usedGas)
 		receipts = append(receipts, receipt)
 		allLogs = append(allLogs, receipt.Logs...)
 	}
@@ -111,27 +108,20 @@ func ApplyTransaction(config *params.ChainConfig, bc *BlockChain, author *common
 		return nil, 0, err
 	}
 	err = voteChangeToDelegateState(msg.From(), tx, statedb, db, blockTime, header.Number.Int64())
-	// log.Info("applyTransaction|voteChangeToDelegateState cost", "timestamp", time.Now().Sub(now4))
+	// log.Debug("applyTransaction|voteChangeToDelegateState cost", "timestamp", time.Now().Sub(now4))
 	if err != nil {
 		return nil, 0, err
 	}
 	// Update the state with pending changes
-	var root []byte
-	//从AresBlock块开始，不用root
-	if config.IsAres(header.Number) {
-		statedb.Finalise(true)
-	} else {
-		root = statedb.IntermediateRoot(false).Bytes()
-	}
+	statedb.Finalise(true)
 	*usedGas += gas
 
 	// Create a new receipt for the transaction, storing the gas used by the tx.
-	receipt := types.NewReceipt(root, failed, *usedGas)
+	receipt := types.NewReceipt(failed, *usedGas)
 	receipt.Action = tx.TxDataAction()
 	receipt.TxHash = tx.Hash()
 	receipt.GasUsed = gas
 	// if the transaction created a contract, store the creation address in the receipt.
-	// 基于交易结构体增加Action属性的扩展进行判断
 	if msg.Action() == types.ActionCreateContract || msg.Action() == types.ActionPublishAsset {
 		receipt.ContractAddress = crypto.CreateAddress(vmenv.Context.Origin, tx.Nonce())
 	}
@@ -155,7 +145,7 @@ func ApplyTransaction(config *params.ChainConfig, bc *BlockChain, author *common
 func voteChangeToDelegateState(from common.Address, tx *types.Transaction, statedb *state.StateDB, db *delegatestate.DelegateDB, blockTime uint64, blockNumber int64) error {
 	// beginDelegateRoot := db.IntermediateRoot(false)
 	address := strings.ToLower(from.Hex())
-	candidates, err := CountTrxVote(address, tx, statedb, db)
+	candidates, err := CountTrxVote(address, tx, statedb, db,blockNumber)
 
 	//if len(candidates) > 0 {
 	//	log.Info("voteChangeToDelegateState|", "blockNumber", blockNumber, "beginDelegateRoot", len(candidates), "err", err)

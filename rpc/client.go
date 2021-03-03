@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package rpc
 
@@ -32,7 +32,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Aurorachain/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/log"
 )
 
 var (
@@ -418,7 +418,9 @@ func (c *Client) newMessage(method string, paramsIn ...interface{}) (*jsonrpcMes
 func (c *Client) send(ctx context.Context, op *requestOp, msg interface{}) error {
 	select {
 	case c.requestOp <- op:
-		log.Debugf("sending %v", msg)
+		log.Trace("", "msg", log.Lazy{Fn: func() string {
+			return fmt.Sprint("sending ", msg)
+		}})
 		err := c.write(ctx, msg)
 		c.sendDone <- err
 		return err
@@ -453,7 +455,7 @@ func (c *Client) write(ctx context.Context, msg interface{}) error {
 func (c *Client) reconnect(ctx context.Context) error {
 	newconn, err := c.connectFunc(ctx)
 	if err != nil {
-		log.Debug(fmt.Sprintf("reconnect failed: %v", err))
+		log.Trace(fmt.Sprintf("reconnect failed: %v", err))
 		return err
 	}
 	select {
@@ -505,25 +507,31 @@ func (c *Client) dispatch(conn net.Conn) {
 			for _, msg := range batch {
 				switch {
 				case msg.isNotification():
-					log.Debugf("<-readResp: notification %v", msg)
+					log.Trace("", "msg", log.Lazy{Fn: func() string {
+						return fmt.Sprint("<-readResp: notification ", msg)
+					}})
 					c.handleNotification(msg)
 				case msg.isResponse():
-					log.Debugf("<-readResp: response %v", msg)
+					log.Trace("", "msg", log.Lazy{Fn: func() string {
+						return fmt.Sprint("<-readResp: response ", msg)
+					}})
 					c.handleResponse(msg)
 				default:
-					log.Info("<-readResp: dropping weird message", msg)
+					log.Debug("", "msg", log.Lazy{Fn: func() string {
+						return fmt.Sprint("<-readResp: dropping weird message", msg)
+					}})
 					// TODO: maybe close
 				}
 			}
 
 		case err := <-c.readErr:
-			log.Info(fmt.Sprintf("<-readErr: %v", err))
+			log.Debug(fmt.Sprintf("<-readErr: %v", err))
 			c.closeRequestOps(err)
 			conn.Close()
 			reading = false
 
 		case newconn := <-c.reconnected:
-			log.Info(fmt.Sprintf("<-reconnected: (reading=%t) %v", reading, conn.RemoteAddr()))
+			log.Debug(fmt.Sprintf("<-reconnected: (reading=%t) %v", reading, conn.RemoteAddr()))
 			if reading {
 				// Wait for the previous read loop to exit. This is a rare case.
 				conn.Close()
@@ -580,7 +588,7 @@ func (c *Client) closeRequestOps(err error) {
 
 func (c *Client) handleNotification(msg *jsonrpcMessage) {
 	if !strings.HasSuffix(msg.Method, notificationMethodSuffix) {
-		log.Info(fmt.Sprint("dropping non-subscription message: ", msg))
+		log.Debug(fmt.Sprint("dropping non-subscription message: ", msg))
 		return
 	}
 	var subResult struct {
@@ -588,7 +596,7 @@ func (c *Client) handleNotification(msg *jsonrpcMessage) {
 		Result json.RawMessage `json:"result"`
 	}
 	if err := json.Unmarshal(msg.Params, &subResult); err != nil {
-		log.Info(fmt.Sprint("dropping invalid subscription message: ", msg))
+		log.Debug(fmt.Sprint("dropping invalid subscription message: ", msg))
 		return
 	}
 	if c.subs[subResult.ID] != nil {
@@ -599,7 +607,7 @@ func (c *Client) handleNotification(msg *jsonrpcMessage) {
 func (c *Client) handleResponse(msg *jsonrpcMessage) {
 	op := c.respWait[string(msg.ID)]
 	if op == nil {
-		log.Info(fmt.Sprintf("unsolicited response %v", msg))
+		log.Debug(fmt.Sprintf("unsolicited response %v", msg))
 		return
 	}
 	delete(c.respWait, string(msg.ID))

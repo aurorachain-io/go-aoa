@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package keystore
 
@@ -27,9 +27,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Aurorachain/go-aoa/accounts"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/accounts"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/log"
 	"gopkg.in/fatih/set.v0"
 )
 
@@ -234,7 +234,7 @@ func (ac *accountCache) scanAccounts() error {
 	// Scan the entire folder metadata for file changes
 	creates, deletes, updates, err := ac.fileC.scan(ac.keydir)
 	if err != nil {
-		log.Infof("Failed to reload keystore contents, err=%v", err)
+		log.Debug("Failed to reload keystore contents", "err", err)
 		return err
 	}
 	if creates.Size() == 0 && deletes.Size() == 0 && updates.Size() == 0 {
@@ -250,7 +250,7 @@ func (ac *accountCache) scanAccounts() error {
 	readAccount := func(path string) *accounts.Account {
 		fd, err := os.Open(path)
 		if err != nil {
-			log.Debugf("Failed to open keystore file, path=%v, err=%v", path, err)
+			log.Trace("Failed to open keystore file", "path", path, "err", err)
 			return nil
 		}
 		defer fd.Close()
@@ -261,9 +261,9 @@ func (ac *accountCache) scanAccounts() error {
 		addr := common.HexToAddress(key.Address)
 		switch {
 		case err != nil:
-			log.Infof("Failed to decode keystore key, path=%v, err=%v", path, err)
+			log.Debug("Failed to decode keystore key", "path", path, "err", err)
 		case (addr == common.Address{}):
-			log.Infof("Failed to decode keystore key, path=%v, err=%v", path, "missing or zero address")
+			log.Debug("Failed to decode keystore key", "path", path, "err", "missing or zero address")
 		default:
 			return &accounts.Account{Address: addr, URL: accounts.URL{Scheme: KeyStoreScheme, Path: path}}
 		}
@@ -293,6 +293,6 @@ func (ac *accountCache) scanAccounts() error {
 	case ac.notify <- struct{}{}:
 	default:
 	}
-	log.Debugf("Handled keystore changes, time=%s", end.Sub(start))
+	log.Trace("Handled keystore changes", "time", end.Sub(start))
 	return nil
 }

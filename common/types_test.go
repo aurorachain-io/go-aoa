@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package common
 
@@ -41,15 +41,15 @@ func TestIsHexAddress(t *testing.T) {
 		str string
 		exp bool
 	}{
-		{"Aoa5aaeb6053f3e94c9b9a09f33669435e7ef1beaed", true},
+		{"em5aaeb6053f3e94c9b9a09f33669435e7ef1beaed", true},
 		{"5aaeb6053f3e94c9b9a09f33669435e7ef1beaed", true},
-		{"AOA5aaeb6053f3e94c9b9a09f33669435e7ef1beaed", true},
-		{"aoaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", true},
-		{"aOAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", true},
-		{"aOa5aaeb6053f3e94c9b9a09f33669435e7ef1beaed1", false},
-		{"AoA5aaeb6053f3e94c9b9a09f33669435e7ef1beae", false},
-		{"AOaaeb6053f3e94c9b9a09f33669435e7ef1beaed11", false},
-		{"xaaeb6053f3e94c9b9a09f33669435e7ef1beaed", false},
+		{"EM5aaeb6053f3e94c9b9a09f33669435e7ef1beaed", true},
+		{"eMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", true},
+		{"EmAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", true},
+		{"em5aaeb6053f3e94c9b9a09f33669435e7ef1beaed1", false},
+		{"EM5aaeb6053f3e94c9b9a09f33669435e7ef1beae", false},
+		{"5aaeb6053f3e94c9b9a09f33669435e7ef1beaed11", false},
+		{"Emxaaeb6053f3e94c9b9a09f33669435e7ef1beaed", false},
 	}
 
 	for _, test := range tests {
@@ -151,4 +151,11 @@ func BenchmarkAddressHex(b *testing.B) {
 		fmt.Println(testAddr.Hex())
 	}
 
+}
+
+func TestHexToAddress(t *testing.T) {
+	testAddr := HexToAddress("EM5aaeb6053f3e94c9b9a09f33669435e7ef1beaed")
+
+	fmt.Println(testAddr.Hex())
+	fmt.Println(testAddr.AoaHex())
 }

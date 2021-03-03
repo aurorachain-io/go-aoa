@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package keystore
 
@@ -20,10 +20,10 @@ import (
 	"crypto/ecdsa"
 	"encoding/base64"
 	"fmt"
-	"github.com/Aurorachain/go-aoa/accounts"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/crypto"
-	"github.com/Aurorachain/go-aoa/event"
+	"github.com/Aurorachain-io/go-aoa/accounts"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/crypto"
+	"github.com/Aurorachain-io/go-aoa/event"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -341,13 +341,12 @@ func TestWalletNotifications(t *testing.T) {
 	checkEvents(t, wantEvents, events)
 }
 
-// 通过keystore文件获取私钥
 func TestKeyStore_Import(t *testing.T) {
-	// keyStore := NewKeyStore("/Users/name/Library/Aurorachain/keystore", veryLightScryptN, veryLightScryptP)
+	// keyStore := NewKeyStore("/Users/yujian/Library/eminer-pro/keystore", veryLightScryptN, veryLightScryptP)
 	keyStore := NewKeyStore("", veryLightScryptN, veryLightScryptP)
 	// UTC--2018-03-07T05-43-28.637655000Z--34f6feaa439ea2e92438365933067acaff5e3b7c
 	address := common.HexToAddress("0x34f6feaa439ea2e92438365933067acaff5e3b7c")
-	key, err := keyStore.storage.GetKey(address, "/Users/name/Library/Aurorachain/keystore/UTC--2018-03-07T05-43-28.637655000Z--34f6feaa439ea2e92438365933067acaff5e3b7c", "name")
+	key, err := keyStore.storage.GetKey(address, "/Users/yujian/Library/eminer-pro/keystore/UTC--2018-03-07T05-43-28.637655000Z--34f6feaa439ea2e92438365933067acaff5e3b7c", "yujian")
 	if err != nil {
 		t.Errorf("GetKey err:%v", err)
 	}
@@ -361,8 +360,8 @@ func TestKeyStore_Import(t *testing.T) {
 
 func TestGetPrivateKeyByKeyFile(t *testing.T) {
 	// address := "0x34f6feaa439ea2e92438365933067acaff5e3b7c"
-	password := "password"
-	fileName := "/Users/name/Library/Aurorachain/keystore/UTC--2018-03-07T05-43-28.637655000Z--34f6feaa439ea2e92438365933067acaff5e3b7c"
+	password := "yujian"
+	fileName := "/Users/yujian/Library/eminer-pro/keystore/UTC--2018-03-07T05-43-28.637655000Z--34f6feaa439ea2e92438365933067acaff5e3b7c"
 	privateKey, err := GetPrivateKeyByKeyFile(fileName, password)
 	privateByte := crypto.FromECDSA(privateKey)
 	privateString := base64.StdEncoding.EncodeToString(privateByte)
@@ -414,13 +413,13 @@ func checkEvents(t *testing.T, want []walletEvent, have []walletEvent) {
 }
 
 func tmpKeyStore(t *testing.T, encrypted bool) (string, *KeyStore) {
-	d, err := ioutil.TempDir("", "aoa-keystore-test")
+	d, err := ioutil.TempDir("", "em-keystore-test")
 	if err != nil {
 		t.Fatal(err)
 	}
 	new1 := NewPlaintextKeyStore
 	if encrypted {
-		new = func(kd string) *KeyStore { return NewKeyStore(kd, veryLightScryptN, veryLightScryptP) }
+		_ = func(kd string) *KeyStore { return NewKeyStore(kd, veryLightScryptN, veryLightScryptP) }
 	}
 	return d, new1(d)
 }

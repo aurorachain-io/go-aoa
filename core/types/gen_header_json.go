@@ -7,8 +7,8 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/common/hexutil"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/common/hexutil"
 )
 
 var _ = (*headerMarshaling)(nil)

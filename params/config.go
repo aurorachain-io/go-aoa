@@ -1,30 +1,30 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package params
 
 import (
 	"fmt"
-	"github.com/Aurorachain/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/common"
 	"math/big"
 )
 
 var (
-	MainnetGenesisHash = common.HexToHash("0x231c31e2b9303ec8cbd6d89af3aff01866b6a02925da401cd2429aefc76c829f") // Mainnet genesis hash to enforce below configs on
-	TestnetGenesisHash = common.HexToHash("0x52d892862b3af7bed302a73a56d8a8aa07696f25f9349375b61d2f6ad936cc0a") // Testnet genesis hash to enforce below configs on
+	MainnetGenesisHash = common.HexToHash("") // Mainnet genesis hash to enforce below configs on
+	TestnetGenesisHash = common.HexToHash("") // Testnet genesis hash to enforce below configs on
 )
 
 var (
@@ -36,41 +36,32 @@ var (
 		ByzantiumBlockReward: big.NewInt(1e+18),
 		MaxElectDelegate:     big.NewInt(101),
 		BlockInterval:        big.NewInt(10),
-
-		AresBlock:     big.NewInt(373300),
-		EpiphronBlock: big.NewInt(485000),
 	}
 
 	// TestnetChainConfig contains the chain parameters to run a node on the Ropsten test network.
 	TestnetChainConfig = &ChainConfig{
-		ChainId:              big.NewInt(11),
+		ChainId:              big.NewInt(3),
 		ByzantiumBlock:       big.NewInt(1700000),
 		FrontierBlockReward:  big.NewInt(5e+18),
 		ByzantiumBlockReward: big.NewInt(2e+18),
 		MaxElectDelegate:     big.NewInt(101),
 		BlockInterval:        big.NewInt(10),
-		AresBlock:            big.NewInt(0),
-		EpiphronBlock:        big.NewInt(20000),
 	}
 
 	// chainId must between 1 ~ 255
-	AllAuroraProtocolChanges = &ChainConfig{
+	AllDacchainProtocolChanges = &ChainConfig{
 		ChainId:              big.NewInt(60),
 		ByzantiumBlock:       big.NewInt(10000),
 		FrontierBlockReward:  big.NewInt(5e+18),
 		ByzantiumBlockReward: big.NewInt(1e+18),
-		MaxElectDelegate:     big.NewInt(3),
+		MaxElectDelegate:     big.NewInt(1),
 		BlockInterval:        big.NewInt(10),
-		AresBlock:            big.NewInt(0),
-		EpiphronBlock:        big.NewInt(3750),
 	}
 
 	TestChainConfig = &ChainConfig{
 		ChainId:        big.NewInt(1),
 		ByzantiumBlock: big.NewInt(0),
-		AresBlock:      big.NewInt(90),
 	}
-	TestRules = TestChainConfig.Rules(new(big.Int))
 )
 
 // ChainConfig is the core config which determines the blockchain settings.
@@ -86,18 +77,13 @@ type ChainConfig struct {
 	ByzantiumBlockReward *big.Int // Block reward in wei for successfully produce a block upward from Byzantium
 	MaxElectDelegate     *big.Int // dpos max elect delegate number
 	BlockInterval        *big.Int
-
-	AresBlock     *big.Int `json:"aresBlock,omitempty"`     // Ares switch block (nil = no fork, 0 = already on ares stage)
-	EpiphronBlock *big.Int `json:"epiphronBlock,omitempty"` // Before Epiphron block, transfer asset value to a contract will always success
 }
 
 // String implements the fmt.Stringer interface.
 func (c *ChainConfig) String() string {
-	return fmt.Sprintf("{ChainID: %v Byzantium: %v AresBlock: %v EpiphronBlock: %v Engine: %v}",
+	return fmt.Sprintf("{ChainID: %v Byzantium: %v Engine: %v}",
 		c.ChainId,
 		c.ByzantiumBlock,
-		c.AresBlock,
-		c.EpiphronBlock,
 		"DPOS-BFT",
 	)
 }
@@ -120,14 +106,10 @@ func (c *ChainConfig) CheckCompatible(newcfg *ChainConfig, height uint64) *Confi
 	return lasterr
 }
 
-//因主链历史原因，不做AresBlock的兼容性检查
 func (c *ChainConfig) checkCompatible(newcfg *ChainConfig, head *big.Int) *ConfigCompatError {
 
 	if isForkIncompatible(c.ByzantiumBlock, newcfg.ByzantiumBlock, head) {
 		return newCompatError("Byzantium fork block", c.ByzantiumBlock, newcfg.ByzantiumBlock)
-	}
-	if isForkIncompatible(c.EpiphronBlock, newcfg.EpiphronBlock, head) {
-		return newCompatError("Epiphron fork block", c.EpiphronBlock, newcfg.EpiphronBlock)
 	}
 
 	return nil
@@ -192,27 +174,11 @@ func (c *ChainConfig) IsByzantium(num *big.Int) bool {
 	return isForked(c.ByzantiumBlock, num)
 }
 
-func (c *ChainConfig) IsAres(num *big.Int) bool {
-	return isForked(c.AresBlock, num)
-}
-
-func (c *ChainConfig) IsEpiphron(num *big.Int) bool {
-	return isForked(c.EpiphronBlock, num)
-}
-
-// GasTable returns the gas table corresponding to the current phase (first phase or epiphron reprice).
+// GasTable returns the gas table corresponding to the current phase .
 //
 // The returned GasTable's fields shouldn't, under any circumstances, be changed.
 func (c *ChainConfig) GasTable(num *big.Int) GasTable {
-	if num == nil {
-		return GasTable{}
-	}
-	switch {
-	case c.IsEpiphron(num):
-		return GasTableEpiphron
-	default:
-		return GasTable{}
-	}
+	return GasTableFrontier
 }
 
 // Rules wraps ChainConfig and is merely syntatic sugar or can be used for functions

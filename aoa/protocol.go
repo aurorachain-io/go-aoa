@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package aoa
 
@@ -22,11 +22,11 @@ import (
 	"math/big"
 
 	"bytes"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/core"
-	"github.com/Aurorachain/go-aoa/core/types"
-	"github.com/Aurorachain/go-aoa/event"
-	"github.com/Aurorachain/go-aoa/rlp"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/core"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/event"
+	"github.com/Aurorachain-io/go-aoa/rlp"
 )
 
 // Constants to match up protocol versions and messages
@@ -38,7 +38,7 @@ const (
 // Official short name of the protocol used during capability negotiation.
 var ProtocolName = "aoa"
 
-// Supported versions of the aoa protocol (first is primary).
+// Supported versions of the em protocol (first is primary).
 var ProtocolVersions = []uint{aoa01, aoa02}
 
 // Number of implemented message corresponding to different protocol versions.
@@ -46,9 +46,9 @@ var ProtocolLengths = []uint64{17, 17}
 
 const ProtocolMaxMsgSize = 10 * 1024 * 1024 // Maximum cap on the size of a protocol message
 
-// aoa protocol message codes
+// em protocol message codes
 const (
-	// Protocol messages belonging to aoa/62
+	// Protocol messages belonging to em/62
 	StatusMsg          = 0x00
 	NewBlockHashesMsg  = 0x01
 	TxMsg              = 0x02
@@ -61,7 +61,7 @@ const (
 	SignaturesBlockMsg = 0x08
 	// broadcast to delegate p2p network
 	PreBlockMsg = 0x09
-	// Protocol messages belonging to aoa/63
+	// Protocol messages belonging to em/63
 	GetNodeDataMsg = 0x0d
 	NodeDataMsg    = 0x0e
 	GetReceiptsMsg = 0x0f
@@ -208,13 +208,13 @@ type signaturesBlockMsg struct {
 
 type voteSignSlice []types.VoteSign
 
-func (ca voteSignSlice) Len() int { // 重写 Len() 方法
+func (ca voteSignSlice) Len() int {
 	return len(ca)
 }
-func (ca voteSignSlice) Swap(i, j int) { // 重写 Swap() 方法
+func (ca voteSignSlice) Swap(i, j int) {
 	ca[i], ca[j] = ca[j], ca[i]
 }
-func (ca voteSignSlice) Less(i, j int) bool { // 重写 Less() 方法
+func (ca voteSignSlice) Less(i, j int) bool {
 	if ca[j].Sign == nil {
 		return false
 	}

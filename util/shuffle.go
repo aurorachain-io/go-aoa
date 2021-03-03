@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package util
 
@@ -20,16 +20,13 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
-	"github.com/Aurorachain/go-aoa/core/types"
-	"github.com/Aurorachain/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/log"
 	"math"
 	"strconv"
 	"time"
 )
 
-// dpos乱序方法,同一个轮回里面传入不同的高度，排序列表是一样的
-// delegateNumber:代理节点数量
-// height:本次产块的块高
 func Shuffle(height int64, delegateNumber int) []int {
 	var truncDelegateList []int
 
@@ -55,7 +52,6 @@ func Shuffle(height int64, delegateNumber int) []int {
 	for i := 0; i < delCount; i++ {
 		for x := 0; x < 4 && i < delCount; i++ {
 			newIndex := int(currentSend[x]) % delCount
-			// 元素互换
 			truncDelegateList[newIndex], truncDelegateList[i] = truncDelegateList[i], truncDelegateList[newIndex]
 			x++
 		}
@@ -71,10 +67,10 @@ func ShuffleNewRound(beginTime int64, maxElectDelegate int, currentDposList []ty
 	if len(currentDposList) < maxElectDelegate {
 		maxElectDelegate = len(currentDposList)
 	}
-	log.Infof("shuffle beginTime=%v, current delegate amount=%v, delegateNumber=%d", time.Unix(beginTime, 0), len(currentDposList), maxElectDelegate)
+	log.Info("shuffle", "beginTime", beginTime, "current delegate", len(currentDposList), "delegateNumber", maxElectDelegate)
 	var newRoundList []types.ShuffleDel
 	truncDelegateList := Shuffle(beginTime+1, maxElectDelegate)
-	log.Infof("shuffle beginTime=%v, trunc=%v", time.Unix(beginTime, 0), truncDelegateList)
+	log.Debug("shuffle", "beginTime", time.Unix(beginTime, 0), "trunc", truncDelegateList)
 
 	for index := int64(0); index < int64(maxElectDelegate); index++ {
 		delegateIndex := truncDelegateList[index]

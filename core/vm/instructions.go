@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package vm
 
@@ -21,11 +21,11 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/common/math"
-	"github.com/Aurorachain/go-aoa/core/types"
-	"github.com/Aurorachain/go-aoa/crypto"
-	"github.com/Aurorachain/go-aoa/params"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/common/math"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/crypto"
+	"github.com/Aurorachain-io/go-aoa/params"
 )
 
 var (
@@ -409,7 +409,7 @@ func opCaller(pc *uint64, evm *EVM, contract *Contract, memory *Memory, stack *S
 }
 
 func opCallValue(pc *uint64, evm *EVM, contract *Contract, memory *Memory, stack *Stack) ([]byte, error) {
-	if isAOA(contract) {
+	if isEM(contract) {
 		stack.push(evm.interpreter.intPool.get().Set(contract.value))
 	} else {
 		stack.push(evm.interpreter.intPool.get().SetUint64(0))
@@ -904,7 +904,7 @@ func opTransferAsset(pc *uint64, evm *EVM, contract *Contract, memory *Memory, s
 }
 
 func opAsset(pc *uint64, evm *EVM, contract *Contract, memory *Memory, stack *Stack) ([]byte, error) {
-	if isAOA(contract) {
+	if isEM(contract) {
 		stack.push(common.Address{}.Big())
 	} else {
 		stack.push(contract.Asset().Big())
@@ -913,7 +913,7 @@ func opAsset(pc *uint64, evm *EVM, contract *Contract, memory *Memory, stack *St
 }
 
 func opAssetValue(pc *uint64, evm *EVM, contract *Contract, memory *Memory, stack *Stack) ([]byte, error) {
-	if isAOA(contract) {
+	if isEM(contract) {
 		stack.push(evm.interpreter.intPool.get().SetUint64(0))
 	} else {
 		stack.push(evm.interpreter.intPool.get().Set(contract.value))
@@ -921,57 +921,6 @@ func opAssetValue(pc *uint64, evm *EVM, contract *Contract, memory *Memory, stac
 	return nil, nil
 }
 
-func isAOA(contract *Contract) bool {
+func isEM(contract *Contract) bool {
 	return nil == contract.Asset()
-}
-
-func opIsDelegate(pc *uint64, evm *EVM, contract *Contract, memory *Memory, stack *Stack) ([]byte, error) {
-	addr := stack.pop()
-	if _, ok := (*evm.DelegateList)[common.BigToAddress(addr)]; ok {
-		stack.push(evm.interpreter.intPool.get().SetUint64(1))
-	} else {
-		stack.push(evm.interpreter.intPool.get().SetUint64(0))
-	}
-	return nil, nil
-}
-
-func opGetCandidateVoteInfo(pc *uint64, evm *EVM, contract *Contract, memory *Memory, stack *Stack) ([]byte, error) {
-	addr := stack.pop()
-	if candidate, ok := (*evm.DelegateList)[common.BigToAddress(addr)]; ok {
-		stack.push(evm.interpreter.intPool.get().SetUint64(candidate.Vote))
-	} else {
-		stack.push(evm.interpreter.intPool.get().SetUint64(0))
-	}
-	return nil, nil
-}
-
-func opGetCandidateVoteInfoFors(pc *uint64, evm *EVM, contract *Contract, memory *Memory, stack *Stack) ([]byte, error) {
-	addrs := []*big.Int{stack.pop(), stack.pop(), stack.pop(), stack.pop(), stack.pop()}
-	var total uint64
-	for i := 0; i < len(addrs); i++ {
-		if candidate, ok := (*evm.DelegateList)[common.BigToAddress(addrs[i])]; ok {
-			total += candidate.Vote
-		}
-	}
-	if total > 0 {
-		stack.push(evm.interpreter.intPool.get().SetUint64(total))
-	} else {
-		stack.push(evm.interpreter.intPool.get().SetUint64(0))
-	}
-	return nil, nil
-}
-
-func opGetCandidateTotalVote(pc *uint64, evm *EVM, contract *Contract, memory *Memory, stack *Stack) ([]byte, error) {
-	stack.pop()
-	addr := contract.CallerAddress
-	if _, ok := (*evm.DelegateList)[addr]; ok {
-		var total uint64
-		for _, v := range *evm.DelegateList {
-			total += v.Vote
-		}
-		stack.push(evm.interpreter.intPool.get().SetUint64(total))
-	} else {
-		stack.push(evm.interpreter.intPool.get().SetUint64(0))
-	}
-	return nil, nil
 }

@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package aoa
 
@@ -27,20 +27,20 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Aurorachain/go-aoa/aoa/tracers"
-	"github.com/Aurorachain/go-aoa/aoadb"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/common/hexutil"
-	"github.com/Aurorachain/go-aoa/consensus/delegatestate"
-	"github.com/Aurorachain/go-aoa/core"
-	"github.com/Aurorachain/go-aoa/core/state"
-	"github.com/Aurorachain/go-aoa/core/types"
-	"github.com/Aurorachain/go-aoa/core/vm"
-	"github.com/Aurorachain/go-aoa/internal/aoaapi"
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/rlp"
-	"github.com/Aurorachain/go-aoa/rpc"
-	"github.com/Aurorachain/go-aoa/trie"
+	"github.com/Aurorachain-io/go-aoa/aoa/tracers"
+	"github.com/Aurorachain-io/go-aoa/aoadb"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/common/hexutil"
+	"github.com/Aurorachain-io/go-aoa/consensus/delegatestate"
+	"github.com/Aurorachain-io/go-aoa/core"
+	"github.com/Aurorachain-io/go-aoa/core/state"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/core/vm"
+	"github.com/Aurorachain-io/go-aoa/internal/aoaapi"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/rlp"
+	"github.com/Aurorachain-io/go-aoa/rpc"
+	"github.com/Aurorachain-io/go-aoa/trie"
 )
 
 const (
@@ -97,23 +97,23 @@ type txTraceTask struct {
 // same time to allow disk fallback for reads that do no hit the memory layer.
 type ephemeralDatabase struct {
 	diskdb aoadb.Database     // Persistent disk database to fall back to with reads
-	memdb  *aoadb.MemDatabase // Ephemeral memory database for primary reads and writes
+	maoadb  *aoadb.MemDatabase // Ephemeral memory database for primary reads and writes
 }
 
-func (db *ephemeralDatabase) Put(key []byte, value []byte) error { return db.memdb.Put(key, value) }
+func (db *ephemeralDatabase) Put(key []byte, value []byte) error { return db.maoadb.Put(key, value) }
 func (db *ephemeralDatabase) Delete(key []byte) error            { return errors.New("delete not supported") }
-func (db *ephemeralDatabase) Close()                             { db.memdb.Close() }
+func (db *ephemeralDatabase) Close()                             { db.maoadb.Close() }
 func (db *ephemeralDatabase) NewBatch() aoadb.Batch {
-	return db.memdb.NewBatch()
+	return db.maoadb.NewBatch()
 }
 func (db *ephemeralDatabase) Has(key []byte) (bool, error) {
-	if has, _ := db.memdb.Has(key); has {
+	if has, _ := db.maoadb.Has(key); has {
 		return has, nil
 	}
 	return db.diskdb.Has(key)
 }
 func (db *ephemeralDatabase) Get(key []byte) ([]byte, error) {
-	if blob, _ := db.memdb.Get(key); blob != nil {
+	if blob, _ := db.maoadb.Get(key); blob != nil {
 		return blob, nil
 	}
 	return db.diskdb.Get(key)
@@ -129,18 +129,18 @@ func (db *ephemeralDatabase) Prune(root common.Hash) {
 		hash := trieSync.Missing(1)[0]
 
 		// Move the next trie node from the memory layer into a trieSync struct
-		node, err := db.memdb.Get(hash[:])
+		node, err := db.maoadb.Get(hash[:])
 		if err != nil {
-			panic(err) // memdb must have the data
+			panic(err) // maoadb must have the data
 		}
 		if _, _, err := trieSync.Process([]trie.SyncResult{{Hash: hash, Data: node}}); err != nil {
 			panic(err) // it's not possible to fail processing a node
 		}
 	}
 	// Discard the old memory layer and write a new one
-	db.memdb, _ = aoadb.NewMemDatabaseWithCap(db.memdb.Len())
+	db.maoadb, _ = aoadb.NewMemDatabaseWithCap(db.maoadb.Len())
 	if _, err := trieSync.Commit(db); err != nil {
-		panic(err) // writing into a memdb cannot fail
+		panic(err) // writing into a maoadb cannot fail
 	}
 }
 
@@ -152,19 +152,19 @@ func (api *PrivateDebugAPI) TraceChain(ctx context.Context, start, end rpc.Block
 
 	switch start {
 	case rpc.PendingBlockNumber:
-		from = api.aoa.dposMiner.PendingBlock()
+		from = api.dac.dposMiner.PendingBlock()
 	case rpc.LatestBlockNumber:
-		from = api.aoa.blockchain.CurrentBlock()
+		from = api.dac.blockchain.CurrentBlock()
 	default:
-		from = api.aoa.blockchain.GetBlockByNumber(uint64(start))
+		from = api.dac.blockchain.GetBlockByNumber(uint64(start))
 	}
 	switch end {
 	case rpc.PendingBlockNumber:
-		to = api.aoa.dposMiner.PendingBlock()
+		to = api.dac.dposMiner.PendingBlock()
 	case rpc.LatestBlockNumber:
-		to = api.aoa.blockchain.CurrentBlock()
+		to = api.dac.blockchain.CurrentBlock()
 	default:
-		to = api.aoa.blockchain.GetBlockByNumber(uint64(end))
+		to = api.dac.blockchain.GetBlockByNumber(uint64(end))
 	}
 	// Trace the chain if we've found all our blocks
 	if from == nil {
@@ -190,13 +190,13 @@ func (api *PrivateDebugAPI) traceChain(ctx context.Context, start, end *types.Bl
 	// Ensure we have a valid starting state before doing any work
 	origin := start.NumberU64()
 
-	memdb, _ := aoadb.NewMemDatabase()
+	maoadb, _ := aoadb.NewMemDatabase()
 	db := &ephemeralDatabase{
-		diskdb: api.aoa.ChainDb(),
-		memdb:  memdb,
+		diskdb: api.dac.ChainDb(),
+		maoadb:  maoadb,
 	}
 	if number := start.NumberU64(); number > 0 {
-		start = api.aoa.blockchain.GetBlock(start.ParentHash(), start.NumberU64()-1)
+		start = api.dac.blockchain.GetBlock(start.ParentHash(), start.NumberU64()-1)
 		if start == nil {
 			return nil, fmt.Errorf("parent block #%d not found", number-1)
 		}
@@ -210,7 +210,7 @@ func (api *PrivateDebugAPI) traceChain(ctx context.Context, start, end *types.Bl
 		}
 		// Find the most recent block that has the state available
 		for i := uint64(0); i < reexec; i++ {
-			start = api.aoa.blockchain.GetBlock(start.ParentHash(), start.NumberU64()-1)
+			start = api.dac.blockchain.GetBlock(start.ParentHash(), start.NumberU64()-1)
 			if start == nil {
 				break
 			}
@@ -252,7 +252,7 @@ func (api *PrivateDebugAPI) traceChain(ctx context.Context, start, end *types.Bl
 				// Trace all the transactions contained within
 				for i, tx := range task.block.Transactions() {
 					msg, _ := tx.AsMessage(signer)
-					vmctx := core.NewEVMContext(msg, task.block.Header(), api.aoa.blockchain, nil)
+					vmctx := core.NewEVMContext(msg, task.block.Header(), api.dac.blockchain, nil)
 
 					res, err := api.traceTx(ctx, msg, vmctx, task.statedb, config)
 					if err != nil {
@@ -316,7 +316,7 @@ func (api *PrivateDebugAPI) traceChain(ctx context.Context, start, end *types.Bl
 				logged = time.Now()
 			}
 			// Retrieve the next block to trace
-			block := api.aoa.blockchain.GetBlockByNumber(number)
+			block := api.dac.blockchain.GetBlockByNumber(number)
 			if block == nil {
 				failed = fmt.Errorf("block #%d not found", number)
 				break
@@ -340,7 +340,7 @@ func (api *PrivateDebugAPI) traceChain(ctx context.Context, start, end *types.Bl
 				break
 			}
 			// Generate the next state snapshot fast without tracing
-			_, _, _, err = api.aoa.blockchain.Processor().Process(block, statedb, vm.Config{}, delegateDB)
+			_, _, _, err = api.dac.blockchain.Processor().Process(block, statedb, vm.Config{}, delegateDB)
 			if err != nil {
 				failed = err
 				break
@@ -379,11 +379,11 @@ func (api *PrivateDebugAPI) traceChain(ctx context.Context, start, end *types.Bl
 				}
 				// No more concurrent access at this point, prune the database
 				var (
-					nodes = db.memdb.Len()
+					nodes = db.maoadb.Len()
 					start = time.Now()
 				)
 				db.Prune(root)
-				log.Info("Pruned tracer state entries", "deleted", nodes-db.memdb.Len(), "left", db.memdb.Len(), "elapsed", time.Since(start))
+				log.Info("Pruned tracer state entries", "deleted", nodes-db.maoadb.Len(), "left", db.maoadb.Len(), "elapsed", time.Since(start))
 
 				statedb, _ = state.New(root, state.NewDatabase(db))
 			}
@@ -427,11 +427,11 @@ func (api *PrivateDebugAPI) TraceBlockByNumber(ctx context.Context, number rpc.B
 
 	switch number {
 	case rpc.PendingBlockNumber:
-		block = api.aoa.dposMiner.PendingBlock()
+		block = api.dac.dposMiner.PendingBlock()
 	case rpc.LatestBlockNumber:
-		block = api.aoa.blockchain.CurrentBlock()
+		block = api.dac.blockchain.CurrentBlock()
 	default:
-		block = api.aoa.blockchain.GetBlockByNumber(uint64(number))
+		block = api.dac.blockchain.GetBlockByNumber(uint64(number))
 	}
 	// Trace the block if it was found
 	if block == nil {
@@ -443,7 +443,7 @@ func (api *PrivateDebugAPI) TraceBlockByNumber(ctx context.Context, number rpc.B
 // TraceBlockByHash returns the structured logs created during the execution of
 // EVM and returns them as a JSON object.
 func (api *PrivateDebugAPI) TraceBlockByHash(ctx context.Context, hash common.Hash, config *TraceConfig) ([]*txTraceResult, error) {
-	block := api.aoa.blockchain.GetBlockByHash(hash)
+	block := api.dac.blockchain.GetBlockByHash(hash)
 	if block == nil {
 		return nil, fmt.Errorf("block #%x not found", hash)
 	}
@@ -475,10 +475,10 @@ func (api *PrivateDebugAPI) TraceBlockFromFile(ctx context.Context, file string,
 // per transaction, dependent on the requestd tracer.
 func (api *PrivateDebugAPI) traceBlock(ctx context.Context, block *types.Block, config *TraceConfig) ([]*txTraceResult, error) {
 	// Create the parent state database
-	if err := api.aoa.aoaEngine.VerifyHeader(api.aoa.blockchain, block.Header()); err != nil {
+	if err := api.dac.dacEngine.VerifyHeader(api.dac.blockchain, block.Header()); err != nil {
 		return nil, err
 	}
-	parent := api.aoa.blockchain.GetBlock(block.ParentHash(), block.NumberU64()-1)
+	parent := api.dac.blockchain.GetBlock(block.ParentHash(), block.NumberU64()-1)
 	if parent == nil {
 		return nil, fmt.Errorf("parent %x not found", block.ParentHash())
 	}
@@ -512,7 +512,7 @@ func (api *PrivateDebugAPI) traceBlock(ctx context.Context, block *types.Block, 
 			// Fetch and execute the next transaction trace tasks
 			for task := range jobs {
 				msg, _ := txs[task.index].AsMessage(signer)
-				vmctx := core.NewEVMContext(msg, block.Header(), api.aoa.blockchain, nil)
+				vmctx := core.NewEVMContext(msg, block.Header(), api.dac.blockchain, nil)
 
 				res, err := api.traceTx(ctx, msg, vmctx, task.statedb, config)
 				if err != nil {
@@ -531,7 +531,7 @@ func (api *PrivateDebugAPI) traceBlock(ctx context.Context, block *types.Block, 
 
 		// Generate the next state snapshot fast without tracing
 		msg, _ := tx.AsMessage(signer)
-		vmctx := core.NewEVMContext(msg, block.Header(), api.aoa.blockchain, nil)
+		vmctx := core.NewEVMContext(msg, block.Header(), api.dac.blockchain, nil)
 
 		vmenv := vm.NewEVM(vmctx, statedb, api.config, vm.Config{})
 		if _, _, _, err := core.ApplyMessage(vmenv, msg, new(core.GasPool).AddGas(msg.Gas())); err != nil {
@@ -556,20 +556,20 @@ func (api *PrivateDebugAPI) traceBlock(ctx context.Context, block *types.Block, 
 // attempted to be reexecuted to generate the desired state.
 func (api *PrivateDebugAPI) computeStateDB(block *types.Block, reexec uint64) (*state.StateDB, error) {
 	// If we have the state fully available, use that
-	statedb, err := api.aoa.blockchain.StateAt(block.Root())
+	statedb, err := api.dac.blockchain.StateAt(block.Root())
 	if err == nil {
 		return statedb, nil
 	}
 	// Otherwise try to reexec blocks until we find a state or reach our limit
 	origin := block.NumberU64()
 
-	memdb, _ := aoadb.NewMemDatabase()
+	maoadb, _ := aoadb.NewMemDatabase()
 	db := &ephemeralDatabase{
-		diskdb: api.aoa.ChainDb(),
-		memdb:  memdb,
+		diskdb: api.dac.ChainDb(),
+		maoadb:  maoadb,
 	}
 	for i := uint64(0); i < reexec; i++ {
-		block = api.aoa.blockchain.GetBlock(block.ParentHash(), block.NumberU64()-1)
+		block = api.dac.blockchain.GetBlock(block.ParentHash(), block.NumberU64()-1)
 		if block == nil {
 			break
 		}
@@ -597,11 +597,11 @@ func (api *PrivateDebugAPI) computeStateDB(block *types.Block, reexec uint64) (*
 			logged = time.Now()
 		}
 		// Retrieve the next block to regenerate and process it
-		if block = api.aoa.blockchain.GetBlockByNumber(block.NumberU64() + 1); block == nil {
+		if block = api.dac.blockchain.GetBlockByNumber(block.NumberU64() + 1); block == nil {
 			return nil, fmt.Errorf("block #%d not found", block.NumberU64()+1)
 		}
-		delegateDB, _ := api.aoa.blockchain.DelegateStateAt(block.DelegateRoot())
-		_, _, _, err := api.aoa.blockchain.Processor().Process(block, statedb, vm.Config{}, delegateDB)
+		delegateDB, _ := api.dac.blockchain.DelegateStateAt(block.DelegateRoot())
+		_, _, _, err := api.dac.blockchain.Processor().Process(block, statedb, vm.Config{}, delegateDB)
 		if err != nil {
 			return nil, err
 		}
@@ -623,11 +623,11 @@ func (api *PrivateDebugAPI) computeStateDB(block *types.Block, reexec uint64) (*
 		// After every N blocks, prune the database to only retain relevant data
 		if block.NumberU64()%4096 == 0 || block.NumberU64() == origin {
 			var (
-				nodes = db.memdb.Len()
+				nodes = db.maoadb.Len()
 				begin = time.Now()
 			)
 			db.Prune(root)
-			log.Info("Pruned tracer state entries", "deleted", nodes-db.memdb.Len(), "left", db.memdb.Len(), "elapsed", time.Since(begin))
+			log.Info("Pruned tracer state entries", "deleted", nodes-db.maoadb.Len(), "left", db.maoadb.Len(), "elapsed", time.Since(begin))
 
 			statedb, _ = state.New(root, state.NewDatabase(db))
 		}
@@ -640,7 +640,7 @@ func (api *PrivateDebugAPI) computeStateDB(block *types.Block, reexec uint64) (*
 // and returns them as a JSON object.
 func (api *PrivateDebugAPI) TraceTransaction(ctx context.Context, hash common.Hash, config *TraceConfig) (interface{}, error) {
 	// Retrieve the transaction and assemble its EVM context
-	tx, blockHash, _, index := core.GetTransaction(api.aoa.ChainDb(), hash)
+	tx, blockHash, _, index := core.GetTransaction(api.dac.ChainDb(), hash)
 	if tx == nil {
 		return nil, fmt.Errorf("transaction %x not found", hash)
 	}
@@ -720,11 +720,11 @@ func (api *PrivateDebugAPI) traceTx(ctx context.Context, message core.Message, v
 // computeTxEnv returns the execution environment of a certain transaction.
 func (api *PrivateDebugAPI) computeTxEnv(blockHash common.Hash, txIndex int, reexec uint64) (core.Message, vm.Context, *state.StateDB, error) {
 	// Create the parent state database
-	block := api.aoa.blockchain.GetBlockByHash(blockHash)
+	block := api.dac.blockchain.GetBlockByHash(blockHash)
 	if block == nil {
 		return nil, vm.Context{}, nil, fmt.Errorf("block %x not found", blockHash)
 	}
-	parent := api.aoa.blockchain.GetBlock(block.ParentHash(), block.NumberU64()-1)
+	parent := api.dac.blockchain.GetBlock(block.ParentHash(), block.NumberU64()-1)
 	if parent == nil {
 		return nil, vm.Context{}, nil, fmt.Errorf("parent %x not found", block.ParentHash())
 	}
@@ -738,7 +738,7 @@ func (api *PrivateDebugAPI) computeTxEnv(blockHash common.Hash, txIndex int, ree
 	for idx, tx := range block.Transactions() {
 		// Assemble the transaction call message and return if the requested offset
 		msg, _ := tx.AsMessage(signer)
-		context := core.NewEVMContext(msg, block.Header(), api.aoa.blockchain, nil)
+		context := core.NewEVMContext(msg, block.Header(), api.dac.blockchain, nil)
 		if idx == txIndex {
 			return msg, context, statedb, nil
 		}

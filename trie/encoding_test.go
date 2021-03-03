@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package trie
 
@@ -97,20 +97,6 @@ func BenchmarkKeybytesToHex(b *testing.B) {
 }
 
 func BenchmarkHexToKeybytes(b *testing.B) {
-	testBytes := []byte{7, 6, 6, 5, 7, 2, 6, 2, 16}
-	for i := 0; i < b.N; i++ {
-		hexToKeybytes(testBytes)
-	}
-}
-
-func BenchmarkHexToKeybytes2(b *testing.B) {
-	testBytes := []byte{7, 6, 6, 5, 7, 2, 6, 2, 16}
-	for i := 0; i < b.N; i++ {
-		hexToKeybytes(testBytes)
-	}
-}
-
-func BenchmarkHexToKeybytes3(b *testing.B) {
 	testBytes := []byte{7, 6, 6, 5, 7, 2, 6, 2, 16}
 	for i := 0; i < b.N; i++ {
 		hexToKeybytes(testBytes)

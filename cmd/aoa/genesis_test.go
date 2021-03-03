@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of go-aurora.
+// Copyright 2021 The go-aoa Authors
+// This file is part of go-eminer.
 //
-// go-aurora is free software: you can redistribute it and/or modify
+// go-eminer is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// go-aurora is distributed in the hope that it will be useful,
+// go-eminer is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with go-aurora. If not, see <http://www.gnu.org/licenses/>.
+// along with go-eminer. If not, see <http://www.gnu.org/licenses/>.
 
 package main
 
@@ -41,7 +41,7 @@ var customGenesisTests = []struct {
 			"parentHash" : "0x0000000000000000000000000000000000000000000000000000000000000000",
 			"timestamp"  : "0x00"
 		}`,
-		query:  "aoa.getBlock(0).nonce",
+		query:  "em.getBlock(0).nonce",
 		result: "0x0000000000000042",
 	},
 	// Genesis file with an empty chain configuration (ensure missing fields work)
@@ -58,7 +58,7 @@ var customGenesisTests = []struct {
 			"timestamp"  : "0x00",
 			"config"     : {}
 		}`,
-		query:  "aoa.getBlock(0).nonce",
+		query:  "em.getBlock(0).nonce",
 		result: "0x0000000000000042",
 	},
 	// Genesis file with specific chain configurations
@@ -79,7 +79,7 @@ var customGenesisTests = []struct {
 				"daoForkSupport" : true
 			},
 		}`,
-		query:  "aoa.getBlock(0).nonce",
+		query:  "em.getBlock(0).nonce",
 		result: "0x0000000000000042",
 	},
 }

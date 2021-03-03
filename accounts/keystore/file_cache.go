@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package keystore
 
@@ -24,7 +24,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Aurorachain/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/log"
 	set "gopkg.in/fatih/set.v0"
 )
 
@@ -59,7 +59,7 @@ func (fc *fileCache) scan(keyDir string) (set.Interface, set.Interface, set.Inte
 		// Skip any non-key files from the folder
 		path := filepath.Join(keyDir, fi.Name())
 		if skipKeyFile(fi) {
-			log.Debugf("Ignoring file on account scan, path=%v", path)
+			log.Trace("Ignoring file on account scan", "path", path)
 			continue
 		}
 		// Gather the set of all and fresly modified files
@@ -84,7 +84,7 @@ func (fc *fileCache) scan(keyDir string) (set.Interface, set.Interface, set.Inte
 	t3 := time.Now()
 
 	// Report on the scanning stats and return
-	log.Infof("FS scan times, list=%s, set=%s, diff=%s", t1.Sub(t0), t2.Sub(t1), t3.Sub(t2))
+	log.Debug("FS scan times", "list", t1.Sub(t0), "set", t2.Sub(t1), "diff", t3.Sub(t2))
 	return creates, deletes, updates, nil
 }
 

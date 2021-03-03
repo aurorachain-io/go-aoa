@@ -1,23 +1,23 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package types
 
 import (
-	"github.com/Aurorachain/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/common"
 	"math/big"
 )
 
@@ -27,7 +27,7 @@ const (
 	// DelegateAmount   = (MaxElectDelegate / 3) * 2
 )
 
-const DelegatePrefix = "aurora-delegates"
+const DelegatePrefix = "dacchain-delegates"
 
 type ShuffleDel struct {
 	WorkTime uint64 `json:"work_time"  gencodec:"required"`
@@ -42,9 +42,9 @@ type ShuffleList struct {
 
 type Candidate struct {
 	Address      string `json:"address"`
-	Vote         uint64 `json:"vote"`         // 投票数
-	Nickname     string `json:"nickname"`     // delegate name
-	RegisterTime uint64 `json:"registerTime"` // 注册时间
+	Vote         uint64 `json:"vote"`
+	Nickname     string `json:"nickname"`
+	RegisterTime uint64 `json:"registerTime"`
 }
 
 type StoreData struct {
@@ -54,13 +54,13 @@ type StoreData struct {
 
 type CandidateSlice []Candidate
 
-func (ca CandidateSlice) Len() int { // 重写 Len() 方法
+func (ca CandidateSlice) Len() int {
 	return len(ca)
 }
-func (ca CandidateSlice) Swap(i, j int) { // 重写 Swap() 方法
+func (ca CandidateSlice) Swap(i, j int) {
 	ca[i], ca[j] = ca[j], ca[i]
 }
-func (ca CandidateSlice) Less(i, j int) bool { // 重写 Less() 方法， vote从大到小排序,如果相等按注册时间从小到大排序，最后按address排序
+func (ca CandidateSlice) Less(i, j int) bool {
 	if ca[j].Vote != ca[i].Vote {
 		return ca[j].Vote < ca[i].Vote
 	}
@@ -72,7 +72,7 @@ func (ca CandidateSlice) Less(i, j int) bool { // 重写 Less() 方法， vote�
 
 type VoteCandidate struct {
 	Address  string
-	Vote     uint64 //投票数
+	Vote     uint64
 	Nickname string // delegate name
 	Action   int    // 0-register,1-add vote,2-sub vote,3-cancel delegate
 }

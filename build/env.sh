@@ -10,7 +10,7 @@ fi
 # Create fake Go workspace if it doesn't exist yet.
 workspace="$PWD/build/_workspace"
 root="$PWD"
-aoadir="$workspace/src/github.com/Aurorachain"
+aoadir="$workspace/src/github.com/Aurorachain-io"
 if [ ! -L "$aoadir/go-aoa" ]; then
     mkdir -p "$aoadir"
     cd "$aoadir"

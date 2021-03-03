@@ -36,7 +36,7 @@ import (
 	"math/big"
 	"unsafe"
 
-	"github.com/Aurorachain/go-aoa/common/math"
+	"github.com/Aurorachain-io/go-aoa/common/math"
 )
 
 /*

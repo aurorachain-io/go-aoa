@@ -1,31 +1,31 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package aoa
 
 import (
 	"encoding/json"
-	"github.com/Aurorachain/go-aoa/aoa/downloader"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/core"
-	"github.com/Aurorachain/go-aoa/core/types"
-	"github.com/Aurorachain/go-aoa/crypto"
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/p2p"
-	"github.com/Aurorachain/go-aoa/rlp"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/core"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/crypto"
+	"github.com/Aurorachain-io/go-aoa/aoa/downloader"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/p2p"
+	"github.com/Aurorachain-io/go-aoa/rlp"
 	"math/big"
 	"strings"
 	"sync/atomic"
@@ -105,7 +105,7 @@ func (pm *ProtocolManager) dealGetBlockHeadersMsg(msg p2p.Msg, p *peer) error {
 			)
 			if next <= current {
 				infos, _ := json.MarshalIndent(p.Peer.Info(), "", "  ")
-				log.Warn("GetBlockHeaders skip overflow attack", "current", current, "skip", query.Skip, "next", next, "attacker", infos)
+				p.Log().Warn("GetBlockHeaders skip overflow attack", "current", current, "skip", query.Skip, "next", next, "attacker", infos)
 				unknown = true
 			} else {
 				if header := pm.blockchain.GetHeaderByNumber(next); header != nil {
@@ -161,10 +161,10 @@ func (pm *ProtocolManager) dealBlockHeadersMsg(msg p2p.Msg, p *peer) error {
 		//
 		//	// Validate the header and either drop the peer or continue
 		//	if err := misc.VerifyDAOHeaderExtraData(pm.chainconfig, headers[0]); err != nil {
-		//		log.Info("Verified to be on the other side of the DAO fork, dropping")
+		//		p.Log().Debug("Verified to be on the other side of the DAO fork, dropping")
 		//		return err
 		//	}
-		//	log.Info("Verified to be on the same side of the DAO fork")
+		//	p.Log().Debug("Verified to be on the same side of the DAO fork")
 		//	return nil
 		//}
 		// Irrelevant of the fork checks, send the header to the fetcher just in case
@@ -173,7 +173,7 @@ func (pm *ProtocolManager) dealBlockHeadersMsg(msg p2p.Msg, p *peer) error {
 	if len(headers) > 0 || !filter {
 		err := pm.downloader.DeliverHeaders(p.id, headers)
 		if err != nil {
-			log.Info("Failed to deliver headers", "err", err)
+			log.Debug("Failed to deliver headers", "err", err)
 		}
 	}
 	return nil
@@ -228,7 +228,7 @@ func (pm *ProtocolManager) dealBlockBodiesMsg(msg p2p.Msg, p *peer) error {
 	if len(trasactions) > 0 || len(uncles) > 0 || !filter {
 		err := pm.downloader.DeliverBodies(p.id, trasactions, uncles)
 		if err != nil {
-			log.Info("Failed to deliver bodies", "err", err)
+			log.Debug("Failed to deliver bodies", "err", err)
 		}
 	}
 	return nil
@@ -270,7 +270,7 @@ func (pm *ProtocolManager) dealNodeDataMsg(msg p2p.Msg, p *peer) error {
 	}
 	// Deliver all to the downloader
 	if err := pm.downloader.DeliverNodeData(p.id, data); err != nil {
-		log.Info("Failed to deliver node state data", "err", err)
+		log.Debug("Failed to deliver node state data", "err", err)
 	}
 	return nil
 }
@@ -320,7 +320,7 @@ func (pm *ProtocolManager) dealReceiptsMsg(msg p2p.Msg, p *peer) error {
 	}
 	// Deliver all to the downloader
 	if err := pm.downloader.DeliverReceipts(p.id, receipts); err != nil {
-		log.Info("Failed to deliver receipts", "err", err)
+		log.Debug("Failed to deliver receipts", "err", err)
 	}
 	return nil
 }
@@ -362,9 +362,9 @@ func (pm *ProtocolManager) dealNewBlockMsg(msg p2p.Msg, p *peer) error {
 	block.RlpEncodeSigns = rlpEncodeSigns
 	currentBlock := pm.blockchain.CurrentBlock()
 	td := pm.blockchain.GetTd(currentBlock.Hash(), currentBlock.NumberU64())
-	log.Infof("New block msg receive, blockNumber=%v, localNumber=%v, localTd=%v, rlpSignsLen=%v", block.NumberU64(), currentBlock.NumberU64(), td, len(rlpEncodeSigns))
+	log.Info("New block msg receive", "blockNumber", block.NumberU64(), "localNumber", currentBlock.NumberU64(), "localTd", td, "rlpSignsLen", len(rlpEncodeSigns))
 	if block.NumberU64() <= currentBlock.NumberU64() {
-		log.Errorf("New block msg end|block is exist, currentBlockNumber=%v", currentBlock.NumberU64())
+		log.Error("New block msg end|block is exist", "currentBlockNumber", currentBlock.NumberU64())
 		return nil
 	}
 	// lost block
@@ -375,11 +375,11 @@ func (pm *ProtocolManager) dealNewBlockMsg(msg p2p.Msg, p *peer) error {
 
 	err := pm.engine.VerifyBlockGenerate(pm.blockchain, block, pm.taskManager.GetCurrentShuffleRound(), blockInterval)
 	if err != nil {
-		log.Error("New block Msg|verify block fail, blockNumber=%v, %v", block.NumberU64(), err)
+		log.Error("New block Msg|verify block fail", "blockNumber", block.NumberU64(), "err", err)
 		pm.shuffleIfVerify(block)
 		err = pm.engine.VerifyBlockGenerate(pm.blockchain, block, pm.taskManager.GetCurrentShuffleRound(), blockInterval)
 		if err != nil {
-			log.Error("New block Msg|verify block fail again, blockNumber=%v, %v", block.NumberU64(), err)
+			log.Error("New block Msg|verify block fail again", "blockNumber", block.NumberU64(), "err", err)
 			return nil
 		}
 	}
@@ -420,23 +420,21 @@ func (pm *ProtocolManager) dealPreBlockMsg(msg p2p.Msg, p *peer) error {
 	// lost block
 	currentBlock := pm.blockchain.CurrentBlock()
 	if block.NumberU64() <= currentBlock.NumberU64() {
-		log.Errorf("PreBlockMsg end|block is exist, currentBlockNumber=%v", currentBlock.NumberU64())
+		log.Error("PreBlockMsg end|block is exist", "currentBlockNumber", currentBlock.NumberU64())
 		return nil
 	}
 	if block.NumberU64() > currentBlock.NumberU64()+1 {
-		log.Infof("PreBlockMsg end|because of lost block begin to sync, currentBlockNumber=%v, receiveBlockNumber=%v", currentBlock.NumberU64(), block.NumberU64())
+		log.Info("PreBlockMsg end|because of lost block begin to sync", "currentBlockNumber", currentBlock.NumberU64(), "receiveBlockNumber", block.NumberU64())
 		go pm.synchroniseWithHigherPeers(p, block)
 		return nil
 	}
-	// 分叉 block number - current block number = 1 但是 block parent hash 不是 current block hash
 	if block.ParentHash() != currentBlock.Hash() {
 		// currentBlock rollback
 		// pm.blockchain.RollbackBFT(currentBlock)
 		// go pm.synchronise(p)
 		// return nil
-		log.Errorf("dealPreBlockMsg block hash is not same, blockNumber=%v, localBlockHash%v, remoteBlockHash%v", currentBlock.NumberU64(), currentBlock.Hash().Hex(), block.ParentHash().Hex())
+		log.Error("dealPreBlockMsg block hash is not same", "blockNumber", currentBlock.NumberU64(), "localBlockHash", currentBlock.Hash().Hex(), "remoteBlockHash", block.ParentHash().Hex())
 	}
-	// 根据delegatedb重新计算洗牌列表，再校验一次，最多校验两次，第二次如果校验成功，则更新洗牌列表
 	verifyBlock := true
 	err := pm.engine.VerifyHeaderAndSign(pm.blockchain, block, pm.taskManager.GetCurrentShuffleRound(), blockInterval)
 	if err != nil {
@@ -449,35 +447,36 @@ func (pm *ProtocolManager) dealPreBlockMsg(msg p2p.Msg, p *peer) error {
 		pm.lockBlockManager.unlock()
 		err = pm.lockBlockManager.addPendingBlock(block)
 		if err != nil {
-			log.Errorf("PreBlockMsg|add pendingBlock fail, blockNumber=%v, err=%v", block.NumberU64(), err)
+			log.Error("PreBlockMsg|add pendingBlock fail", "blockNumber", block.NumberU64(), "err", err)
 			return nil
 		}
 		go pm.addSignToPendingBlock(block, approveVote)
 	} else {
-		log.Info("PreBlockMsg|push oppose vote start, blockHash=%v", block.Hash().Hex())
+		log.Info("PreBlockMsg|push oppose vote start", "blockHash", block.Hash().Hex())
 		go pm.addSignToPendingBlock(block, opposeVote)
 	}
+	// log.Info("PreBlockMsg|receive pre new block", "blockNumber", block.NumberU64(), block.NumberU64(), "coinbase", block.Coinbase().Hex(), "localCommit", commitIndex, "verifySuccess", verifyBlock)
 	return nil
 }
 
 func (pm *ProtocolManager) dealSignaturesBlockMsg(msg p2p.Msg, p *peer) error {
 	var signBlockMsg signaturesBlockMsg
 	if err := msg.Decode(&signBlockMsg); err != nil {
-		log.Errorf("dealSignaturesBlockMsg|err, err=%v", err)
+		log.Error("dealSignaturesBlockMsg|err", "err", err)
 		return errResp(ErrDecode, "%v: %v", msg, err)
 	}
 	blockHash := common.BytesToHash(signBlockMsg.BlockHash)
 	blockHashHex := common.BytesToHash(signBlockMsg.BlockHash).Hex()
-	log.Infof("SignaturesBlockMsg receive, blockHash=%v, signLen=%v", blockHashHex, len(signBlockMsg.Signatures))
+	log.Debug("SignaturesBlockMsg receive", "blockHash", blockHashHex, "signLen", len(signBlockMsg.Signatures))
 	if p.HasReceiveSignatures(signBlockMsg.Signatures, signBlockMsg.BlockHash) {
-		log.Infof("SignaturesBlockMsg already receive, blockHash=%v", blockHashHex)
+		log.Debug("SignaturesBlockMsg already receive", "blockHash", blockHashHex)
 		return nil
 	}
 	p.MarkBlockSignatures(signBlockMsg.Signatures, signBlockMsg.BlockHash)
 	currentShuffleRound := pm.taskManager.GetCurrentShuffleRound()
 	err := pm.lockBlockManager.checkBroadcastSignatures(blockHash, signBlockMsg.Signatures, currentShuffleRound)
 	if err != nil {
-		log.Errorf("dealSignaturesBlockMsg|receive error sign msg, blockHash=%v, peerId=%v, err=%v", blockHashHex, p.id, err)
+		log.Error("dealSignaturesBlockMsg|receive error sign msg", "blockHash", blockHashHex, "peerId", p.id, "err", err)
 		return nil
 	}
 	go pm.BroadcastBlockSignatures(signBlockMsg.BlockHash, signBlockMsg.Signatures)
@@ -488,7 +487,6 @@ func (pm *ProtocolManager) dealSignaturesBlockMsg(msg p2p.Msg, p *peer) error {
 }
 
 func (pm *ProtocolManager) dealTxMsg(msg p2p.Msg, p *peer) error {
-	// log.Info("收到广播出来的交易", "message", msg)
 	// Transactions arrived, make sure we have a valid and fresh chain to handle them
 	if atomic.LoadUint32(&pm.acceptTxs) == 0 {
 		return nil

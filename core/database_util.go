@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package core
 
@@ -23,13 +23,13 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
-	"github.com/Aurorachain/go-aoa/aoadb"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/core/types"
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/metrics"
-	"github.com/Aurorachain/go-aoa/params"
-	"github.com/Aurorachain/go-aoa/rlp"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/aoadb"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/metrics"
+	"github.com/Aurorachain-io/go-aoa/params"
+	"github.com/Aurorachain-io/go-aoa/rlp"
 )
 
 // DatabaseReader wraps the Get method of a backing data store.
@@ -58,7 +58,7 @@ var (
 	bloomBitsPrefix     = []byte("B") // bloomBitsPrefix + bit (uint16 big endian) + section (uint64 big endian) + hash -> bloom bits
 
 	preimagePrefix = "secure-key-"              // preimagePrefix + hash -> preimage
-	configPrefix   = []byte("aurora-config-") 	// config prefix for the db
+	configPrefix   = []byte("dacchain-config-") // config prefix for the db
 
 	// Chain index prefixes (use `i` + single byte to avoid mixing data walletType).
 	BloomBitsIndexPrefix = []byte("iB") // BloomBitsIndexPrefix is the data table of a chain indexer to track its progress
@@ -347,7 +347,7 @@ func GetBloomBits(db DatabaseReader, bit uint, section uint64, head common.Hash)
 func WriteCanonicalHash(db aoadb.Putter, hash common.Hash, number uint64) error {
 	key := append(append(headerPrefix, encodeBlockNumber(number)...), numSuffix...)
 	if err := db.Put(key, hash.Bytes()); err != nil {
-		log.Error("Failed to store number to hash mapping", "err", err)
+		log.Crit("Failed to store number to hash mapping", "err", err)
 	}
 	return nil
 }
@@ -355,7 +355,7 @@ func WriteCanonicalHash(db aoadb.Putter, hash common.Hash, number uint64) error 
 // WriteHeadHeaderHash stores the head header's hash.
 func WriteHeadHeaderHash(db aoadb.Putter, hash common.Hash) error {
 	if err := db.Put(headHeaderKey, hash.Bytes()); err != nil {
-		log.Error("Failed to store last header's hash", "err", err)
+		log.Crit("Failed to store last header's hash", "err", err)
 	}
 	return nil
 }
@@ -363,7 +363,7 @@ func WriteHeadHeaderHash(db aoadb.Putter, hash common.Hash) error {
 // WriteHeadBlockHash stores the head block's hash.
 func WriteHeadBlockHash(db aoadb.Putter, hash common.Hash) error {
 	if err := db.Put(headBlockKey, hash.Bytes()); err != nil {
-		log.Error("Failed to store last block's hash", "err", err)
+		log.Crit("Failed to store last block's hash", "err", err)
 	}
 	return nil
 }
@@ -371,7 +371,7 @@ func WriteHeadBlockHash(db aoadb.Putter, hash common.Hash) error {
 // WriteHeadFastBlockHash stores the fast head block's hash.
 func WriteHeadFastBlockHash(db aoadb.Putter, hash common.Hash) error {
 	if err := db.Put(headFastKey, hash.Bytes()); err != nil {
-		log.Error("Failed to store last fast block's hash", "err", err)
+		log.Crit("Failed to store last fast block's hash", "err", err)
 	}
 	return nil
 }
@@ -387,11 +387,11 @@ func WriteHeader(db aoadb.Putter, header *types.Header) error {
 	encNum := encodeBlockNumber(num)
 	key := append(blockHashPrefix, hash...)
 	if err := db.Put(key, encNum); err != nil {
-		log.Error("Failed to store hash to number mapping", "err", err)
+		log.Crit("Failed to store hash to number mapping", "err", err)
 	}
 	key = append(append(headerPrefix, encNum...), hash...)
 	if err := db.Put(key, data); err != nil {
-		log.Error("Failed to store header", "err", err)
+		log.Crit("Failed to store header", "err", err)
 	}
 	return nil
 }
@@ -409,7 +409,7 @@ func WriteBody(db aoadb.Putter, hash common.Hash, number uint64, body *types.Bod
 func WriteBodyRLP(db aoadb.Putter, hash common.Hash, number uint64, rlp rlp.RawValue) error {
 	key := append(append(bodyPrefix, encodeBlockNumber(number)...), hash.Bytes()...)
 	if err := db.Put(key, rlp); err != nil {
-		log.Error("Failed to store block body", "err", err)
+		log.Crit("Failed to store block body", "err", err)
 	}
 	return nil
 }
@@ -422,7 +422,7 @@ func WriteTd(db aoadb.Putter, hash common.Hash, number uint64, td *big.Int) erro
 	}
 	key := append(append(append(headerPrefix, encodeBlockNumber(number)...), hash.Bytes()...), tdSuffix...)
 	if err := db.Put(key, data); err != nil {
-		log.Error("Failed to store block total difficulty", "err", err)
+		log.Crit("Failed to store block total difficulty", "err", err)
 	}
 	return nil
 }
@@ -456,7 +456,7 @@ func WriteBlockReceipts(db aoadb.Putter, hash common.Hash, number uint64, receip
 	// Store the flattened receipt slice
 	key := append(append(blockReceiptsPrefix, encodeBlockNumber(number)...), hash.Bytes()...)
 	if err := db.Put(key, bytes); err != nil {
-		log.Error("Failed to store block receipts", "err", err)
+		log.Crit("Failed to store block receipts", "err", err)
 	}
 	return nil
 }
@@ -491,7 +491,7 @@ func WriteBloomBits(db aoadb.Putter, bit uint, section uint64, head common.Hash,
 	binary.BigEndian.PutUint64(key[3:], section)
 
 	if err := db.Put(key, bits); err != nil {
-		log.Error("Failed to store bloom bits", "err", err)
+		log.Crit("Failed to store bloom bits", "err", err)
 	}
 }
 
@@ -499,7 +499,7 @@ func WriteBloomBits(db aoadb.Putter, bit uint, section uint64, head common.Hash,
 func WriteDelegateBodyRLP(db aoadb.Putter, rlp rlp.RawValue) error {
 	key := []byte(datagateDataPrefix)
 	if err := db.Put(key, rlp); err != nil {
-		log.Error("Failed to store delegate data", "err", err)
+		log.Crit("Failed to store delegate data", "err", err)
 	}
 	return nil
 }
@@ -507,7 +507,7 @@ func WriteDelegateBodyRLP(db aoadb.Putter, rlp rlp.RawValue) error {
 func WriteDelegateShuffleBlockHeightRLP(db aoadb.Putter, rlp rlp.RawValue) error {
 	key := []byte(delegateStorePrefix)
 	if err := db.Put(key, rlp); err != nil {
-		log.Error("Failed to store delegate block number", "err", err)
+		log.Crit("Failed to store delegate block number", "err", err)
 	}
 	return nil
 }

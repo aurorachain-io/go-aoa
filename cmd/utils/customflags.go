@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of go-aurora.
+// Copyright 2021 The go-aoa Authors
+// This file is part of go-eminer.
 //
-// go-aurora is free software: you can redistribute it and/or modify
+// go-eminer is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// go-aurora is distributed in the hope that it will be useful,
+// go-eminer is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with go-aurora. If not, see <http://www.gnu.org/licenses/>.
+// along with go-eminer. If not, see <http://www.gnu.org/licenses/>.
 
 package utils
 
@@ -21,14 +21,13 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/Aurorachain-io/go-aoa/common/math"
+	"gopkg.in/urfave/cli.v1"
 	"math/big"
 	"os"
 	"os/user"
 	"path"
 	"strings"
-
-	"github.com/Aurorachain/go-aoa/common/math"
-	"gopkg.in/urfave/cli.v1"
 )
 
 // Custom type which is registered in the flags library which cli uses for
@@ -48,7 +47,7 @@ func (d *DirectoryString) Set(value string) error {
 }
 
 // Custom cli.Flag type which expand the received string to an absolute path.
-// e.g. ~/.aurora -> /home/username/.aurora
+// e.g. ~/.eminer -> /home/username/.eminer
 type DirectoryFlag struct {
 	Name  string
 	Value DirectoryString

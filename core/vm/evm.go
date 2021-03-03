@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package vm
 
@@ -22,11 +22,10 @@ import (
 	"time"
 
 	"errors"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/core/types"
-	"github.com/Aurorachain/go-aoa/crypto"
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/params"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/crypto"
+	"github.com/Aurorachain-io/go-aoa/params"
 )
 
 // emptyCodeHash is used by create to ensure deployment is disallowed to already
@@ -34,13 +33,13 @@ import (
 var emptyCodeHash = crypto.Keccak256Hash(nil)
 
 type (
-	//the last but one arg is the asset ID. when assetid is nil then it represents our main Cash AOA.
+	//the last but one arg is the asset ID. when assetid is nil then it represents our main Cash DAC.
 	CanTransferFunc func(StateDB, common.Address, *common.Address, *big.Int) bool
 	TransferFunc    func(StateDB, common.Address, common.Address, *common.Address, *big.Int)
 	// GetHashFunc returns the nth block hash in the blockchain
 	// and is used by the BLOCKHASH EVM op code.
 	GetHashFunc func(uint64) common.Hash
-	VoteFunc    func(StateDB, common.Address, *big.Int, []types.Vote, *map[common.Address]types.Candidate, int64) error
+	VoteFunc    func(StateDB, common.Address, []types.Vote, *map[common.Address]types.Candidate, int64) error
 )
 
 // run runs the given contract and takes care of running precompiles with a fallback to the byte code interpreter.
@@ -58,9 +57,9 @@ func run(evm *EVM, contract *Contract, input []byte) ([]byte, error) {
 // it shouldn't be modified.
 type Context struct {
 	// CanTransfer returns whether the account contains
-	// sufficient aoa to transfer the value
+	// sufficient em to transfer the value
 	CanTransfer CanTransferFunc
-	// Transfer transfers aoa from one account to the other
+	// Transfer transfers em from one account to the other
 	Transfer TransferFunc
 	// GetHash returns the hash corresponding to n
 	GetHash GetHashFunc
@@ -80,7 +79,7 @@ type Context struct {
 	DelegateList *map[common.Address]types.Candidate
 }
 
-// EVM is the Aurora Virtual Machine base object and provides
+// EVM is the eminer-pro Virtual Machine base object and provides
 // the necessary tools to run a contract on the given state with
 // the provided context. It should be noted that any error
 // generated through any of the calls should be considered a
@@ -104,7 +103,7 @@ type EVM struct {
 	// virtual machine configuration options used to initialise the
 	// evm.
 	vmConfig Config
-	// global (to this context) Aurora virtual machine
+	// global (to this context) eminer-pro virtual machine
 	// used throughout the execution of the tx.
 	interpreter *Interpreter
 	// abort is used to abort the EVM calling operations
@@ -152,12 +151,9 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 	if evm.vmConfig.NoRecursion && evm.depth > 0 {
 		return nil, gas, nil
 	}
-	var voteList []types.Vote
 	var asset *common.Address
 	for _, a := range args {
 		switch a.(type) {
-		case []types.Vote:
-			voteList = a.([]types.Vote)
 		case *common.Address:
 			asset = a.(*common.Address)
 		default:
@@ -169,18 +165,8 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 	if evm.depth > int(params.CallCreateDepth) {
 		return nil, gas, ErrDepth
 	}
-	// Fail if we're trying to transfer more than the available balance
-	registerCost := new(big.Int)
-	registerCost.SetString(params.TxGasAgentCreation, 10)
 
-
-	checkValue := value
-	if action == types.ActionSubVote {
-		checkValue = big.NewInt(1).Mul(big.NewInt(-1), value)
-	}
-
-	if !evm.Context.CanTransfer(evm.StateDB, caller.Address(), asset, checkValue) ||
-		(action == types.ActionRegister && !evm.Context.CanTransfer(evm.StateDB, caller.Address(), nil, registerCost)) {
+	if !evm.Context.CanTransfer(evm.StateDB, caller.Address(), asset, value) {
 		return nil, gas, ErrInsufficientBalance
 	}
 
@@ -199,23 +185,8 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 		}
 		evm.StateDB.CreateAccount(addr)
 	}
-	if action == types.ActionAddVote || action == types.ActionSubVote {
-		if len(voteList) == 0 {
-			return nil, gas, errors.New("empty vote list")
-		}
-		err := evm.Vote(evm.StateDB, caller.Address(), value, voteList, evm.DelegateList, maxElectDelegate)
-		if err != nil {
-			log.Warn("HereVote", "err", err)
-			evm.StateDB.RevertToSnapshot(snapshot, evm.chainConfig.IsEpiphron(evm.BlockNumber))
-			return nil, gas, err
-		}
-	} else if action == types.ActionRegister {
-		if _, ok := (*evm.DelegateList)[caller.Address()]; ok {
-			return nil, gas, errors.New("Address " + caller.Address().Hex() + " have already register delegate")
-		}
-	} else {
-		evm.Transfer(evm.StateDB, caller.Address(), to.Address(), asset, value)
-	}
+
+	evm.Transfer(evm.StateDB, caller.Address(), to.Address(), asset, value)
 
 	// Initialise a new contract and set the code that is to be used by the EVM.
 	// The contract is a scoped environment for this execution context only.
@@ -238,7 +209,7 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 	// above we revert to the snapshot and consume any gas remaining. Additionally
 	// when we're in homestead this also counts for code storage gas errors.
 	if err != nil {
-		evm.StateDB.RevertToSnapshot(snapshot, evm.chainConfig.IsEpiphron(evm.BlockNumber))
+		evm.StateDB.RevertToSnapshot(snapshot)
 		if err != errExecutionReverted {
 			contract.UseGas(contract.Gas)
 		}
@@ -279,7 +250,7 @@ func (evm *EVM) CallCode(caller ContractRef, addr common.Address, input []byte, 
 
 	ret, err = run(evm, contract, input)
 	if err != nil {
-		evm.StateDB.RevertToSnapshot(snapshot, evm.chainConfig.IsEpiphron(evm.BlockNumber))
+		evm.StateDB.RevertToSnapshot(snapshot)
 		if err != errExecutionReverted {
 			contract.UseGas(contract.Gas)
 		}
@@ -312,7 +283,7 @@ func (evm *EVM) DelegateCall(caller ContractRef, addr common.Address, input []by
 
 	ret, err = run(evm, contract, input)
 	if err != nil {
-		evm.StateDB.RevertToSnapshot(snapshot, evm.chainConfig.IsEpiphron(evm.BlockNumber))
+		evm.StateDB.RevertToSnapshot(snapshot)
 		if err != errExecutionReverted {
 			contract.UseGas(contract.Gas)
 		}
@@ -355,7 +326,7 @@ func (evm *EVM) StaticCall(caller ContractRef, addr common.Address, input []byte
 	// when we're in Homestead this also counts for code storage gas errors.
 	ret, err = run(evm, contract, input)
 	if err != nil {
-		evm.StateDB.RevertToSnapshot(snapshot, evm.chainConfig.IsEpiphron(evm.BlockNumber))
+		evm.StateDB.RevertToSnapshot(snapshot)
 		if err != errExecutionReverted {
 			contract.UseGas(contract.Gas)
 		}
@@ -429,7 +400,7 @@ func (evm *EVM) Create(caller ContractRef, code []byte, gas uint64, asset *commo
 	// above we revert to the snapshot and consume any gas remaining. Additionally
 	// when we're in homestead this also counts for code storage gas errors.
 	if maxCodeSizeExceeded || (err != nil && (err != ErrCodeStoreOutOfGas)) {
-		evm.StateDB.RevertToSnapshot(snapshot, evm.chainConfig.IsEpiphron(evm.BlockNumber))
+		evm.StateDB.RevertToSnapshot(snapshot)
 		if err != errExecutionReverted {
 			contract.UseGas(contract.Gas)
 		}

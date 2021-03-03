@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package state
 
@@ -30,16 +30,16 @@ import (
 
 	check "gopkg.in/check.v1"
 
-	"github.com/Aurorachain/go-aoa/aoadb"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/emdb"
 )
 
 // Tests that updating a state trie does not leak any database writes prior to
 // actually committing the state.
 func TestUpdateLeaks(t *testing.T) {
 	// Create an empty state database
-	db, _ := aoadb.NewMemDatabase()
+	db, _ := emdb.NewMemDatabase()
 	state, _ := New(common.Hash{}, NewDatabase(db))
 
 	// Update it with some accounts
@@ -66,8 +66,8 @@ func TestUpdateLeaks(t *testing.T) {
 // only the one right before the commit.
 func TestIntermediateLeaks(t *testing.T) {
 	// Create two state databases, one transitioning to the final state, the other final from the beginning
-	transDb, _ := aoadb.NewMemDatabase()
-	finalDb, _ := aoadb.NewMemDatabase()
+	transDb, _ := emdb.NewMemDatabase()
+	finalDb, _ := emdb.NewMemDatabase()
 	transState, _ := New(common.Hash{}, NewDatabase(transDb))
 	finalState, _ := New(common.Hash{}, NewDatabase(finalDb))
 
@@ -118,7 +118,7 @@ func TestIntermediateLeaks(t *testing.T) {
 }
 
 func TestStateDB_AddBalance(t *testing.T) {
-	mem, _ := aoadb.NewMemDatabase()
+	mem, _ := emdb.NewMemDatabase()
 	stateDb, _ := New(common.Hash{}, NewDatabase(mem))
 	address1 := common.Address{1}
 	root1 := stateDb.IntermediateRoot(false)
@@ -147,10 +147,10 @@ func TestStateDB_AddBalance(t *testing.T) {
 
 // TestCopy tests that copying a statedb object indeed makes the original and
 // the copy independent of each other. This test is a regression test against
-// https://github.com/Aurorachain/go-aoa/pull/15549.
+// https://github.com/Dacchain/go-Dacchain/pull/15549.
 func TestCopy(t *testing.T) {
 	// Create a random state test to copy and modify "independently"
-	mem, _ := aoadb.NewMemDatabase()
+	mem, _ := emdb.NewMemDatabase()
 	orig, _ := New(common.Hash{}, NewDatabase(mem))
 
 	for i := byte(0); i < 255; i++ {
@@ -362,7 +362,7 @@ func (test *snapshotTest) String() string {
 func (test *snapshotTest) run() bool {
 	// Run all actions and create snapshots.
 	var (
-		db, _        = aoadb.NewMemDatabase()
+		db, _        = emdb.NewMemDatabase()
 		state, _     = New(common.Hash{}, NewDatabase(db))
 		snapshotRevs = make([]int, len(test.snapshots))
 		sindex       = 0
@@ -395,7 +395,7 @@ func (test *snapshotTest) run() bool {
 func (test *snapshotTest) checkEqual(state, checkstate *StateDB) error {
 	for _, addr := range test.addrs {
 		var err error
-		checkeq := func(op string, a, b interface{}) bool {
+		checkEqual := func(op string, a, b interface{}) bool {
 			if err == nil && !reflect.DeepEqual(a, b) {
 				err = fmt.Errorf("got %s(%s) == %v, want %v", op, addr.Hex(), a, b)
 				return false
@@ -403,20 +403,20 @@ func (test *snapshotTest) checkEqual(state, checkstate *StateDB) error {
 			return true
 		}
 		// Check basic accessor methods.
-		checkeq("Exist", state.Exist(addr), checkstate.Exist(addr))
-		checkeq("HasSuicided", state.HasSuicided(addr), checkstate.HasSuicided(addr))
-		checkeq("GetBalance", state.GetBalance(addr), checkstate.GetBalance(addr))
-		checkeq("GetNonce", state.GetNonce(addr), checkstate.GetNonce(addr))
-		checkeq("GetCode", state.GetCode(addr), checkstate.GetCode(addr))
-		checkeq("GetCodeHash", state.GetCodeHash(addr), checkstate.GetCodeHash(addr))
-		checkeq("GetCodeSize", state.GetCodeSize(addr), checkstate.GetCodeSize(addr))
+		checkEqual("Exist", state.Exist(addr), checkstate.Exist(addr))
+		checkEqual("HasSuicided", state.HasSuicided(addr), checkstate.HasSuicided(addr))
+		checkEqual("GetBalance", state.GetBalance(addr), checkstate.GetBalance(addr))
+		checkEqual("GetNonce", state.GetNonce(addr), checkstate.GetNonce(addr))
+		checkEqual("GetCode", state.GetCode(addr), checkstate.GetCode(addr))
+		checkEqual("GetCodeHash", state.GetCodeHash(addr), checkstate.GetCodeHash(addr))
+		checkEqual("GetCodeSize", state.GetCodeSize(addr), checkstate.GetCodeSize(addr))
 		// Check storage.
 		if obj := state.getStateObject(addr); obj != nil {
 			state.ForEachStorage(addr, func(key, val common.Hash) bool {
-				return checkeq("GetState("+key.Hex()+")", val, checkstate.GetState(addr, key))
+				return checkEqual("GetState("+key.Hex()+")", val, checkstate.GetState(addr, key))
 			})
 			checkstate.ForEachStorage(addr, func(key, checkval common.Hash) bool {
-				return checkeq("GetState("+key.Hex()+")", state.GetState(addr, key), checkval)
+				return checkEqual("GetState("+key.Hex()+")", state.GetState(addr, key), checkval)
 			})
 		}
 		if err != nil {

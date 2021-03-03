@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package discv5
 
@@ -24,12 +24,12 @@ import (
 	"net"
 	"time"
 
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/crypto"
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/p2p/nat"
-	"github.com/Aurorachain/go-aoa/p2p/netutil"
-	"github.com/Aurorachain/go-aoa/rlp"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/crypto"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/p2p/nat"
+	"github.com/Aurorachain-io/go-aoa/p2p/netutil"
+	"github.com/Aurorachain-io/go-aoa/rlp"
 )
 
 const Version = 4
@@ -247,7 +247,7 @@ func ListenUDP(priv *ecdsa.PrivateKey, conn conn, realaddr *net.UDPAddr, nodeDBP
 	if err != nil {
 		return nil, err
 	}
-	log.Infof("UDP listener up, net=%v", net.tab.self)
+	log.Info("UDP listener up", "net", net.tab.self)
 	transport.net = net
 	go transport.readLoop()
 	return net, nil
@@ -341,9 +341,9 @@ func (t *udp) sendPacket(toid NodeID, toaddr *net.UDPAddr, ptype byte, req inter
 		//fmt.Println(err)
 		return hash, err
 	}
-	log.Debug(fmt.Sprintf(">>> %v to %x@%v", nodeEvent(ptype), toid[:8], toaddr))
+	log.Trace(fmt.Sprintf(">>> %v to %x@%v", nodeEvent(ptype), toid[:8], toaddr))
 	if _, err = t.conn.WriteToUDP(packet, toaddr); err != nil {
-		log.Debug(fmt.Sprint("UDP send failed:", err))
+		log.Trace(fmt.Sprint("UDP send failed:", err))
 	}
 	//fmt.Println(err)
 	return hash, err
@@ -384,11 +384,11 @@ func (t *udp) readLoop() {
 		nbytes, from, err := t.conn.ReadFromUDP(buf)
 		if netutil.IsTemporaryError(err) {
 			// Ignore temporary read errors.
-			log.Info(fmt.Sprintf("Temporary read error: %v", err))
+			log.Debug(fmt.Sprintf("Temporary read error: %v", err))
 			continue
 		} else if err != nil {
 			// Shut down the loop for permament errors.
-			log.Info(fmt.Sprintf("Read error: %v", err))
+			log.Debug(fmt.Sprintf("Read error: %v", err))
 			return
 		}
 		t.handlePacket(from, buf[:nbytes])
@@ -398,7 +398,7 @@ func (t *udp) readLoop() {
 func (t *udp) handlePacket(from *net.UDPAddr, buf []byte) error {
 	pkt := ingressPacket{remoteAddr: from}
 	if err := decodePacket(buf, &pkt); err != nil {
-		log.Info(fmt.Sprintf("Bad packet from %v: %v", from, err))
+		log.Debug(fmt.Sprintf("Bad packet from %v: %v", from, err))
 		//fmt.Println("bad packet", err)
 		return err
 	}

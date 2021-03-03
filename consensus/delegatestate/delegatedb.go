@@ -1,32 +1,31 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package delegatestate
 
 import (
 	"fmt"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/core/types"
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/rlp"
-	"github.com/Aurorachain/go-aoa/trie"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/rlp"
+	"github.com/Aurorachain-io/go-aoa/trie"
 	"math/big"
 	"sort"
 	"sync"
-	"time"
 )
 
 type revision struct {
@@ -201,7 +200,7 @@ func (d *DelegateDB) SubExist(addr common.Address) bool {
 
 func (d *DelegateDB) getStateObjectContainDelete(addr common.Address) (delegateObject *delegateObject) {
 	if obj := d.delegateObjects[addr]; obj != nil {
-		log.Infof("getStateObjectContainDelete, stateObj=%s", obj)
+		log.Debug("getStateObjectContainDelete", "stateObj", obj)
 		return obj
 	}
 	// Load the object from the database.
@@ -215,6 +214,7 @@ func (d *DelegateDB) getStateObjectContainDelete(addr common.Address) (delegateO
 		log.Error("Failed to decode delegate object", "addr", addr, "err", err)
 		return nil
 	}
+	// log.Info("getStateObjectContainDelete", "data", data)
 	// Insert into the live set.
 	obj := newObject(d, addr, data, d.MarkStateObjectDirty)
 	d.setStateObject(obj)
@@ -271,14 +271,14 @@ func (d *DelegateDB) GetOrNewStateObject(addr common.Address, nickname string, r
 	stateObject := d.getStateObjectContainDelete(addr)
 	if stateObject == nil {
 		stateObject, _ = d.createObject(addr, nickname, registerTime)
-		log.Infof("delegateDB|registerDelegateSuccess, address=%s, nickname=%s,registerTime=%v", addr.Hex(),  nickname,  time.Unix(int64(registerTime), 0))
+		log.Info("delegateDB|registerDelegateSuccess", "addr", addr.Hex(), "nickname", nickname, "registerTime", registerTime)
 		return stateObject
 	}
 	if stateObject.data.Delete {
 		preVote := stateObject.Vote()
 		stateObject, _ = d.createObject(addr, nickname, registerTime)
 		d.AddVote(addr, preVote)
-		log.Infof("delegateDB|registerDelegateSuccess again, address=%s, nickname=%s,registerTime=%v", addr.Hex(),  nickname,  time.Unix(int64(registerTime),0))
+		log.Info("delegateDB|registerDelegateSuccess again", "addr", addr.Hex(), "nickname", nickname, "registerTime", registerTime)
 
 	}
 	return stateObject
@@ -457,7 +457,7 @@ func (d *DelegateDB) Finalise(deleteEmptyObjects bool) {
 	for addr := range d.delegateObjectsDirty {
 		delegateObject := d.delegateObjects[addr]
 		if delegateObject.suicided {
-			log.Infof("DelegateDB|Finalise|delete, addr=%v", addr)
+			log.Info("DelegateDB|Finalise|delete", "addr", addr)
 			d.deleteStateObject(delegateObject)
 		} else {
 			delegateObject.updateRoot(d.db)
@@ -484,7 +484,9 @@ func (d *DelegateDB) CommitTo(dbw trie.DatabaseWriter, deleteEmptyObjects bool) 
 
 	// Commit objects to the trie.
 	for addr, delegateObject := range d.delegateObjects {
+		// log.Info("delegate|commit to", "addr", addr.Hex())
 		_, isDirty := d.delegateObjectsDirty[addr]
+		// log.Info("delegate commit", "addr", addr.Hex(), "isDirty", isDirty, "object", delegateObject.data)
 		switch {
 		case delegateObject.suicided:
 			// If the object has been removed, don't bother syncing it
@@ -503,8 +505,8 @@ func (d *DelegateDB) CommitTo(dbw trie.DatabaseWriter, deleteEmptyObjects bool) 
 	}
 	// Write trie changes.
 	root, err = d.trie.CommitTo(dbw)
-	log.Infof("delegate Trie commit, rootHash=%v, err=%v", root.Hex(), err)
-	log.Infof("delegate Trie cache stats after commit, misses=%v, unloads=%v", trie.CacheMisses(), trie.CacheUnloads())
+	log.Debug("delegate Trie commit", "rootHash", root.Hex(), "err", err)
+	log.Debug("delegate Trie cache stats after commit", "misses", trie.CacheMisses(), "unloads", trie.CacheUnloads())
 	return root, err
 }
 

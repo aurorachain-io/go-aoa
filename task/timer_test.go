@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package task
 
@@ -67,26 +67,7 @@ func TestNewTimingWheel(t *testing.T) {
 		-1, onTimeOut2)
 	tw.AddTimer(time.Now().Add(time.Second),
 		-1, onTimeOut3)
-	tw.AddTimer(time.Now().Add(-10 * time.Second),
+	tw.AddTimer(time.Now().Add(-10*time.Second),
 		-1, onTimeOut4)
-	wb.Wait()
-}
-
-
-func TestNewTimingWheel2(t *testing.T) {
-	tw := NewTimingWheel(context.Background())
-	var wb sync.WaitGroup
-
-	onTimeOut1 := &OnTimeOut{
-		Callback: func(ctx context.Context) {
-			fmt.Print(ctx.Value("param"))
-			wb.Done()
-		},
-		Ctx: context.WithValue(context.Background(), "param", "1sss"),
-	}
-
-	tw.AddTimer(time.Now().Add(time.Second),
-		-1, onTimeOut1)
-	wb.Add(1)
 	wb.Wait()
 }

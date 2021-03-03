@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package aoa
 
@@ -20,31 +20,31 @@ import (
 	"compress/gzip"
 	"context"
 	"fmt"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/common/hexutil"
-	"github.com/Aurorachain/go-aoa/core"
-	"github.com/Aurorachain/go-aoa/core/state"
-	"github.com/Aurorachain/go-aoa/core/types"
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/params"
-	"github.com/Aurorachain/go-aoa/rlp"
-	"github.com/Aurorachain/go-aoa/rpc"
-	"github.com/Aurorachain/go-aoa/trie"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/common/hexutil"
+	"github.com/Aurorachain-io/go-aoa/core"
+	"github.com/Aurorachain-io/go-aoa/core/state"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/params"
+	"github.com/Aurorachain-io/go-aoa/rlp"
+	"github.com/Aurorachain-io/go-aoa/rpc"
+	"github.com/Aurorachain-io/go-aoa/trie"
 	"io"
 	"os"
 	"strings"
 )
 
-// PrivateAdminAPI is the collection of Aurora full node-related APIs
+// PrivateAdminAPI is the collection of eminer-pro full node-related APIs
 // exposed over the private admin endpoint.
 type PrivateAdminAPI struct {
-	aoa *Aurora
+	dac *Dacchain
 }
 
 // NewPrivateAdminAPI creates a new API definition for the full node private
-// admin methods of the Aurora service.
-func NewPrivateAdminAPI(aoa *Aurora) *PrivateAdminAPI {
-	return &PrivateAdminAPI{aoa: aoa}
+// admin methods of the eminer-pro service.
+func NewPrivateAdminAPI(dac *Dacchain) *PrivateAdminAPI {
+	return &PrivateAdminAPI{dac: dac}
 }
 
 // ExportChain exports the current blockchain into a local file.
@@ -63,7 +63,7 @@ func (api *PrivateAdminAPI) ExportChain(file string) (bool, error) {
 	}
 
 	// Export the blockchain
-	if err := api.aoa.BlockChain().Export(writer); err != nil {
+	if err := api.dac.BlockChain().Export(writer); err != nil {
 		return false, err
 	}
 	return true, nil
@@ -115,12 +115,12 @@ func (api *PrivateAdminAPI) ImportChain(file string) (bool, error) {
 			break
 		}
 
-		if hasAllBlocks(api.aoa.BlockChain(), blocks) {
+		if hasAllBlocks(api.dac.BlockChain(), blocks) {
 			blocks = blocks[:0]
 			continue
 		}
 		// Import the batch and reset the buffer
-		if _, err := api.aoa.BlockChain().InsertChain(blocks); err != nil {
+		if _, err := api.dac.BlockChain().InsertChain(blocks); err != nil {
 			return false, fmt.Errorf("batch %d: failed to insert: %v", batch, err)
 		}
 		blocks = blocks[:0]
@@ -128,16 +128,16 @@ func (api *PrivateAdminAPI) ImportChain(file string) (bool, error) {
 	return true, nil
 }
 
-// PublicDebugAPI is the collection of Aurora full node APIs exposed
+// PublicDebugAPI is the collection of eminer-pro full node APIs exposed
 // over the public debugging endpoint.
 type PublicDebugAPI struct {
-	aoa *Aurora
+	dac *Dacchain
 }
 
 // NewPublicDebugAPI creates a new API definition for the full node-
-// related public debug methods of the Aurora service.
-func NewPublicDebugAPI(aoa *Aurora) *PublicDebugAPI {
-	return &PublicDebugAPI{aoa: aoa}
+// related public debug methods of the eminer-pro service.
+func NewPublicDebugAPI(dac *Dacchain) *PublicDebugAPI {
+	return &PublicDebugAPI{dac: dac}
 }
 
 // DumpBlock retrieves the entire state of the database at a given block.
@@ -146,52 +146,52 @@ func (api *PublicDebugAPI) DumpBlock(blockNr rpc.BlockNumber) (state.Dump, error
 		// If we're dumping the pending state, we need to request
 		// both the pending block as well as the pending state from
 		// the miner and operate on those
-		_, stateDb := api.aoa.dposMiner.Pending()
+		_, stateDb := api.dac.dposMiner.Pending()
 		return stateDb.RawDump(), nil
 	}
 	var block *types.Block
 	if blockNr == rpc.LatestBlockNumber {
-		block = api.aoa.blockchain.CurrentBlock()
+		block = api.dac.blockchain.CurrentBlock()
 	} else {
-		block = api.aoa.blockchain.GetBlockByNumber(uint64(blockNr))
+		block = api.dac.blockchain.GetBlockByNumber(uint64(blockNr))
 	}
 	if block == nil {
 		return state.Dump{}, fmt.Errorf("block #%d not found", blockNr)
 	}
-	stateDb, err := api.aoa.BlockChain().StateAt(block.Root())
+	stateDb, err := api.dac.BlockChain().StateAt(block.Root())
 	if err != nil {
 		return state.Dump{}, err
 	}
 	return stateDb.RawDump(), nil
 }
 
-// PrivateDebugAPI is the collection of Aurora full node APIs exposed over
+// PrivateDebugAPI is the collection of eminer-pro full node APIs exposed over
 // the private debugging endpoint.
 type PrivateDebugAPI struct {
 	config *params.ChainConfig
-	aoa    *Aurora
+	dac    *Dacchain
 }
 
 // NewPrivateDebugAPI creates a new API definition for the full node-related
-// private debug methods of the Aurora service.
-func NewPrivateDebugAPI(config *params.ChainConfig, aoa *Aurora) *PrivateDebugAPI {
-	return &PrivateDebugAPI{config: config, aoa: aoa}
+// private debug methods of the eminer-pro service.
+func NewPrivateDebugAPI(config *params.ChainConfig, dac *Dacchain) *PrivateDebugAPI {
+	return &PrivateDebugAPI{config: config, dac: dac}
 }
 
 // Preimage is a debug API function that returns the preimage for a sha3 hash, if known.
 func (api *PrivateDebugAPI) Preimage(ctx context.Context, hash common.Hash) (hexutil.Bytes, error) {
-	db := core.PreimageTable(api.aoa.ChainDb())
+	db := core.PreimageTable(api.dac.ChainDb())
 	return db.Get(hash.Bytes())
 }
 func (api *PrivateDebugAPI) GetTranTypeNum() interface{} {
 	log.Info("GetTranTypeNum")
-	return api.aoa.txPool.TxKindNum()
+	return api.dac.txPool.TxKindNum()
 }
 
 // GetBadBLocks returns a list of the last 'bad blocks' that the client has seen on the network
 // and returns them as a JSON list of block-hashes
 func (api *PrivateDebugAPI) GetBadBlocks(ctx context.Context) ([]core.BadBlockArgs, error) {
-	return api.aoa.BlockChain().BadBlocks()
+	return api.dac.BlockChain().BadBlocks()
 }
 
 // StorageRangeResult is the result of a debug_storageRangeAt API call.
@@ -251,19 +251,19 @@ func storageRangeAt(st state.Trie, start []byte, maxResult int) (StorageRangeRes
 func (api *PrivateDebugAPI) GetModifiedAccountsByNumber(startNum uint64, endNum *uint64) ([]common.Address, error) {
 	var startBlock, endBlock *types.Block
 
-	startBlock = api.aoa.blockchain.GetBlockByNumber(startNum)
+	startBlock = api.dac.blockchain.GetBlockByNumber(startNum)
 	if startBlock == nil {
 		return nil, fmt.Errorf("start block %x not found", startNum)
 	}
 
 	if endNum == nil {
 		endBlock = startBlock
-		startBlock = api.aoa.blockchain.GetBlockByHash(startBlock.ParentHash())
+		startBlock = api.dac.blockchain.GetBlockByHash(startBlock.ParentHash())
 		if startBlock == nil {
 			return nil, fmt.Errorf("block %x has no parent", endBlock.Number())
 		}
 	} else {
-		endBlock = api.aoa.blockchain.GetBlockByNumber(*endNum)
+		endBlock = api.dac.blockchain.GetBlockByNumber(*endNum)
 		if endBlock == nil {
 			return nil, fmt.Errorf("end block %d not found", *endNum)
 		}
@@ -278,19 +278,19 @@ func (api *PrivateDebugAPI) GetModifiedAccountsByNumber(startNum uint64, endNum 
 // With one parameter, returns the list of accounts modified in the specified block.
 func (api *PrivateDebugAPI) GetModifiedAccountsByHash(startHash common.Hash, endHash *common.Hash) ([]common.Address, error) {
 	var startBlock, endBlock *types.Block
-	startBlock = api.aoa.blockchain.GetBlockByHash(startHash)
+	startBlock = api.dac.blockchain.GetBlockByHash(startHash)
 	if startBlock == nil {
 		return nil, fmt.Errorf("start block %x not found", startHash)
 	}
 
 	if endHash == nil {
 		endBlock = startBlock
-		startBlock = api.aoa.blockchain.GetBlockByHash(startBlock.ParentHash())
+		startBlock = api.dac.blockchain.GetBlockByHash(startBlock.ParentHash())
 		if startBlock == nil {
 			return nil, fmt.Errorf("block %x has no parent", endBlock.Number())
 		}
 	} else {
-		endBlock = api.aoa.blockchain.GetBlockByHash(*endHash)
+		endBlock = api.dac.blockchain.GetBlockByHash(*endHash)
 		if endBlock == nil {
 			return nil, fmt.Errorf("end block %x not found", *endHash)
 		}
@@ -303,11 +303,11 @@ func (api *PrivateDebugAPI) getModifiedAccounts(startBlock, endBlock *types.Bloc
 		return nil, fmt.Errorf("start block height (%d) must be less than end block height (%d)", startBlock.Number().Uint64(), endBlock.Number().Uint64())
 	}
 
-	oldTrie, err := trie.NewSecure(startBlock.Root(), api.aoa.chainDb, 0)
+	oldTrie, err := trie.NewSecure(startBlock.Root(), api.dac.chainDb, 0)
 	if err != nil {
 		return nil, err
 	}
-	newTrie, err := trie.NewSecure(endBlock.Root(), api.aoa.chainDb, 0)
+	newTrie, err := trie.NewSecure(endBlock.Root(), api.dac.chainDb, 0)
 	if err != nil {
 		return nil, err
 	}

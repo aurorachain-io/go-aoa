@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 package core
 
@@ -24,13 +24,12 @@ import (
 	"math/big"
 	mrand "math/rand"
 	"time"
-
-	"github.com/Aurorachain/go-aoa/aoadb"
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/consensus"
-	"github.com/Aurorachain/go-aoa/core/types"
-	"github.com/Aurorachain/go-aoa/log"
-	"github.com/Aurorachain/go-aoa/params"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/consensus"
+	"github.com/Aurorachain-io/go-aoa/core/types"
+	"github.com/Aurorachain-io/go-aoa/aoadb"
+	"github.com/Aurorachain-io/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/params"
 	"github.com/hashicorp/golang-lru"
 )
 
@@ -144,10 +143,10 @@ func (hc *HeaderChain) WriteHeader(header *types.Header) (status WriteStatus, er
 
 	// Irrelevant of the canonical status, write the td and header to the database
 	if err := hc.WriteTd(hash, number, externTd); err != nil {
-		log.Error("Failed to write header total difficulty", "err", err)
+		log.Crit("Failed to write header total difficulty", "err", err)
 	}
 	if err := WriteHeader(hc.chainDb, header); err != nil {
-		log.Error("Failed to write header content", "err", err)
+		log.Crit("Failed to write header content", "err", err)
 	}
 	// If the total difficulty is higher than our known, add it to the canonical chain
 	// Second clause in the if statement reduces the vulnerability to selfish mining.
@@ -176,10 +175,10 @@ func (hc *HeaderChain) WriteHeader(header *types.Header) (status WriteStatus, er
 		}
 		// Extend the canonical chain with the new header
 		if err := WriteCanonicalHash(hc.chainDb, hash, number); err != nil {
-			log.Error("Failed to insert header number", "err", err)
+			log.Crit("Failed to insert header number", "err", err)
 		}
 		if err := WriteHeadHeaderHash(hc.chainDb, hash); err != nil {
-			log.Error("Failed to insert head header hash", "err", err)
+			log.Crit("Failed to insert head header hash", "err", err)
 		}
 		hc.currentHeaderHash, hc.currentHeader = hash, types.CopyHeader(header)
 
@@ -232,7 +231,7 @@ func (hc *HeaderChain) ValidateHeaderChain(chain []*types.Header, checkFreq int)
 	for i, header := range chain {
 		// If the chain is terminating, stop processing blocks
 		if hc.procInterrupt() {
-			log.Info("Premature abort during headers verification")
+			log.Debug("Premature abort during headers verification")
 			return 0, errors.New("aborted")
 		}
 		// If the header is a banned one, straight out abort
@@ -263,7 +262,7 @@ func (hc *HeaderChain) InsertHeaderChain(chain []*types.Header, writeHeader WhCa
 	for i, header := range chain {
 		// Short circuit insertion if shutting down
 		if hc.procInterrupt() {
-			log.Info("Premature abort during headers import")
+			log.Debug("Premature abort during headers import")
 			return i, errors.New("aborted")
 		}
 		// If the header's already known, skip it, otherwise store
@@ -278,8 +277,8 @@ func (hc *HeaderChain) InsertHeaderChain(chain []*types.Header, writeHeader WhCa
 	}
 	// Report some public statistics so the user has a clue what's going on
 	last := chain[len(chain)-1]
-	log.Infof("Imported new block headers, count=%v, elapsed=%v, number=%v, hash=%v, ignored=%v", stats.processed, common.PrettyDuration(time.Since(start)),
-		last.Number, last.Hash().Hex(), stats.ignored)
+	log.Info("Imported new block headers", "count", stats.processed, "elapsed", common.PrettyDuration(time.Since(start)),
+		"number", last.Number, "hash", last.Hash(), "ignored", stats.ignored)
 
 	return 0, nil
 }
@@ -389,7 +388,7 @@ func (hc *HeaderChain) CurrentHeader() *types.Header {
 // SetCurrentHeader sets the current head header of the canonical chain.
 func (hc *HeaderChain) SetCurrentHeader(head *types.Header) {
 	if err := WriteHeadHeaderHash(hc.chainDb, head.Hash()); err != nil {
-		log.Error("Failed to insert head header hash", "err", err)
+		log.Crit("Failed to insert head header hash", "err", err)
 	}
 	hc.currentHeader = head
 	hc.currentHeaderHash = head.Hash()
@@ -432,7 +431,7 @@ func (hc *HeaderChain) SetHead(head uint64, delFn DeleteCallback) {
 	hc.currentHeaderHash = hc.currentHeader.Hash()
 
 	if err := WriteHeadHeaderHash(hc.chainDb, hc.currentHeaderHash); err != nil {
-		log.Error("Failed to reset head header hash", "err", err)
+		log.Crit("Failed to reset head header hash", "err", err)
 	}
 }
 

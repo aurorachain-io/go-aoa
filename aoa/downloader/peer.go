@@ -1,18 +1,18 @@
-// Copyright 2018 The go-aurora Authors
-// This file is part of the go-aurora library.
+// Copyright 2021 The go-aoa Authors
+// This file is part of the go-aoa library.
 //
-// The go-aurora library is free software: you can redistribute it and/or modify
+// The the go-aoa library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-aurora library is distributed in the hope that it will be useful,
+// The the go-aoa library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-aurora library. If not, see <http://www.gnu.org/licenses/>.
+// along with the go-aoa library. If not, see <http://www.gnu.org/licenses/>.
 
 // Contains the active peer-set of the downloader, maintaining both failures
 // as well as reputation metrics to prioritize the block retrievals.
@@ -29,16 +29,16 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Aurorachain/go-aoa/common"
-	"github.com/Aurorachain/go-aoa/event"
-	"github.com/Aurorachain/go-aoa/log"
+	"github.com/Aurorachain-io/go-aoa/common"
+	"github.com/Aurorachain-io/go-aoa/event"
+	"github.com/Aurorachain-io/go-aoa/log"
 )
 
 const (
 	maxLackingHashes  = 4096 // Maximum number of entries allowed on the list or lacking items
 	measurementImpact = 0.1  // The impact a single measurement has on a peer's final throughput value.
-	aoa01             = 21
-	aoa02             = 22
+	dac01             = 21
+	dac02             = 22
 )
 
 var (
@@ -73,6 +73,7 @@ type peerConnection struct {
 	peer Peer
 
 	version int        // Eth protocol version number to switch strategies
+	log     log.Logger // Contextual logger to add extra infos to peer logs
 	lock    sync.RWMutex
 }
 
@@ -114,12 +115,13 @@ func (w *lightPeerWrapper) RequestNodeData([]common.Hash) error {
 }
 
 // newPeerConnection creates a new downloader peer.
-func newPeerConnection(id string, version int, peer Peer) *peerConnection {
+func newPeerConnection(id string, version int, peer Peer, logger log.Logger) *peerConnection {
 	return &peerConnection{
 		id:      id,
 		lacking: make(map[common.Hash]struct{}),
 		peer:    peer,
 		version: version,
+		log:     logger,
 	}
 }
 
@@ -144,8 +146,8 @@ func (p *peerConnection) Reset() {
 // FetchHeaders sends a header retrieval request to the remote peer.
 func (p *peerConnection) FetchHeaders(from uint64, count int) error {
 	// Sanity check the protocol version
-	if p.version < aoa01 {
-		panic(fmt.Sprintf("header fetch [aoa/01+] requested on aoa/%d", p.version))
+	if p.version < dac01 {
+		panic(fmt.Sprintf("header fetch [em/01+] requested on em/%d", p.version))
 	}
 	// Short circuit if the peer is already fetching
 	if !atomic.CompareAndSwapInt32(&p.headerIdle, 0, 1) {
@@ -162,8 +164,8 @@ func (p *peerConnection) FetchHeaders(from uint64, count int) error {
 // FetchBodies sends a block body retrieval request to the remote peer.
 func (p *peerConnection) FetchBodies(request *fetchRequest) error {
 	// Sanity check the protocol version
-	if p.version < aoa01 {
-		panic(fmt.Sprintf("body fetch [aoa/01+] requested on aoa/%d", p.version))
+	if p.version < dac01 {
+		panic(fmt.Sprintf("body fetch [em/01+] requested on em/%d", p.version))
 	}
 	// Short circuit if the peer is already fetching
 	if !atomic.CompareAndSwapInt32(&p.blockIdle, 0, 1) {
@@ -184,8 +186,8 @@ func (p *peerConnection) FetchBodies(request *fetchRequest) error {
 // FetchReceipts sends a receipt retrieval request to the remote peer.
 func (p *peerConnection) FetchReceipts(request *fetchRequest) error {
 	// Sanity check the protocol version
-	if p.version < aoa02 {
-		panic(fmt.Sprintf("body fetch [aoa/02+] requested on aoa/%d", p.version))
+	if p.version < dac02 {
+		panic(fmt.Sprintf("body fetch [em/02+] requested on em/%d", p.version))
 	}
 	// Short circuit if the peer is already fetching
 	if !atomic.CompareAndSwapInt32(&p.receiptIdle, 0, 1) {
@@ -206,8 +208,8 @@ func (p *peerConnection) FetchReceipts(request *fetchRequest) error {
 // FetchNodeData sends a node state data retrieval request to the remote peer.
 func (p *peerConnection) FetchNodeData(hashes []common.Hash) error {
 	// Sanity check the protocol version
-	if p.version < aoa02 {
-		panic(fmt.Sprintf("node data fetch [aoa/02+] requested on aoa/%d", p.version))
+	if p.version < dac02 {
+		panic(fmt.Sprintf("node data fetch [em/02+] requested on em/%d", p.version))
 	}
 	// Short circuit if the peer is already fetching
 	if !atomic.CompareAndSwapInt32(&p.stateIdle, 0, 1) {
@@ -276,7 +278,7 @@ func (p *peerConnection) setIdle(started time.Time, delivered int, throughput *f
 	*throughput = (1-measurementImpact)*(*throughput) + measurementImpact*measured
 	p.rtt = time.Duration((1-measurementImpact)*float64(p.rtt) + measurementImpact*float64(elapsed))
 
-	log.Debug("Peer throughput measurements updated",
+	p.log.Trace("Peer throughput measurements updated",
 		"hps", p.headerThroughput, "bps", p.blockThroughput,
 		"rps", p.receiptThroughput, "sps", p.stateThroughput,
 		"miss", len(p.lacking), "rtt", p.rtt)
@@ -475,7 +477,7 @@ func (ps *peerSet) HeaderIdlePeers() ([]*peerConnection, int) {
 		defer p.lock.RUnlock()
 		return p.headerThroughput
 	}
-	return ps.idlePeers(aoa01, aoa02+1, idle, throughput)
+	return ps.idlePeers(dac01, dac02+1, idle, throughput)
 }
 
 // BodyIdlePeers retrieves a flat list of all the currently body-idle peers within
@@ -489,7 +491,7 @@ func (ps *peerSet) BodyIdlePeers() ([]*peerConnection, int) {
 		defer p.lock.RUnlock()
 		return p.blockThroughput
 	}
-	return ps.idlePeers(aoa01, aoa02+1, idle, throughput)
+	return ps.idlePeers(dac01, dac02+1, idle, throughput)
 }
 
 // ReceiptIdlePeers retrieves a flat list of all the currently receipt-idle peers
@@ -503,7 +505,7 @@ func (ps *peerSet) ReceiptIdlePeers() ([]*peerConnection, int) {
 		defer p.lock.RUnlock()
 		return p.receiptThroughput
 	}
-	return ps.idlePeers(aoa02, aoa02+1, idle, throughput)
+	return ps.idlePeers(dac02, dac02+1, idle, throughput)
 }
 
 // NodeDataIdlePeers retrieves a flat list of all the currently node-data-idle
@@ -517,7 +519,7 @@ func (ps *peerSet) NodeDataIdlePeers() ([]*peerConnection, int) {
 		defer p.lock.RUnlock()
 		return p.stateThroughput
 	}
-	return ps.idlePeers(aoa02, aoa02+1, idle, throughput)
+	return ps.idlePeers(dac02, dac02+1, idle, throughput)
 }
 
 // idlePeers retrieves a flat list of all currently idle peers satisfying the
