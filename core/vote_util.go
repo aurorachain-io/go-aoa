@@ -148,11 +148,7 @@ func CountTrxVote(from string, tx *types.Transaction, statedb *state.StateDB, db
 	}
 	if db.Exist(common.HexToAddress(from)) {
 		registerCost := new(big.Int)
-		if blockNumber <= params.AgentChangeBlockNumber {
-			registerCost.SetString(params.TxGasAgentCreationOld, 10)
-		}else {
-			registerCost.SetString(params.TxGasAgentCreation, 10)
-		}
+		registerCost.SetString(params.TxGasAgentCreation, 10)
 		log.Info("VoteUtil deal cancel", "address balance", statedb.GetBalance(common.HexToAddress(from)), "compare", registerCost)
 		if statedb.GetBalance(common.HexToAddress(from)).Cmp(registerCost) < 0 {
 			candidate := types.VoteCandidate{Address: from, Action: cancel}

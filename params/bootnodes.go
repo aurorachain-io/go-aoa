@@ -21,7 +21,7 @@ import "math/big"
 // MainnetBootnodes are the enode URLs of the P2P bootstrap nodes running on
 // the main eminer-pro network.
 var MainnetBootnodes = []string{
-	"enode://31e515e0875ba9898629a00fade15617e9df9de58d3d5238cb440eabc8f16b773a84541bc8a93b2fd828a47054478d3c68d1a76988b83fb32ba748917a574ef8@40.83.72.70:30303",
+	"enode://9ecce36d18f04efc4a092e9c3afcd49219e3f28cf5ce226a42f3ef0556f820541af3ed51b02fa9e0fad041efa3eeb8a90a00abfcaf80ec5eb7564bd15fec643e@40.83.72.70:30303",
 }
 
 // TestnetBootnodes
