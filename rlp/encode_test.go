@@ -339,3 +339,23 @@ func TestEncodeToReaderReturnToPool(t *testing.T) {
 	}
 	wg.Wait()
 }
+
+func TestEncodeToReaderReturnToPool2(t *testing.T) {
+	buf := make([]byte, 50)
+	wg := new(sync.WaitGroup)
+	for i := 0; i < 5; i++ {
+		wg.Add(1)
+		go func() {
+			for i := 0; i < 1000; i++ {
+				_, r, _ := EncodeToReader("foo")
+				ioutil.ReadAll(r)
+				r.Read(buf)
+				r.Read(buf)
+				r.Read(buf)
+				r.Read(buf)
+			}
+			wg.Done()
+		}()
+	}
+	wg.Wait()
+}
