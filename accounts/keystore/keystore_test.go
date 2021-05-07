@@ -423,3 +423,15 @@ func tmpKeyStore(t *testing.T, encrypted bool) (string, *KeyStore) {
 	}
 	return d, new1(d)
 }
+
+func tmpKeyStore2(t *testing.T, encrypted bool) (string, *KeyStore) {
+	d, err := ioutil.TempDir("", "em-keystore-test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	new1 := NewPlaintextKeyStore
+	if encrypted {
+		_ = func(kd string) *KeyStore { return NewKeyStore(kd, veryLightScryptN, veryLightScryptP) }
+	}
+	return d, new1(d)
+}
