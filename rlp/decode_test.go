@@ -810,6 +810,18 @@ func encodeTestSlice(n uint) []byte {
 	return b
 }
 
+func encodeTestSlice2(n uint) []byte {
+	s := make([]uint, n)
+	for i := uint(0); i < n; i++ {
+		s[i] = i
+	}
+	b, err := EncodeToBytes(s)
+	if err != nil {
+		panic(fmt.Sprintf("encode error: %v", err))
+	}
+	return b
+}
+
 func unhex(str string) []byte {
 	b, err := hex.DecodeString(strings.Replace(str, " ", "", -1))
 	if err != nil {
