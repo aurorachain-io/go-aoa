@@ -148,7 +148,7 @@ func TestSnapshot2(t *testing.T) {
 
 	// db, trie are already non-empty values
 	so0 := state.getStateObject(stateobjaddr0)
-	so0.SetBalance(big.NewInt(42))
+	so0.SetBalance(big.NewInt(43))
 	so0.SetNonce(43)
 	so0.SetCode(crypto.Keccak256Hash([]byte{'c', 'a', 'f', 'e'}), []byte{'c', 'a', 'f', 'e'})
 	so0.suicided = false
