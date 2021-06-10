@@ -376,6 +376,7 @@ func writeLicense(info *info) {
 
 func doLines(cmd *exec.Cmd, f func(string)) error {
 	stdout, err := cmd.StdoutPipe()
+	
 	if err != nil {
 		return err
 	}
