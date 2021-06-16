@@ -208,5 +208,6 @@ type GasEstimator interface {
 // A PendingStateEventer provides access to real time notifications about changes to the
 // pending state.
 type PendingStateEventer interface {
+	
 	SubscribePendingTransactions(ctx context.Context, ch chan<- *types.Transaction) (Subscription, error)
 }
