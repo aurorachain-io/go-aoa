@@ -127,6 +127,7 @@ func testAttachWelcome(t *testing.T, geth *testgeth, endpoint, apis string) {
 	// Attach to a running em note and terminate immediately
 	attach := runGeth(t, "attach", endpoint)
 	defer attach.ExpectExit()
+	
 	attach.CloseStdin()
 
 	// Gather all the infos the welcome message needs to contain
