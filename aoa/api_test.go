@@ -74,6 +74,10 @@ func TestStorageRangeAt(t *testing.T) {
 			want: StorageRangeResult{storage, nil},
 		},
 		{
+			start: []byte{0x00}, limit: 5,
+			want: StorageRangeResult{storage, nil},
+		},
+		{
 			start: []byte{0x40}, limit: 2,
 			want: StorageRangeResult{storageMap{keys[1]: storage[keys[1]], keys[2]: storage[keys[2]]}, &keys[3]},
 		},
