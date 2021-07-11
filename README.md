@@ -42,7 +42,7 @@ nohup /data/aoa/aoa --datadir /data/aoa/aoa-data --port 30303 --rpc --rpcaddr 0.
 ```
 /data/aoa/aoa attach /data/aoa/aoa-data/aoa.ipc
 ```
-### Common console commond
+### Common console command
 ```
 #get block height
 aoa.blockNumber
