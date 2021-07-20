@@ -166,6 +166,7 @@ func testParallelPutGet(db emdb.Database, t *testing.T) {
 	pending.Wait()
 
 	pending.Add(n)
+	
 	for i := 0; i < n; i++ {
 		go func(key string) {
 			defer pending.Done()
