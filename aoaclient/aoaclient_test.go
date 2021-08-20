@@ -31,5 +31,6 @@ import _ "github.com/Aurorachain-io/go-aoa"
 //	_ = dacchain.PendingStateReader(&Client{})
 //	// _ = dacchain.PendingStateEventer(&Client{})
 //	_ = dacchain.PendingContractCaller(&Client{})
+
 //)
 // 
