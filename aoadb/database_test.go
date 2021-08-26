@@ -28,6 +28,7 @@ import (
 )
 
 func newTestLDB() (*emdb.LDBDatabase, func()) {
+	
 	dirname, err := ioutil.TempDir(os.TempDir(), "dacdb_test_")
 	if err != nil {
 		panic("failed to create test file: " + err.Error())
