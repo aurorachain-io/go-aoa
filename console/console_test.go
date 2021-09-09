@@ -59,6 +59,7 @@ func (p *hookedPrompter) PromptInput(prompt string) (string, error) {
 }
 
 func (p *hookedPrompter) PromptPassword(prompt string) (string, error) {
+
 	return "", errors.New("not implemented")
 }
 func (p *hookedPrompter) PromptConfirm(prompt string) (bool, error) {
