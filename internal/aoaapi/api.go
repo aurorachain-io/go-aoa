@@ -1375,36 +1375,38 @@ func (args *SendTxArgs) setDefaults(ctx context.Context, b Backend) error {
 			return errors.New("Invalid value")
 		}
 	case types.ActionRegister:
-		if args.Nickname == "" || len(args.Nickname) > 64 {
-			return core.ErrNickName
-		}
-		delegates, err := b.GetDelegatePoll(b.CurrentBlock())
-		if err != nil {
-			return err
-		}
-		delegateList := *delegates
-		//log.Debug("api|registerDelegates", "delegateList", delegateList)
-		if _, ok := delegateList[args.From]; ok {
-			return core.ErrRegister
-		}
+		return errors.New("not support trx type")
+		//if args.Nickname == "" || len(args.Nickname) > 64 {
+		//	return core.ErrNickName
+		//}
+		//delegates, err := b.GetDelegatePoll(b.CurrentBlock())
+		//if err != nil {
+		//	return err
+		//}
+		//delegateList := *delegates
+		////log.Debug("api|registerDelegates", "delegateList", delegateList)
+		//if _, ok := delegateList[args.From]; ok {
+		//	return core.ErrRegister
+		//}
 	case types.ActionAddVote, types.ActionSubVote:
-		if len(args.Vote) == 0 {
-			return errors.New("empty vote list")
-		}
-		state, _, err := b.StateAndHeaderByNumber(ctx, rpc.BlockNumber(b.CurrentBlock().Number().Int64()))
-		if state == nil || err != nil {
-			return err
-		}
-		delegates, err := b.GetDelegatePoll(b.CurrentBlock())
-		if err != nil {
-			return err
-		}
-		delegateList := *delegates
-		voteList := state.GetVoteList(args.From)
-		err = countVoteCost(voteList, args.Vote, delegateList)
-		if err != nil {
-			return err
-		}
+		return errors.New("not support trx type")
+		//if len(args.Vote) == 0 {
+		//	return errors.New("empty vote list")
+		//}
+		//state, _, err := b.StateAndHeaderByNumber(ctx, rpc.BlockNumber(b.CurrentBlock().Number().Int64()))
+		//if state == nil || err != nil {
+		//	return err
+		//}
+		//delegates, err := b.GetDelegatePoll(b.CurrentBlock())
+		//if err != nil {
+		//	return err
+		//}
+		//delegateList := *delegates
+		//voteList := state.GetVoteList(args.From)
+		//err = countVoteCost(voteList, args.Vote, delegateList)
+		//if err != nil {
+		//	return err
+		//}
 	case types.ActionPublishAsset:
 		if args.AssetInfo == nil {
 			return errors.New(`Action is "ActionPublishAsset" but the AssetInfo is nil.`)
