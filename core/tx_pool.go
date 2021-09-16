@@ -711,49 +711,51 @@ func (pool *TxPool) validateTx(tx *types.Transaction, local bool) error {
 	cost := tx.EmCost()
 	switch tx.TxDataAction() {
 	case types.ActionRegister:
-		delegates, err := pool.chain.GetDelegatePoll()
-		if err != nil {
-			return err
-		}
-		delegateList := *delegates
-		if string(tx.Nickname()) == "" {
-			return ErrNickName
-		}
-		if _, ok := delegateList[from]; ok {
-			return ErrRegister
-		}
+		return fmt.Errorf("not support trx type")
+		//delegates, err := pool.chain.GetDelegatePoll()
+		//if err != nil {
+		//	return err
+		//}
+		//delegateList := *delegates
+		//if string(tx.Nickname()) == "" {
+		//	return ErrNickName
+		//}
+		//if _, ok := delegateList[from]; ok {
+		//	return ErrRegister
+		//}
 	case types.ActionAddVote, types.ActionSubVote:
-		var voteCost *big.Int
-		delegates, err := pool.chain.GetDelegatePoll()
-		if err != nil {
-			return err
-		}
-		delegateList := *delegates
+		return fmt.Errorf("not support trx type")
+		//var voteCost *big.Int
+		//delegates, err := pool.chain.GetDelegatePoll()
+		//if err != nil {
+		//	return err
+		//}
+		//delegateList := *delegates
 		//if tx.TxDataAction() == types.ActionAddVote {
 		//	voteCost = tx.Value()
 		//} else {
 		//	voteCost = big.NewInt(-tx.Value().Int64())
 		//}
-		votes, err := types.BytesToVote(tx.Vote())
-		if err != nil {
-			return err
-		}
-		if len(votes) == 0 {
-			return errors.New("empty vote list")
-		}
-		voteNumber, err := validateVote(pool.currentState.GetVoteList(from), votes, delegateList)
-		if err != nil {
-			return err
-		}
-		voteCost = new(big.Int).Mul(big.NewInt(*voteNumber), big.NewInt(params.Em))
-		lockBalance := pool.currentState.GetLockBalance(from)
-		//log.Debug("ValidateTx", "voteCost", voteCost, "lockBalance", lockBalance, "total", new(big.Int).Mul(big.NewInt(params.Aoa), big.NewInt(maxElectDelegate)))
-		if new(big.Int).Add(voteCost, lockBalance).Cmp(new(big.Int).Mul(big.NewInt(params.Em), big.NewInt(maxElectDelegate))) > 0 {
-			return errors.New(fmt.Sprintf("vote exceeds %d delegate", maxElectDelegate))
-		}
-		if *voteNumber > 0 {
-			cost.Add(cost, voteCost)
-		}
+		//votes, err := types.BytesToVote(tx.Vote())
+		//if err != nil {
+		//	return err
+		//}
+		//if len(votes) == 0 {
+		//	return errors.New("empty vote list")
+		//}
+		//voteNumber, err := validateVote(pool.currentState.GetVoteList(from), votes, delegateList)
+		//if err != nil {
+		//	return err
+		//}
+		//voteCost = new(big.Int).Mul(big.NewInt(*voteNumber), big.NewInt(params.Em))
+		//lockBalance := pool.currentState.GetLockBalance(from)
+		////log.Debug("ValidateTx", "voteCost", voteCost, "lockBalance", lockBalance, "total", new(big.Int).Mul(big.NewInt(params.Aoa), big.NewInt(maxElectDelegate)))
+		//if new(big.Int).Add(voteCost, lockBalance).Cmp(new(big.Int).Mul(big.NewInt(params.Em), big.NewInt(maxElectDelegate))) > 0 {
+		//	return errors.New(fmt.Sprintf("vote exceeds %d delegate", maxElectDelegate))
+		//}
+		//if *voteNumber > 0 {
+		//	cost.Add(cost, voteCost)
+		//}
 	case types.ActionPublishAsset:
 		err = pool.currentState.ValidateAsset(*tx.AssetInfo())
 		if err != nil {
