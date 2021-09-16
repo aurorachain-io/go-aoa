@@ -30,6 +30,7 @@ const (
 
 // Tests that a json key file can be decrypted and encrypted in multiple rounds.
 func TestKeyEncryptDecrypt(t *testing.T) {
+	
 	keyjson, err := ioutil.ReadFile("testdata/very-light-scrypt.json")
 	if err != nil {
 		t.Fatal(err)
@@ -53,6 +54,7 @@ func TestKeyEncryptDecrypt(t *testing.T) {
 		}
 		// Recrypt with a new password and start over
 		password += "new data appended"
+		
 		if keyjson, err = EncryptKey(key, password, veryLightScryptN, veryLightScryptP); err != nil {
 			t.Errorf("test %d: failed to recrypt key %v", i, err)
 		}
