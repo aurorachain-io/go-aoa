@@ -30,14 +30,13 @@ import (
 var discard = Protocol{
 	Name:   "discard",
 	Length: 1,
-	Run: func(p *Peer, rw MsgReadWriter, netType byte) error {
+	Run: func(p *Peer, rw MsgReadWriter) error {
 		for {
 			msg, err := rw.ReadMsg()
 			if err != nil {
 				return err
 			}
 			fmt.Printf("discarding %d\n", msg.Code)
-			fmt.Printf("netType: %d\n", netType)
 			if err = msg.Discard(); err != nil {
 				return err
 			}
@@ -45,16 +44,57 @@ var discard = Protocol{
 	},
 }
 
+// uintID encodes i into a node ID.
+func uintID(i uint16) enode.ID {
+	var id enode.ID
+	binary.BigEndian.PutUint16(id[:], i)
+	return id
+}
+
+// newNode creates a node record with the given address.
+func newNode(id enode.ID, addr string) *enode.Node {
+	var r enr.Record
+	// Set the port if present.
+	if strings.Contains(addr, ":") {
+		hs, ps, err := net.SplitHostPort(addr)
+		if err != nil {
+			panic(fmt.Errorf("invalid address %q", addr))
+		}
+		port, err := strconv.Atoi(ps)
+		if err != nil {
+			panic(fmt.Errorf("invalid port in %q", addr))
+		}
+		r.Set(enr.TCP(port))
+		r.Set(enr.UDP(port))
+		addr = hs
+	}
+	// Set the IP.
+	if addr != "" {
+		ip := net.ParseIP(addr)
+		if ip == nil {
+			panic(fmt.Errorf("invalid IP %q", addr))
+		}
+		r.Set(enr.IP(ip))
+	}
+	return enode.SignNull(&r, id)
+}
+
 func testPeer(protos []Protocol) (func(), *conn, *Peer, <-chan error) {
-	fd1, fd2 := net.Pipe()
-	c1 := &conn{fd: fd1, transport: newTestTransport(randomID(), fd1), netType: discover.ConsNet}
-	c2 := &conn{fd: fd2, transport: newTestTransport(randomID(), fd2), netType: discover.ConsNet}
+	var (
+		fd1, fd2   = net.Pipe()
+		key1, key2 = newkey(), newkey()
+		t1         = newTestTransport(&key2.PublicKey, fd1, nil)
+		t2         = newTestTransport(&key1.PublicKey, fd2, &key1.PublicKey)
+	)
+
+	c1 := &conn{fd: fd1, node: newNode(uintID(1), ""), transport: t1}
+	c2 := &conn{fd: fd2, node: newNode(uintID(2), ""), transport: t2}
 	for _, p := range protos {
 		c1.caps = append(c1.caps, p.cap())
 		c2.caps = append(c2.caps, p.cap())
 	}
 
-	peer := newPeer(c1, protos)
+	peer := newPeer(log.Root(), c1, protos)
 	errc := make(chan error, 1)
 	go func() {
 		_, err := peer.run()
@@ -69,7 +109,7 @@ func TestPeerProtoReadMsg(t *testing.T) {
 	proto := Protocol{
 		Name:   "a",
 		Length: 5,
-		Run: func(peer *Peer, rw MsgReadWriter, netType byte) error {
+		Run: func(peer *Peer, rw MsgReadWriter) error {
 			if err := ExpectMsg(rw, 2, []uint{1}); err != nil {
 				t.Error(err)
 			}
@@ -104,7 +144,7 @@ func TestPeerProtoEncodeMsg(t *testing.T) {
 	proto := Protocol{
 		Name:   "a",
 		Length: 2,
-		Run: func(peer *Peer, rw MsgReadWriter, netType byte) error {
+		Run: func(peer *Peer, rw MsgReadWriter) error {
 			if err := SendItems(rw, 2); err == nil {
 				t.Error("expected error for out-of-range msg code, got nil")
 			}
@@ -133,9 +173,12 @@ func TestPeerPing(t *testing.T) {
 	}
 }
 
+// This test checks that a disconnect message sent by a peer is returned
+// as the error from Peer.run.
 func TestPeerDisconnect(t *testing.T) {
 	closer, rw, _, disc := testPeer(nil)
 	defer closer()
+
 	if err := SendItems(rw, discMsg, DiscQuitting); err != nil {
 		t.Fatal(err)
 	}
@@ -152,7 +195,7 @@ func TestPeerDisconnect(t *testing.T) {
 // This test is supposed to verify that Peer can reliably handle
 // multiple causes of disconnection occurring at the same time.
 func TestPeerDisconnectRace(t *testing.T) {
-	maybe := func() bool { return rand.Intn(1) == 1 }
+	maybe := func() bool { return rand.Intn(2) == 1 }
 
 	for i := 0; i < 1000; i++ {
 		protoclose := make(chan error)
@@ -160,12 +203,12 @@ func TestPeerDisconnectRace(t *testing.T) {
 		closer, rw, p, disc := testPeer([]Protocol{
 			{
 				Name:   "closereq",
-				Run:    func(p *Peer, rw MsgReadWriter, netType byte) error { return <-protoclose },
+				Run:    func(p *Peer, rw MsgReadWriter) error { return <-protoclose },
 				Length: 1,
 			},
 			{
 				Name:   "disconnect",
-				Run:    func(p *Peer, rw MsgReadWriter, netType byte) error { p.Disconnect(<-protodisc); return nil },
+				Run:    func(p *Peer, rw MsgReadWriter) error { p.Disconnect(<-protodisc); return nil },
 				Length: 1,
 			},
 		})
